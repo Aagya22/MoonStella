@@ -1,0 +1,22 @@
+import { z } from 'zod'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const envSchema = z.object({
+  PORT: z.string().default('5000'),
+  NODE_ENV: z.enum(['development', 'production']).default('development'),
+  MONGO_URI: z.string().min(1),
+  JWT_SECRET: z.string().min(1),
+  CLIENT_URL: z.string().default('http://localhost:3000'),
+})
+
+const parsed = envSchema.safeParse(process.env)
+
+if (!parsed.success) {
+  console.error(' Missing environment variables:')
+  console.error(parsed.error.flatten().fieldErrors)
+  process.exit(1)
+}
+
+export const env = parsed.data
