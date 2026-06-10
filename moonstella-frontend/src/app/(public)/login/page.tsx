@@ -3,15 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { loginApi } from '@/lib/api/auth'
 import Image from 'next/image'
-type Role = 'collector' | 'artisan'
+import Navbar from '@/app/components/navbar'
+import { loginApi } from '@/lib/api/auth'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [role, setRole] = useState<Role>('collector')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -22,193 +22,232 @@ export default function LoginPage() {
 
     try {
       const result = await loginApi({ email, password })
-
-      // Save token to localStorage
       localStorage.setItem('ms_token', result.token)
       localStorage.setItem('ms_user', JSON.stringify(result.user))
 
-      // Redirect based on role
-      if (result.user.role === 'buyer') {
-        router.push('/buyer/feed')
-      } else if (result.user.role === 'seller') {
-        router.push('/seller/feed')
-      } else if (result.user.role === 'admin') {
-        router.push('/admin/dashboard')
-      }
+      if (result.user.role === 'buyer') router.push('/buyer/feed')
+      else if (result.user.role === 'seller') router.push('/seller/feed')
+      else if (result.user.role === 'admin') router.push('/admin/dashboard')
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message || 'Something went wrong. Please try again.'
-      )
+      setError(err?.response?.data?.message || 'Invalid email or password.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: '#FAF8F5' }}
+    >
+      {/* Navbar */}
+      <Navbar />
 
-      {/* Left — image */}
-      <div className="hidden md:block w-1/2 relative overflow-hidden">
-        
-          
-          <Image src="/artisan.png" alt="Artisan crafting jewellery" fill className="object-cover" />
-        *
-        <div className="absolute inset-0 bg-gradient-to-br from-stone-800 to-stone-950" />
+      {/* Page content — centred vertically and horizontally */}
+      <div className="flex-1 flex items-center justify-center px-4 py-10">
+
+        {/* Card container */}
         <div
-          className="absolute inset-0"
+          className="w-full flex overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #1a0f0a 0%, #2c1810 50%, #0d0705 100%)',
+            maxWidth: '900px',
+            minHeight: '580px',
+            borderRadius: '4px',
+            boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
           }}
-        />
-      </div>
+        >
 
-      {/* Right — form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center px-8 py-12 bg-white">
-        <div className="w-full max-w-md">
-
-          {/* Title */}
-          <h1
-            className="text-3xl font-bold text-gray-900 mb-2"
-            style={{ fontFamily: 'var(--font-playfair)' }}
-          >
-            Sign In to MoonStella
-          </h1>
-          <p
-            className="text-sm text-gray-500 mb-8"
-            style={{ fontFamily: 'var(--font-montserrat)' }}
-          >
-            Enter your credentials to access your personal workspace.
-          </p>
-
-          {/* Role toggle */}
-          <div className="flex items-center gap-2 mb-8">
-            <button
-              type="button"
-              onClick={() => setRole('collector')}
-              className="px-6 py-2.5 rounded-full text-xs font-bold tracking-widest transition-all"
-              style={{
-                fontFamily: 'var(--font-montserrat)',
-                backgroundColor: role === 'collector' ? '#3D0C1F' : 'transparent',
-                color: role === 'collector' ? '#fff' : '#3D0C1F',
-                border: `1.5px solid ${role === 'collector' ? '#3D0C1F' : '#d1d5db'}`,
-              }}
-            >
-              COLLECTOR
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('artisan')}
-              className="px-6 py-2.5 rounded-full text-xs font-bold tracking-widest transition-all"
-              style={{
-                fontFamily: 'var(--font-montserrat)',
-                backgroundColor: role === 'artisan' ? '#3D0C1F' : 'transparent',
-                color: role === 'artisan' ? '#fff' : '#3D0C1F',
-                border: `1.5px solid ${role === 'artisan' ? '#3D0C1F' : '#d1d5db'}`,
-              }}
-            >
-              ARTISAN
-            </button>
+          {/* Left — image */}
+          <div className="hidden md:block relative" style={{ width: '45%', flexShrink: 0 }}>
+            <Image
+              src="/artisan.png"
+              alt="Artisan crafting jewellery"
+              fill
+              className="object-cover object-center"
+              priority
+            />
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Right — form */}
+          <div
+            className="flex-1 bg-white flex items-center justify-center px-10 py-12"
+          >
+            <div className="w-full" style={{ maxWidth: '340px' }}>
 
-            {/* Email */}
-            <div className="flex flex-col gap-1.5">
-              <label
-                className="text-xs font-semibold tracking-widest text-gray-700"
-                style={{ fontFamily: 'var(--font-montserrat)' }}
+              {/* Title */}
+              <h1
+                className="font-bold text-gray-900 mb-2 leading-tight"
+                style={{
+                  fontFamily: 'var(--font-playfair)',
+                  fontSize: '28px',
+                }}
               >
-                EMAIL
-              </label>
-              <input
-                type="email"
-                placeholder="email123@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded focus:outline-none focus:border-stone-400 transition-colors"
-                style={{ fontFamily: 'var(--font-montserrat)' }}
-              />
-            </div>
+                Sign In to MoonStella
+              </h1>
+              <p
+                className="text-gray-500 mb-8 leading-relaxed"
+                style={{
+                  fontFamily: 'var(--font-montserrat)',
+                  fontSize: '13px',
+                }}
+              >
+                Enter your credentials to access your personal workspace.
+              </p>
 
-            {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <label
-                className="text-xs font-semibold tracking-widest text-gray-700"
-                style={{ fontFamily: 'var(--font-montserrat)' }}
-              >
-                PASSWORD
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded focus:outline-none focus:border-stone-400 transition-colors"
-                style={{ fontFamily: 'var(--font-montserrat)' }}
-              />
-              <div className="flex justify-end">
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
+                {/* Email */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    className="uppercase text-gray-700"
+                    style={{
+                      fontFamily: 'var(--font-montserrat)',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                    }}
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="email123@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 text-sm rounded focus:outline-none transition-colors"
+                    style={{
+                      fontFamily: 'var(--font-montserrat)',
+                      backgroundColor: '#F5F2F2',
+                      border: 'none',
+                      color: '#1a1a1a',
+                    }}
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    className="uppercase text-gray-700"
+                    style={{
+                      fontFamily: 'var(--font-montserrat)',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                    }}
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 text-sm rounded focus:outline-none transition-colors pr-10"
+                      style={{
+                        fontFamily: 'var(--font-montserrat)',
+                        backgroundColor: '#F5F2F2',
+                        border: 'none',
+                        color: '#1a1a1a',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? (
+                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <path d="M3 12s3.6-7 9-7 9 7 9 7-3.6 7-9 7-9-7-9-7z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <path d="M17.94 17.94A10.1 10.1 0 0112 20c-5.4 0-9-7-9-7a17.6 17.6 0 014.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c5.4 0 9 7 9 7a17.6 17.6 0 01-2.06 3.06M3 3l18 18"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex justify-end">
+                    <Link
+                      href="/forgot-password"
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      style={{
+                        fontFamily: 'var(--font-montserrat)',
+                        fontSize: '11px',
+                      }}
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Error */}
+                {error && (
+                  <p
+                    className="text-red-500 -mt-2"
+                    style={{
+                      fontFamily: 'var(--font-montserrat)',
+                      fontSize: '12px',
+                    }}
+                  >
+                    {error}
+                  </p>
+                )}
+
+                {/* Sign in button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 text-white rounded transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed uppercase"
+                  style={{
+                    backgroundColor: '#3D0C1F',
+                    fontFamily: 'var(--font-montserrat)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.15em',
+                  }}
                 >
-                  Forgot Password?
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+
+              </form>
+
+              {/* Join section */}
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <p
+                  className="text-gray-500"
+                  style={{
+                    fontFamily: 'var(--font-montserrat)',
+                    fontSize: '12px',
+                  }}
+                >
+                  Are you a new and seeking to join us?
+                </p>
+                <Link
+                  href="/get-started"
+                  className="w-full py-3.5 text-center rounded border-2 transition-colors hover:bg-gray-50 uppercase"
+                  style={{
+                    borderColor: '#3D0C1F',
+                    color: '#3D0C1F',
+                    fontFamily: 'var(--font-montserrat)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.15em',
+                  }}
+                >
+                  Join the Circle
                 </Link>
               </div>
+
             </div>
-
-            {/* Error message */}
-            {error && (
-              <p
-                className="text-xs text-red-500"
-                style={{ fontFamily: 'var(--font-montserrat)' }}
-              >
-                {error}
-              </p>
-            )}
-
-            {/* Sign in button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 text-xs font-bold tracking-widest text-white rounded transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
-              style={{
-                backgroundColor: '#3D0C1F',
-                fontFamily: 'var(--font-montserrat)',
-              }}
-            >
-              {loading ? 'SIGNING IN...' : 'SIGN IN'}
-            </button>
-
-          </form>
-
-          {/* Join section */}
-          <div className="mt-8 flex flex-col items-center gap-4">
-            <p
-              className="text-sm text-gray-500"
-              style={{ fontFamily: 'var(--font-montserrat)' }}
-            >
-              Are you a new and seeking to join us?
-            </p>
-            <Link
-              href="/register/buyer/step-one"
-              className="w-full py-3.5 text-xs font-bold tracking-widest text-center rounded border-2 transition-colors hover:bg-gray-50"
-              style={{
-                borderColor: '#3D0C1F',
-                color: '#3D0C1F',
-                fontFamily: 'var(--font-montserrat)',
-              }}
-            >
-              JOIN THE CIRCLE
-            </Link>
           </div>
 
         </div>
       </div>
-
     </div>
   )
 }

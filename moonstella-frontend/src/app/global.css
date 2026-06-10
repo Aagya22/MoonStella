@@ -8,7 +8,7 @@
 }
 * {
   margin: 0;
-  padding-inline: 5;
+  /* padding-inline: 0; */
   /* padding-bottom: 2; */
   box-sizing: border-box;
 }
@@ -18,6 +18,11 @@ html {
 body {
   background-color: #FCF9F8;
   color: #1a1a1a;
+
+  color: #1a1a1a;
+ 
+  flex-direction: column;
+  
 }
 .btn-primary {
   display: inline-block;

@@ -1,10 +1,67 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
+
+const categories = [
+  { id: 1, title: 'Custom Creations', image: '/custom.png', href: '#' },
+  { id: 2, title: 'Ready-Made', image: '/ready-made.png', href: '#' },
+  { id: 3, title: 'Gemstones', image: '/gemstones.png', href: '#' },
+  { id: 4, title: 'Ethnics', image: '/newbangle.jpg', href: '#' },
+]
+
+function CategoryCard({ item, index }: { item: typeof categories[0], index: number }) {
+  const ref = useRef<HTMLAnchorElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true) },
+      { threshold: 0.2 }
+    )
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <Link
+      ref={ref}
+      href={item.href}
+      className="group flex-shrink-0 block"
+      style={{
+        width: '320px',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateX(0)' : 'translateX(60px)',
+        transition: 'opacity 0.6s ease, transform 0.6s ease',
+        transitionDelay: `${index * 0.15}s`,
+      }}
+    >
+      <div className="relative overflow-hidden rounded-2xl mb-4" style={{ height: '420px' }}>
+        <Image
+          src={item.image}
+          alt={item.title}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+        <div className="absolute bottom-5 left-5">
+          <h3
+            className="text-xl font-bold text-white"
+            style={{ fontFamily: 'var(--font-playfair)' }}
+          >
+            {item.title}
+          </h3>
+        </div>
+      </div>
+    </Link>
+  )
+}
 
 export default function ShopByCategory() {
   return (
-    <section className="py-20 px-8 md:px-16 bg-white">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20 bg-[#FCF9F8] w-full">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px' }}>
 
         <div className="text-center mb-12">
           <p
@@ -21,96 +78,18 @@ export default function ShopByCategory() {
           </h2>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-12 md:h-[680px]">
-
-          {/* Custom Creations — large left panel */}
-          <Link
-            href="#"
-            className="relative overflow-hidden rounded-2xl group md:col-span-6 min-h-[360px] md:h-full"
-          >
-            <Image
-              src="/custom.png"
-              alt="Custom Creations"
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
-            <div className="absolute bottom-6 left-6">
-              <h3
-                className="text-xl md:text-2xl font-bold text-white"
-                style={{ fontFamily: 'var(--font-playfair)' }}
-              >
-                Custom Creations
-              </h3>
-            </div>
-          </Link>
-
-          {/* Right column */}
-          <div className="grid gap-4 md:col-span-6 md:grid-rows-2 md:h-full">
-
-            {/* Ready-Made and Gemstones */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Link href="#" className="relative overflow-hidden rounded-2xl group aspect-[4/5]">
-                <Image
-                  src="/ready-made.png"
-                  alt="Ready-Made"
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-                <div className="absolute bottom-3 left-3">
-                  <h3
-                    className="text-sm font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-playfair)' }}
-                  >
-                    Ready-Made
-                  </h3>
-                </div>
-              </Link>
-
-              <Link href="#" className="relative overflow-hidden rounded-2xl group aspect-[4/5]">
-                <Image
-                  src="/gemstones.png"
-                  alt="Gemstones"
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-                <div className="absolute bottom-3 left-3">
-                  <h3
-                    className="text-sm font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-playfair)' }}
-                  >
-                    Gemstones
-                  </h3>
-                </div>
-              </Link>
-            </div>
-
-            {/* High Jewellery */}
-            <Link href="#" className="relative overflow-hidden rounded-2xl group min-h-[240px] md:h-full">
-              {/* <Image
-                src="/high-jewellery.png"
-                alt="High Jewellery"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              /> */}
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-              <div className="absolute bottom-4 left-5">
-                <h3
-                  className="text-lg font-bold text-white"
-                  style={{ fontFamily: 'var(--font-playfair)' }}
-                >
-                  High Jewellery
-                </h3>
-              </div>
-            </Link>
-
-          </div>
-
-        </div>
-
       </div>
+
+      {/* Horizontal scroll — full width */}
+      <div
+        className="flex gap-5 overflow-x-auto px-16 pb-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {categories.map((item, index) => (
+          <CategoryCard key={item.id} item={item} index={index} />
+        ))}
+      </div>
+
     </section>
   )
 }
