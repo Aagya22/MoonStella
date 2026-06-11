@@ -1,8 +1,9 @@
 import { Router } from 'express'
-import { register, login, getMe } from '../controllers/auth.controller'
+import { register, login, getMe, updateProfile } from '../controllers/auth.controller'
 import { protect } from '../middleware/auth.middleware'
 import { registerSchema, loginDto } from '../dtos/auth.dto'
 import { validate } from '../middleware/validate.middleware'
+import { updateUserProfile } from '../repositories/user.repository'
 
 const router = Router()
 
@@ -16,5 +17,6 @@ router.post('/login', validate(loginDto), login)
 // GET /api/auth/me
 // protect runs first — if no valid token, controller never runs
 router.get('/me', protect, getMe)
+router.patch('/profile',protect,updateProfile)
 
 export default router

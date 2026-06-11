@@ -25,7 +25,7 @@ export const createUser = async (data: {
 
 export const updateUserProfile = async (
   id: string,
-  data: { avatar?: string; location?: string }
+  data: { avatar?: string; location?: string; studioName?: string }
 ): Promise<IUser | null> => {
   return User.findByIdAndUpdate(
     id,

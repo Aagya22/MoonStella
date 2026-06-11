@@ -45,3 +45,12 @@ export const getMe = async (
     next(err)
   }
 }
+export const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = String((req.user as any)._id)
+    const result = await AuthService.updateUserProfile(userId, req.body)
+    ok(res, result, 'Profile updated successfully')
+  } catch (err) {
+    next(err)
+  }
+}

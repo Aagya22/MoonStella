@@ -89,7 +89,7 @@ export default function BuyerRegisterStepOne() {
             style={{ width: '42%', flexShrink: 0 }}
           >
             <Image
-              src="/buyer-register.png"
+              src="/buyersignup.png"
               alt="The Buyer's Journey"
               fill
               className="object-cover object-center"

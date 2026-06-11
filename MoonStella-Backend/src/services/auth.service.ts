@@ -4,7 +4,7 @@ import { env } from '../config/env'
 import { AppError } from '../errors/app.error'
 import * as UserRepository from '../repositories/user.repository'
 import type { IUser } from '../models/user.model'
-import type { RegisterDto, LoginDto } from '../dtos/auth.dto'
+import type { RegisterDto, LoginDto, UpdateProfileDto } from '../dtos/auth.dto'
 
 
 
@@ -81,5 +81,13 @@ export const loginUser = async (data: LoginDto) => {
 }
 
 export const getCurrentUser = (user: IUser) => {
+  return formatUser(user)
+}
+export const updateUserProfile = async (
+  userId: string,
+  data: UpdateProfileDto
+) => {
+  const user = await UserRepository.updateUserProfile(userId, data)
+  if (!user) throw new AppError('User not found', 404)
   return formatUser(user)
 }

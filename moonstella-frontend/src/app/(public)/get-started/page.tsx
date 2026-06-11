@@ -85,7 +85,7 @@ export default function GetStartedPage() {
             {/* Image */}
             <div className="relative w-full" style={{ height: '180px' }}>
               <Image
-                src="/buyer-role.png"
+                src="/get started.png"
                 alt="Buyer"
                 fill
                 className="object-cover"
@@ -134,7 +134,7 @@ export default function GetStartedPage() {
             {/* Image */}
             <div className="relative w-full" style={{ height: '180px' }}>
               <Image
-                src="/seller-role.png"
+                src="/get startedd.png"
                 alt="Artisan"
                 fill
                 className="object-cover"
