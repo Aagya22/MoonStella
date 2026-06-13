@@ -23,6 +23,7 @@ export default function HeroSection() {
           src="/bracelet.png"
           alt="Diamond bracelet"
           fill
+          sizes="100vw"
           priority
           className="object-cover"
           style={{

@@ -9,7 +9,11 @@ const envSchema = z.object({
   MONGO_URI: z.string().min(1),
   JWT_SECRET: z.string().min(1),
   CLIENT_URL: z.string().default('http://localhost:3000'),
+  CLOUDINARY_CLOUD: z.string().min(1),
+  CLOUDINARY_KEY: z.string().min(1),
+  CLOUDINARY_SECRET: z.string().min(1),
 })
+
 
 const parsed = envSchema.safeParse(process.env)
 

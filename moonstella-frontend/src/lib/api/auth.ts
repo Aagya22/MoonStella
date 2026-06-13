@@ -27,3 +27,22 @@ export const getMeApi = async (): Promise<AuthResponse['user']> => {
   const response = await api.get(ENDPOINTS.auth.me)
   return response.data.data
 }
+
+export const updateProfileApi = async (data: {
+  avatar?: string | null
+  location?: string | null
+  studioName?: string | null
+}, token: string): Promise<AuthResponse['user']> => {
+  const response = await api.patch(ENDPOINTS.auth.profile, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return response.data.data
+}
+
+export const checkUniqueApi = async (data: {
+  email: string
+  phoneNumber: string
+}): Promise<{ unique: boolean }> => {
+  const response = await api.post(ENDPOINTS.auth.checkUnique, data)
+  return response.data.data
+}

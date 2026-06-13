@@ -59,6 +59,16 @@ export const updateProfileDto=z.object({
   studioName:z.string().optional(),
 })
 
+export const checkUniqueSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .email('Please enter a valid email address')
+    .toLowerCase(),
+  phoneNumber: z
+    .string({ required_error: 'Phone number is required' })
+    .min(7, 'Phone number is too short'),
+})
+
 export type RegisterDto = z.infer<typeof registerSchema>
 export type LoginDto = z.infer<typeof loginDto>
 export type UpdateProfileDto=z.infer<typeof updateProfileDto>

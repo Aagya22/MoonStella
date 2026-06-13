@@ -42,6 +42,7 @@ function CategoryCard({ item, index }: { item: typeof categories[0], index: numb
           src={item.image}
           alt={item.title}
           fill
+          sizes="320px"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />

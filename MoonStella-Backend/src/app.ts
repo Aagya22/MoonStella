@@ -3,6 +3,7 @@ import cors from 'cors'
 import { env } from './config/env'
 import { errorHandler } from './middleware/error.middleware'
 import authRoutes from './routes/auth.routes'
+import uploadRoutes from './routes/upload.routes'
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.get('/health', (_, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/upload', uploadRoutes)
 
 app.use(errorHandler)
 

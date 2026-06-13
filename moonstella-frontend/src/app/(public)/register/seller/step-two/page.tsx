@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Navbar from '@/app/components/navbar'
-import { registerApi } from '@/lib/api/auth'
-import api from '@/lib/api/axios'
+import StepProgressBar from '@/app/components/stepprogressbar'
+import { registerApi, updateProfileApi } from '@/lib/api/auth'
+import { nepalLocations, districts } from '@/lib/nepal-locations/location'
 
 export default function SellerRegisterStepTwo() {
   const router = useRouter()
@@ -13,9 +14,25 @@ export default function SellerRegisterStepTwo() {
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [studioName, setStudioName] = useState('')
-  const [cityCountry, setCityCountry] = useState('')
+  const [district, setDistrict] = useState('')
+  const [locality, setLocality] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('seller_step_one')
+    if (!saved) router.push('/register/seller/step-one')
+  }, [router])
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('seller_step_two')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      setStudioName(parsed.studioName || '')
+      setDistrict(parsed.district || '')
+      setLocality(parsed.locality || '')
+    }
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
@@ -24,240 +41,314 @@ export default function SellerRegisterStepTwo() {
     setPreview(URL.createObjectURL(selected))
   }
 
+  const handleBack = () => {
+    sessionStorage.setItem('seller_step_two', JSON.stringify({ studioName, district, locality }))
+    router.push('/register/seller/step-one?back=true')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!studioName.trim()) {
+      setError('Studio name is required for sellers')
+      return
+    }
+    if (!district || !locality) {
+      setError('Please select your district and locality — location is required')
+      return
+    }
+
     setLoading(true)
 
     try {
       const stepOne = sessionStorage.getItem('seller_step_one')
-      if (!stepOne) {
-        router.push('/register/seller/step-one')
-        return
-      }
+      if (!stepOne) { router.push('/register/seller/step-one'); return }
       const stepOneData = JSON.parse(stepOne)
 
+      // Register
       const result = await registerApi(stepOneData)
+      const token = result.token
 
-      localStorage.setItem('ms_token', result.token)
+      // Save token immediately
+      localStorage.setItem('ms_token', token)
       localStorage.setItem('ms_user', JSON.stringify(result.user))
 
-      let avatarUrl = null
+      // Upload avatar
+      let avatarUrl: string | null = null
       if (file) {
         const formData = new FormData()
         formData.append('image', file)
-        const uploadRes = await api.post('/api/upload/image', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        avatarUrl = uploadRes.data.data.url
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          })
+          const data = await res.json()
+          avatarUrl = data?.data?.url ?? null
+        } catch {
+          // continue without avatar
+        }
       }
 
-      await api.patch('/api/auth/profile', {
+      // Update profile — pass token directly
+      await updateProfileApi({
         avatar: avatarUrl,
-        studioName: studioName || null,
-        location: cityCountry || null,
-      })
+        studioName: studioName.trim(),
+        location: `${locality}, ${district}, Nepal`,
+      }, token)
 
       sessionStorage.removeItem('seller_step_one')
+      sessionStorage.removeItem('seller_step_two')
       router.push('/seller/feed')
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Something went wrong.')
+      setError(err?.response?.data?.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  const inputStyle = {
+  const selectStyle: React.CSSProperties = {
     fontFamily: 'var(--font-montserrat)',
     backgroundColor: '#F5F2F2',
     border: 'none',
     fontSize: '13px',
     color: '#1a1a1a',
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '4px',
+    outline: 'none',
+    appearance: 'none',
+    cursor: 'pointer',
   }
+
+  const inputStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-montserrat)',
+    backgroundColor: '#F5F2F2',
+    border: 'none',
+    fontSize: '13px',
+    color: '#1a1a1a',
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '4px',
+    outline: 'none',
+  }
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-montserrat)',
+    fontSize: '11px',
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    color: '#374151',
+    marginBottom: '6px',
+    display: 'block',
+  }
+
+  const localities = district ? nepalLocations[district] || [] : []
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
       <Navbar />
 
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
+      {/* Centered card container container */}
+      <div className="flex-1 flex items-start justify-center px-4 pb-8 pt-0 md:px-10 md:pb-12 md:pt-0">
+
+        {/* Card container */}
         <div
-          className="w-full flex"
+          className="w-full flex overflow-hidden bg-white"
           style={{
-            maxWidth: '960px',
-            minHeight: '600px',
+            maxWidth: '1200px',
+            minHeight: '700px',
             borderRadius: '4px',
             boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
-            background: 'white',
           }}
         >
-
-          {/* Left — text and image */}
-          <div
-            className="hidden md:flex flex-col p-10 justify-between"
-            style={{ width: '42%', flexShrink: 0, backgroundColor: '#FAF8F5' }}
-          >
+          {/* Left — text + image */}
+          <div className="hidden md:flex flex-col justify-between p-10" style={{ width: '42%', flexShrink: 0, backgroundColor: '#FAF8F5' }}>
             <div>
-              <h2
-                className="font-bold text-gray-900 leading-tight mb-4"
-                style={{ fontFamily: 'var(--font-playfair)', fontSize: '32px' }}
-              >
+              <h2 className="font-bold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'var(--font-playfair)', fontSize: '28px' }}>
                 Define Your<br />Creative<br />Sanctuary
               </h2>
-              <p
-                className="text-gray-500 leading-relaxed"
-                style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px' }}
-              >
-                Your studio profile is the digital window into your craft. Share
-                where your pieces come to life and present the face of your atelier
-                to the world's most discerning collectors.
+              <p className="text-gray-500 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px' }}>
+                Your studio profile is the digital window into your craft. Share where your pieces come to life and present the face of your atelier to the world's most discerning collectors.
               </p>
             </div>
-            {/* Ring image */}
-            <div className="relative w-full rounded overflow-hidden" style={{ height: '260px' }}>
-              <Image
-                src="/sellersignupp.jpg"
-                alt="Jewellery ring"
-                fill
-                className="object-cover object-center"
-              />
+            <div className="relative w-full rounded overflow-hidden" style={{ height: '380px' }}>
+              <Image src="/sellersignupp.jpg" alt="Jewellery" fill className="object-cover object-center" />
             </div>
           </div>
 
-          {/* Right — form */}
-          <div className="flex-1 flex flex-col px-10 py-10">
+          {/* Right — form column */}
+          <div className="flex-1 bg-white flex flex-col items-center justify-center p-6 md:p-12">
+            <div className="w-full flex flex-col gap-6" style={{ maxWidth: '480px' }}>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-8 h-full">
+              {/* Progress bar inside aligned column */}
+              <StepProgressBar currentStep={2} />
 
-              {/* Section 1 — Seller Portrait */}
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ backgroundColor: '#FCE8F0', color: '#3D0C1F', fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    1
-                  </div>
-                  <h2
-                    className="font-semibold text-gray-900"
-                    style={{ fontFamily: 'var(--font-playfair)', fontSize: '20px' }}
-                  >
-                    Seller Portrait
-                  </h2>
-                </div>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full rounded cursor-pointer flex flex-col items-center justify-center transition-colors hover:bg-gray-50"
-                  style={{ border: '1.5px dashed #D0C4C4', minHeight: '150px', backgroundColor: '#FAF8F8' }}
-                >
-                  {preview ? (
-                    <div className="relative w-full h-36 rounded overflow-hidden">
-                      <Image src={preview} alt="Preview" fill className="object-cover" />
+                  {/* Section 1 — Portrait */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#FCE8F0', color: '#3D0C1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>1</div>
+                      <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Seller Portrait</h2>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 py-8">
-                      <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
-                      </svg>
-                      <p className="font-semibold uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '10px', color: '#6B7280' }}>
-                        Upload Profile Image
-                      </p>
-                      <p className="text-gray-400 text-center" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '11px' }}>
-                        Recommended: 1200 x 800px. Minimal backgrounds preferred.
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-              </div>
 
-              {/* Section 2 — Seller Location */}
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ backgroundColor: '#FCE8F0', color: '#3D0C1F', fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    2
-                  </div>
-                  <h2
-                    className="font-semibold text-gray-900"
-                    style={{ fontFamily: 'var(--font-playfair)', fontSize: '20px' }}
-                  >
-                    Seller Location
-                  </h2>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      className="uppercase text-gray-500"
-                      style={{ fontFamily: 'var(--font-montserrat)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em' }}
-                    >
-                      Official Studio Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. The Gilded Vault"
-                      value={studioName}
-                      onChange={(e) => setStudioName(e.target.value)}
-                      className="w-full px-4 py-3 rounded focus:outline-none"
-                      style={inputStyle}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      className="uppercase text-gray-500"
-                      style={{ fontFamily: 'var(--font-montserrat)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em' }}
-                    >
-                      City & Country
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Paris, France"
-                        value={cityCountry}
-                        onChange={(e) => setCityCountry(e.target.value)}
-                        className="w-full px-4 py-3 rounded focus:outline-none pr-10"
-                        style={inputStyle}
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
-                        </svg>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <div
+                        onClick={!preview ? () => fileInputRef.current?.click() : undefined}
+                        style={{
+                          width: '130px',
+                          height: '130px',
+                          borderRadius: '50%',
+                          border: '1.5px dashed #D1C4C4',
+                          backgroundColor: '#FAF8F8',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: !preview ? 'pointer' : 'default',
+                        }}
+                      >
+                        {preview ? (
+                          <Image src={preview} alt="Preview" fill className="object-cover" />
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', textAlign: 'center', padding: '10px' }}>
+                            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth="1.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '8px', fontWeight: 700, letterSpacing: '0.08em', color: '#6B7280', textTransform: 'uppercase' }}>Upload</p>
+                          </div>
+                        )}
                       </div>
+                      {!preview && (
+                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '11px', color: '#9CA3AF', marginTop: '8px', textAlign: 'center' }}>
+                          Recommended: square image, clear background.
+                        </p>
+                      )}
+                    </div>
+                    {preview && (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            fontFamily: 'var(--font-montserrat)',
+                            fontWeight: 600,
+                            backgroundColor: '#FAF8F5',
+                            border: '1px solid #D1C4C4',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#374151'
+                          }}
+                        >
+                          Change Image
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFile(null)
+                            setPreview(null)
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = ''
+                            }
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '11px',
+                            fontFamily: 'var(--font-montserrat)',
+                            fontWeight: 600,
+                            backgroundColor: '#FEE2E2',
+                            border: '1px solid #FCA5A5',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#991B1B'
+                          }}
+                        >
+                          Remove Image
+                        </button>
+                      </div>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                  </div>
+
+                  {/* Section 2 — Location */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#FCE8F0', color: '#3D0C1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>2</div>
+                      <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Seller Location</h2>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+
+                      {/* Studio name — required for seller */}
+                      <div>
+                        <label style={labelStyle}>Official Studio Name *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. The Gilded Vault"
+                          value={studioName}
+                          onChange={(e) => setStudioName(e.target.value)}
+                          required
+                          style={inputStyle}
+                        />
+                      </div>
+
+                      {/* District */}
+                      <div>
+                        <label style={labelStyle}>District *</label>
+                        <div className="relative">
+                          <select value={district} onChange={(e) => { setDistrict(e.target.value); setLocality('') }} required style={selectStyle}>
+                            <option value="">Select district</option>
+                            {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                          </select>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg width="13" height="13" fill="none" stroke="#6B7280" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Locality */}
+                      <div>
+                        <label style={labelStyle}>Area / Locality *</label>
+                        <div className="relative">
+                          <select value={locality} onChange={(e) => setLocality(e.target.value)} required disabled={!district} style={{ ...selectStyle, opacity: district ? 1 : 0.5 }}>
+                            <option value="">{district ? 'Select locality' : 'Select district first'}</option>
+                            {localities.map(l => <option key={l} value={l}>{l}</option>)}
+                          </select>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg width="13" height="13" fill="none" stroke="#6B7280" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                          </div>
+                        </div>
+                      </div>
+
+                      {district && locality && (
+                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#3D0C1F' }}>
+                          📍 {locality}, {district}, Nepal
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
+
+                  {error && <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#EF4444' }}>{error}</p>}
+
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button type="button" onClick={handleBack} style={{ padding: '12px 28px', borderRadius: '4px', border: '2px solid #3D0C1F', color: '#3D0C1F', backgroundColor: 'transparent', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                      Back
+                    </button>
+                    <button type="submit" disabled={loading} style={{ padding: '12px 32px', borderRadius: '4px', backgroundColor: '#3D0C1F', color: 'white', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, border: 'none' }}>
+                      {loading ? 'Creating account...' : 'Get Started'}
+                    </button>
+                  </div>
+
+                </form>
               </div>
-
-              {error && (
-                <p className="text-red-500 text-xs" style={{ fontFamily: 'var(--font-montserrat)' }}>{error}</p>
-              )}
-
-              {/* Buttons */}
-              <div className="flex items-center gap-4 mt-auto">
-                <button
-                  type="button"
-                  onClick={() => router.push('/register/seller/step-one')}
-                  className="px-8 py-3.5 rounded border-2 uppercase transition-colors hover:bg-gray-50"
-                  style={{ borderColor: '#3D0C1F', color: '#3D0C1F', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em' }}
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-10 py-3.5 text-white rounded uppercase transition-opacity hover:opacity-90 disabled:opacity-60"
-                  style={{ backgroundColor: '#3D0C1F', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em' }}
-                >
-                  {loading ? 'Creating...' : 'Get Started'}
-                </button>
-              </div>
-
-            </form>
+            </div>
           </div>
         </div>
       </div>
