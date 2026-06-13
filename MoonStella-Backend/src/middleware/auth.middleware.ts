@@ -15,7 +15,7 @@ export const protect =async(
         unauthorized(res)
         return
     }
-    const token=authHeader.split('')[1]
+    const token=authHeader.split(' ')[1]
     const decoded=jwt.verify(token,env.JWT_SECRET)as {id:string}
     const user=await User.findById(decoded.id).select('-passwordHash')
     if(!user){

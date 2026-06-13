@@ -12,6 +12,7 @@ export interface IUser extends Document{
     avatar?: string
     location?:string
     following: mongoose.Types.ObjectId[]
+    studioName:string|null
     createdAt: Date
     updatedAt: Date
     comparePassword(password:string):Promise<boolean>
@@ -38,6 +39,7 @@ const UserSchema =new Schema <IUser> (
         phoneNumber:{
             type:String,
             required:true,
+            unique:true,
             trim:true,
         },
         passwordHash:{
@@ -57,6 +59,7 @@ const UserSchema =new Schema <IUser> (
             type:String,
             default:null,
         },
+        studioName: { type: String, default: null },
         following:[
             {
                 type:Schema.Types.ObjectId,

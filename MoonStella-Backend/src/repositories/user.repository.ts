@@ -1,14 +1,14 @@
 import { User, IUser } from '../models/user.model'
 
-export const findByEmail = async (
-  email: string
-): Promise<IUser | null> => {
+export const findByEmail = async (email: string): Promise<IUser | null> => {
   return User.findOne({ email })
 }
 
-export const findById = async (
-  id: string
-): Promise<IUser | null> => {
+export const findByPhoneNumber = async (phoneNumber: string): Promise<IUser | null> => {
+  return User.findOne({ phoneNumber })
+}
+
+export const findById = async (id: string): Promise<IUser | null> => {
   return User.findById(id).select('-passwordHash')
 }
 
@@ -25,7 +25,11 @@ export const createUser = async (data: {
 
 export const updateUserProfile = async (
   id: string,
-  data: { avatar?: string; location?: string }
+  data: {
+    avatar?: string | null
+    location?: string | null
+    studioName?: string | null
+  }
 ): Promise<IUser | null> => {
   return User.findByIdAndUpdate(
     id,
