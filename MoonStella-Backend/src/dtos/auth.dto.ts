@@ -57,6 +57,10 @@ export const updateProfileDto=z.object({
   avatar:z.string().optional(),
   location:z.string().optional(),
   studioName:z.string().optional(),
+  studioSpecialty:z.string().optional(),
+  averageResponseTime:z.string().optional(),
+  onboarded:z.boolean().optional(),
+  interests:z.array(z.string()).optional(),
 })
 
 export const checkUniqueSchema = z.object({

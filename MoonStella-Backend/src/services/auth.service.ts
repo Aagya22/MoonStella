@@ -20,6 +20,10 @@ export const formatUser = (user: IUser) => ({
   avatar: user.avatar,
   location: user.location,
   studioName: user.studioName,
+  studioSpecialty: user.studioSpecialty,
+  averageResponseTime: user.averageResponseTime,
+  onboarded: user.onboarded,
+  interests: user.interests,
   createdAt: user.createdAt,
 })
 

@@ -10,56 +10,77 @@ export interface IUser extends Document{
     passwordHash:string
     role:'buyer'| 'seller'|'admin'
     avatar?: string
-    location?:string
+    location?: string
     following: mongoose.Types.ObjectId[]
-    studioName:string|null
+    studioName: string | null
+    studioSpecialty?: 'custom' | 'ready-made' | 'both' | null
+    averageResponseTime?: string | null
+    onboarded: boolean
+    interests: string[]
     createdAt: Date
     updatedAt: Date
-    comparePassword(password:string):Promise<boolean>
+    comparePassword(password: string): Promise<boolean>
 }
-const UserSchema =new Schema <IUser> (
+const UserSchema = new Schema<IUser>(
     {
-        firstName:{
-            type:String,
-            required:true,
-            trim:true,
+        firstName: {
+            type: String,
+            required: true,
+            trim: true,
         },
-        lastName:{
-            type:String,
-            required:true,
-            trim:true,
+        lastName: {
+            type: String,
+            required: true,
+            trim: true,
         },
-        email:{
-            type:String,
-            required:true,
-            unique:true,
-            lowercase:true,
-            trim:true,
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
         },
-        phoneNumber:{
-            type:String,
-            required:true,
-            unique:true,
-            trim:true,
+        phoneNumber: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
         },
-        passwordHash:{
-            type:String,
-            required:true,
+        passwordHash: {
+            type: String,
+            required: true,
         },
-        role:{
-            type:String,
-            enum:['buyer','seller','admin'],
-            required:true,
+        role: {
+            type: String,
+            enum: ['buyer', 'seller', 'admin'],
+            required: true,
         },
-        avatar:{
-            type:String,
-            default:null,
+        avatar: {
+            type: String,
+            default: null,
         },
-        location:{
-            type:String,
-            default:null,
+        location: {
+            type: String,
+            default: null,
         },
         studioName: { type: String, default: null },
+        studioSpecialty: {
+            type: String,
+            enum: ['custom', 'ready-made', 'both', null],
+            default: null,
+        },
+        averageResponseTime: {
+            type: String,
+            default: null,
+        },
+        onboarded: {
+            type: Boolean,
+            default: false,
+        },
+        interests: {
+            type: [String],
+            default: [],
+        },
         following:[
             {
                 type:Schema.Types.ObjectId,

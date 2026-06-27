@@ -1,6 +1,7 @@
 import './global.css'
 import type { Metadata } from 'next'
 import {Playfair_Display,Montserrat} from 'next/font/google'
+import { SnackbarProvider } from '@/context/SnackbarContext'
 
 
 const playfair = Playfair_Display({
@@ -27,8 +28,10 @@ export default function RootLayout({
     return (   
         <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
       <body className="antialiased overflow-x-hidden bg-white">
-                {children}
-            </body>
+        <SnackbarProvider>
+          {children}
+        </SnackbarProvider>
+      </body>
         </html>
     )
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Navbar from '@/app/components/navbar'
 import { loginApi } from '@/lib/api/auth'
+import { useSnackbar } from '@/context/SnackbarContext'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { showSnackbar } = useSnackbar()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,11 +27,15 @@ export default function LoginPage() {
       localStorage.setItem('ms_token', result.token)
       localStorage.setItem('ms_user', JSON.stringify(result.user))
 
+      showSnackbar(`Welcome back, ${result.user.firstName}!`, 'success')
+
       if (result.user.role === 'buyer') router.push('/buyer/feed')
       else if (result.user.role === 'seller') router.push('/seller/feed')
       else if (result.user.role === 'admin') router.push('/admin/dashboard')
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Invalid email or password.')
+      const errMsg = err?.response?.data?.message || 'Invalid email or password.'
+      setError(errMsg)
+      showSnackbar(errMsg, 'error')
     } finally {
       setLoading(false)
     }

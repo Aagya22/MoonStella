@@ -29,6 +29,10 @@ export const updateUserProfile = async (
     avatar?: string | null
     location?: string | null
     studioName?: string | null
+    studioSpecialty?: string | null
+    averageResponseTime?: string | null
+    onboarded?: boolean
+    interests?: string[]
   }
 ): Promise<IUser | null> => {
   return User.findByIdAndUpdate(

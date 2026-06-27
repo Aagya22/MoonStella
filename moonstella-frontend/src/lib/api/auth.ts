@@ -32,6 +32,10 @@ export const updateProfileApi = async (data: {
   avatar?: string | null
   location?: string | null
   studioName?: string | null
+  studioSpecialty?: string | null
+  averageResponseTime?: string | null
+  onboarded?: boolean
+  interests?: string[]
 }, token: string): Promise<AuthResponse['user']> => {
   const response = await api.patch(ENDPOINTS.auth.profile, data, {
     headers: { Authorization: `Bearer ${token}` }
