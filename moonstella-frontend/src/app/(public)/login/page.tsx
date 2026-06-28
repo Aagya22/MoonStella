@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import Navbar from '@/app/components/navbar'
+import Navbar from '@/app/components/shared/navbar'
 import { loginApi } from '@/lib/api/auth'
 import { useSnackbar } from '@/context/SnackbarContext'
 

@@ -36,3 +36,9 @@ export const deleteUserPost = async (postId: string, userId: string) => {
   if (!success) throw new AppError('Post not found or unauthorized to delete', 403)
   return { success: true }
 }
+
+export const updateUserPost = async (postId: string, userId: string, data: any) => {
+  const post = await PostRepository.updatePost(postId, userId, data)
+  if (!post) throw new AppError('Post not found or unauthorized to edit', 403)
+  return post
+}

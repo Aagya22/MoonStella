@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { create, getAll, toggleLike, addComment, deletePost } from '../controllers/post.controller'
+import { create, getAll, toggleLike, addComment, deletePost, editPost } from '../controllers/post.controller'
 import { protect } from '../middleware/auth.middleware'
 import { createPostDto } from '../dtos/post.dto'
 import { validate } from '../middleware/validate.middleware'
@@ -20,5 +20,8 @@ router.post('/:id/comment', protect, addComment)
 
 // DELETE /api/posts/:id - Delete a post (protected)
 router.delete('/:id', protect, deletePost)
+
+// PATCH /api/posts/:id - Edit a post (protected)
+router.patch('/:id', protect, editPost)
 
 export default router

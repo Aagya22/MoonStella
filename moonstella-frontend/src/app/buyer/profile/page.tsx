@@ -1,0 +1,741 @@
+'use client'
+
+import { useState, useEffect, useRef, Suspense } from 'react'
+import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
+import { useBuyerContext } from '../BuyerContext'
+import api from '@/lib/api/axios'
+import { useSnackbar } from '@/context/SnackbarContext'
+import { updateProfileApi } from '@/lib/api/auth'
+
+export default function BuyerProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs">Loading profile...</div>}>
+      <BuyerProfileContent />
+    </Suspense>
+  )
+}
+
+function BuyerProfileContent() {
+  const { user, wishlist, openChatWith, setTimelineOpen, triggerProfileEdit, followedArtisans = [] } = useBuyerContext()
+  const { showSnackbar } = useSnackbar()
+  const searchParams = useSearchParams()
+  const profileId = searchParams.get('id')
+
+  const [profileUser, setProfileUser] = useState<any>(null)
+  const [posts, setPosts] = useState<any[]>([])
+  const [selectedInspectPost, setSelectedInspectPost] = useState<any>(null)
+  const [activeInspectIndex, setActiveInspectIndex] = useState(0)
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editDesc, setEditDesc] = useState('')
+  const [editBudget, setEditBudget] = useState('')
+
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const isOwnProfile = !profileId || String(user?.id || user?._id) === String(profileId)
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm("Are you sure you want to delete this custom request?")) return
+    try {
+      await api.delete(`/api/posts/${postId}`)
+      setPosts(posts.filter(p => p.id !== postId))
+      setSelectedInspectPost(null)
+      showSnackbar("Your custom request has been deleted.", "info")
+    } catch (err) {
+      console.error("Error deleting post:", err)
+      showSnackbar("Failed to delete post. Please try again.", "error")
+    }
+  }
+
+  const handleUpdatePost = async (postId: string) => {
+    if (!editDesc.trim()) {
+      showSnackbar("Description cannot be empty.", "error")
+      return
+    }
+    try {
+      const budgetNum = editBudget ? Number(editBudget) : null
+      await api.patch(`/api/posts/${postId}`, {
+        description: editDesc,
+        budget: budgetNum,
+        price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote'
+      })
+      const updatedPosts = posts.map(p => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            description: editDesc,
+            budget: budgetNum,
+            price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote'
+          }
+        }
+        return p
+      })
+      setPosts(updatedPosts)
+      setSelectedInspectPost((prev: any) => ({
+        ...prev,
+        description: editDesc,
+        price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote'
+      }))
+      setIsEditing(false)
+      showSnackbar("Changes saved successfully!", "success")
+    } catch (err) {
+      console.error("Error updating post:", err)
+      showSnackbar("Failed to update post. Please try again.", "error")
+    }
+  }
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
+  const handleSaveAvatar = async () => {
+    if (!avatarFile) return
+    setAvatarLoading(true)
+    try {
+      const token = localStorage.getItem('ms_token')
+      let avatarUrl = ''
+
+      if (token && token !== 'mock_token_for_preview') {
+        const formData = new FormData()
+        formData.append('image', avatarFile)
+
+        const uploadRes = await api.post('/api/upload/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        avatarUrl = uploadRes.data?.data?.url
+
+        const updatedUser = await updateProfileApi({ avatar: avatarUrl }, token)
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setProfileUser(updatedUser)
+      } else {
+        avatarUrl = URL.createObjectURL(avatarFile)
+        const updatedUser = { ...user, avatar: avatarUrl }
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setProfileUser(updatedUser)
+      }
+
+      showSnackbar("Profile picture updated successfully!", "success")
+      setAvatarModalOpen(false)
+      setAvatarFile(null)
+      setAvatarPreview(null)
+      window.location.reload()
+    } catch (err: any) {
+      console.error("Failed to update avatar:", err)
+      showSnackbar("Failed to update profile picture.", "error")
+    } finally {
+      setAvatarLoading(false)
+    }
+  }
+
+  const handleDeleteAvatar = async () => {
+    if (!window.confirm("Are you sure you want to remove your profile picture?")) return
+    setAvatarLoading(true)
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (token && token !== 'mock_token_for_preview') {
+        const updatedUser = await updateProfileApi({ avatar: null }, token)
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setProfileUser(updatedUser)
+      } else {
+        const updatedUser = { ...user, avatar: null }
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setProfileUser(updatedUser)
+      }
+      showSnackbar("Profile picture removed successfully.", "info")
+      setAvatarModalOpen(false)
+      window.location.reload()
+    } catch (err: any) {
+      console.error("Failed to delete avatar:", err)
+      showSnackbar("Failed to remove profile picture.", "error")
+    } finally {
+      setAvatarLoading(false)
+    }
+  }
+
+  // Load profile user details
+  useEffect(() => {
+    const loadProfileUser = async () => {
+      if (isOwnProfile) {
+        setProfileUser(user)
+        return
+      }
+
+      try {
+        const res = await api.get(`/api/auth/profile/${profileId}`)
+        setProfileUser(res.data?.data || res.data)
+      } catch (err) {
+        console.error('Failed to fetch profile user details:', err)
+        showSnackbar('Failed to load user profile.', 'error')
+      }
+    }
+
+    if (user) {
+      loadProfileUser()
+    }
+  }, [user, profileId, isOwnProfile])
+
+  // Fetch only posts created by this profile user
+  useEffect(() => {
+    const fetchProfilePosts = async () => {
+      try {
+        const response = await api.get('/api/posts')
+        const targetUserId = profileUser?.id || profileUser?._id
+        const targetUserName = profileUser ? `${profileUser.firstName} ${profileUser.lastName}` : ''
+
+        const formatted = response.data
+          .filter((p: any) => {
+            const authorId = p.userId?._id || p.userId
+            return String(authorId) === String(targetUserId)
+          })
+          .map((p: any) => ({
+            id: p._id,
+            userId: p.userId?._id || p.userId,
+            artisanName: p.userId ? `${p.userId.firstName} ${p.userId.lastName}` : targetUserName,
+            artisanTitle: p.userId?.role === 'seller' ? 'MASTER ARTISAN' : 'CONNOISSEUR MEMBER',
+            avatar: p.userId?.avatar || profileUser?.avatar || null,
+            image: p.images?.[0] || null,
+            images: p.images || [],
+            category: p.category,
+            price: p.budget ? `Rs. ${p.budget.toLocaleString()}` : (p.price || 'Contact for Quote'),
+            description: p.description,
+            materials: p.materials?.length > 0 ? p.materials : ['Bespoke Custom'],
+            likes: p.likes?.length || 0,
+            liked: p.likes?.some((like: any) => String(like._id || like) === String(user?.id || user?._id || '')),
+            comments: p.comments || [],
+            time: new Date(p.createdAt).toLocaleDateString()
+          }))
+        setPosts(formatted)
+      } catch (err) {
+        console.error('Error fetching profile posts:', err)
+      }
+    }
+
+    if (profileUser) {
+      fetchProfilePosts()
+    }
+  }, [profileUser, user])
+
+  return (
+    <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 flex flex-col gap-8 animate-fade-in">
+
+      {/* 1. Header Greeting / Title */}
+      <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
+            {isOwnProfile ? 'My Profile' : (profileUser?.role === 'seller' ? 'Artisan Profile' : 'User Profile')}
+          </h1>
+          <p className="text-xs text-gray-550 font-medium tracking-wide mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>
+            {isOwnProfile ? 'Manage your bespoke request briefings and portfolio settings.' : `Viewing ${profileUser?.firstName} ${profileUser?.lastName}'s design space.`}
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Grid Split: Profile Content (Left 2/3) & Sidebar Widgets (Right 1/3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+
+        {/* Left Column (2/3 width) */}
+        <div className="lg:col-span-2 flex flex-col gap-8">
+
+          {/* Profile Header Details Card */}
+          <div className="bg-gradient-to-br from-white to-[#FAF8F5] rounded-3xl p-8 border border-gray-150/70 shadow-[0_8px_30px_rgba(61,12,31,0.015)] flex flex-col sm:flex-row items-center justify-between gap-6 relative">
+            <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+              {/* Avatar with Checkmark Badge */}
+              <div
+                className={`relative ${isOwnProfile ? 'cursor-pointer group' : ''}`}
+                onClick={isOwnProfile ? () => setAvatarModalOpen(true) : undefined}
+              >
+                <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-150 shadow-inner bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-3xl select-none relative transition-all group-hover:scale-98">
+                  {profileUser?.avatar ? (
+                    <Image
+                      src={profileUser.avatar}
+                      alt="User Profile"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span>{profileUser?.firstName ? profileUser.firstName[0].toUpperCase() : 'A'}</span>
+                  )}
+                  {isOwnProfile && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="absolute bottom-0 right-0 bg-[#3D0C1F] text-white p-1 rounded-full border-2 border-white flex items-center justify-center shadow-md select-none pointer-events-none">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-[#E9D7C3]">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Text Info */}
+              <div>
+                <h2 className="text-xl font-bold text-gray-855" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  {profileUser?.firstName} {profileUser?.lastName}
+                </h2>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-4 items-center mt-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  <span className="flex items-center gap-1.5">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {profileUser?.location || 'Kathmandu, Nepal'}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    Active since {profileUser?.createdAt ? new Date(profileUser.createdAt).getFullYear() : 2026}
+                  </span>
+                </div>
+                {profileUser?.bio && (
+                  <p
+                    className="text-xs text-gray-500 font-medium italic leading-relaxed mt-3 max-w-md border-l-2 border-gray-150 pl-3 py-0.5"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    "{profileUser.bio}"
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Edit / Message Button */}
+            {isOwnProfile ? (
+              <button
+                onClick={triggerProfileEdit}
+                className="bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all shadow-sm active:scale-95 border-none"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Edit Your Profile
+              </button>
+            ) : (
+              <button
+                onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
+                className="bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all shadow-sm active:scale-95 border-none"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Message
+              </button>
+            )}
+          </div>
+
+          {/* Instagram Post Grid */}
+          <div className="flex flex-col gap-6">
+            <div className="border-b border-gray-100 pb-3 flex justify-between items-center">
+              <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                {isOwnProfile ? 'My Bespoke Requests' : (profileUser?.role === 'seller' ? 'Bespoke Collection' : `${profileUser?.firstName}'s Bespoke Requests`)}
+              </h3>
+              <span className="text-[9px] font-bold text-gray-400 bg-gray-50 border border-gray-150 px-2.5 py-0.5 rounded">
+                {posts.length} {posts.length === 1 ? 'Post' : 'Posts'}
+              </span>
+            </div>
+
+            {posts.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2 md:gap-4">
+                {posts.map((post) => (
+                  <div
+                    key={post.id}
+                    onClick={() => {
+                      setSelectedInspectPost(post)
+                      setActiveInspectIndex(0)
+                    }}
+                    className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group bg-[#FAF8F5] border border-gray-100 shadow-sm"
+                  >
+                    {post.image ? (
+                      <Image
+                        src={post.image}
+                        alt="My Request"
+                        fill
+                        className="object-contain p-2 transition-transform duration-500 ease-out group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[#FAF8F5] p-5 flex flex-col justify-between border border-gray-150 rounded-2xl select-none group-hover:bg-[#FAF8F5]/80 transition-colors">
+                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.category}</span>
+                        <p className="text-[10px] text-gray-600 font-medium leading-relaxed line-clamp-4 my-auto" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.description}</p>
+                        <span className="text-[9px] font-extrabold text-[#3D0C1F] tracking-wide" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.price}</span>
+                      </div>
+                    )}
+
+                    {/* Stacked Images Indicator */}
+                    {post.images && post.images.length > 1 && (
+                      <div className="absolute top-2.5 right-2.5 bg-black/40 backdrop-blur-md p-1 rounded-lg text-white z-10">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <rect x="3" y="3" width="13" height="13" rx="1.5" />
+                          <path d="M8 8H18V18" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Hover overlay with Like & Comment Counts */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-6 text-white text-xs font-bold font-sans">
+                      <span className="flex items-center gap-1.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-[#E9D7C3]">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                        {post.likes}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-[#E9D7C3]">
+                          <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z" />
+                        </svg>
+                        {post.comments.length}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-white border border-dashed border-gray-200 rounded-3xl flex flex-col items-center gap-4 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center text-gray-300 border border-gray-50 shadow-inner">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-gray-800" style={{ fontFamily: 'var(--font-montserrat)' }}>No Requests Shared Yet</h4>
+                  <p className="text-[10px] text-gray-400 mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>Your bespoke request blueprints will appear in a grid format here.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Sidebar Column (1/3 width) */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+
+          {/* Stats Box */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.015)] flex flex-col gap-4">
+            <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
+              Network Stats
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#FAF8F5]/60 rounded-2xl p-4 border border-gray-50 flex flex-col items-center justify-center text-center">
+                <span className="text-xl font-extrabold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  {isOwnProfile ? followedArtisans.length : (profileUser?.role === 'seller' ? 12 : 3)}
+                </span>
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>Following</span>
+              </div>
+              <div className="bg-[#FAF8F5]/60 rounded-2xl p-4 border border-gray-50 flex flex-col items-center justify-center text-center">
+                <span className="text-xl font-extrabold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  {isOwnProfile ? 0 : (profileUser?.role === 'seller' ? 84 : 0)}
+                </span>
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>Followers</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 4. DETAIL ZOOM MODAL OVERLAY */}
+      {selectedInspectPost && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-5xl md:h-[650px] overflow-hidden shadow-2xl border border-gray-100 flex flex-col md:flex-row max-h-[90vh] animate-scale-up">
+
+            <div className="w-full md:w-1/2 relative bg-[#FAF8F5] flex items-center justify-center overflow-hidden h-full">
+              <Image
+                src={(selectedInspectPost.images && selectedInspectPost.images[activeInspectIndex]) || selectedInspectPost.image}
+                alt="Bespoke Jewelry Piece"
+                fill
+                className="object-contain"
+              />
+
+              {/* Image Carousel Selection Row */}
+              {selectedInspectPost.images && selectedInspectPost.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 backdrop-blur-md px-3 py-2 rounded-2xl overflow-x-auto max-w-[90%] z-10">
+                  {selectedInspectPost.images.map((img: string, idx: number) => (
+                    <div
+                      key={idx}
+                      onClick={() => setActiveInspectIndex(idx)}
+                      className={`relative w-10 h-10 rounded-lg overflow-hidden cursor-pointer border-2 transition-all flex-shrink-0 ${activeInspectIndex === idx ? 'border-white scale-95 shadow' : 'border-transparent opacity-60 hover:opacity-100'
+                        }`}
+                    >
+                      <Image src={img} alt="Bespoke design thumb" fill className="object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => setSelectedInspectPost(null)}
+                className="absolute top-4 left-4 text-white bg-black/40 p-2.5 rounded-full hover:bg-black/60 cursor-pointer md:hidden"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-between bg-white h-full overflow-y-auto">
+              <div>
+                <div className="flex justify-between items-start border-b border-gray-100 pb-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none">
+                      {selectedInspectPost.avatar ? (
+                        <Image src={selectedInspectPost.avatar} alt="Artisan" fill className="object-cover object-center" />
+                      ) : (
+                        <span>{selectedInspectPost.artisanName ? selectedInspectPost.artisanName[0].toUpperCase() : 'A'}</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-855" style={{ fontFamily: 'var(--font-montserrat)' }}>{selectedInspectPost.artisanName}</h4>
+                      {selectedInspectPost.artisanTitle === 'MASTER ARTISAN' && (
+                        <p className="text-[9px] font-semibold text-[#3D0C1F] uppercase mt-0.5">{selectedInspectPost.artisanTitle}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {/* Three Dots Menu for Own Post */}
+                    {isOwnProfile && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setMenuOpen(!menuOpen)}
+                          className="text-gray-400 hover:text-gray-700 cursor-pointer p-1 rounded-full hover:bg-gray-50 border-none bg-transparent flex items-center justify-center"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </button>
+
+                        {menuOpen && (
+                          <div className="absolute right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 w-32 z-50 flex flex-col text-left">
+                            <button
+                              onClick={() => {
+                                setIsEditing(true)
+                                setMenuOpen(false)
+                                setEditDesc(selectedInspectPost.description)
+                                setEditBudget(selectedInspectPost.price?.replace('Rs. ', '')?.replace(/,/g, '') || '')
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-black border-none bg-transparent cursor-pointer"
+                            >
+                              Edit Post
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMenuOpen(false)
+                                handleDeletePost(selectedInspectPost.id)
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 border-none bg-transparent cursor-pointer"
+                            >
+                              Delete Post
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <button onClick={() => setSelectedInspectPost(null)} className="text-gray-405 hover:text-gray-650 cursor-pointer hidden md:block border-none bg-transparent">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-[9px] font-bold text-amber-600 tracking-widest uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    {selectedInspectPost.category || 'Bespoke Brief'}
+                  </span>
+                  <span className="text-[10px] font-extrabold text-[#3D0C1F] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
+                    Est. Budget: {selectedInspectPost.price || 'Contact'}
+                  </span>
+                </div>
+
+                {isEditing ? (
+                  <div className="flex flex-col gap-3 mb-4">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Edit Description</label>
+                    <textarea
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl p-3 bg-[#FAF8F5] focus:outline-none focus:border-[#3D0C1F] resize-none h-24"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    />
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Edit Budget (Rs.)</label>
+                    <input
+                      type="number"
+                      value={editBudget}
+                      onChange={(e) => setEditBudget(e.target.value)}
+                      className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-[#FAF8F5] focus:outline-none focus:border-[#3D0C1F]"
+                      placeholder="e.g. 50000"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    />
+                    <div className="flex gap-2 justify-end mt-2">
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="px-4 py-2 rounded-full border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50 cursor-pointer bg-white"
+                        style={{ fontFamily: 'var(--font-montserrat)' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleUpdatePost(selectedInspectPost.id)}
+                        className="px-4 py-2 rounded-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] text-xs font-semibold cursor-pointer border-none"
+                        style={{ fontFamily: 'var(--font-montserrat)' }}
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'var(--font-playfair)' }}>Bespoke Request Blueprint</h3>
+                    <p className="text-xs text-gray-550 leading-relaxed font-normal mb-6" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                      {selectedInspectPost.description}
+                    </p>
+                  </>
+                )}
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {selectedInspectPost.materials.map((m: string) => (
+                    <span
+                      key={m}
+                      className="text-[9px] font-bold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-150 pt-5 mt-auto flex justify-between items-center text-xs font-semibold text-gray-500 pb-2">
+                <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-400">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  <span>{selectedInspectPost.likes} {selectedInspectPost.likes === 1 ? 'Like' : 'Likes'}</span>
+                </div>
+                <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-400">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span>{wishlist.includes(selectedInspectPost.id) ? 1 : 0} Saves</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. INTERACTIVE AVATAR MODAL OVERLAY */}
+      {avatarModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-gray-100 animate-scale-up flex flex-col gap-6 relative text-center">
+
+            <button
+              onClick={() => {
+                setAvatarModalOpen(false)
+                setAvatarFile(null)
+                setAvatarPreview(null)
+              }}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <div>
+              <h3 className="text-sm font-bold text-gray-900" style={{ fontFamily: 'var(--font-montserrat)' }}>Profile Picture</h3>
+              <p className="text-[10px] text-gray-400 mt-1 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                {avatarPreview ? "Preview your new profile picture" : "Select an action to update your visual representation"}
+              </p>
+            </div>
+
+            {/* Preview Section */}
+            <div className="flex justify-center my-2">
+              <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#3D0C1F]/20 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-4xl relative shadow-inner select-none">
+                {avatarPreview ? (
+                  <Image src={avatarPreview} alt="New Avatar Preview" fill className="object-cover" />
+                ) : profileUser?.avatar ? (
+                  <Image src={profileUser.avatar} alt="Current Avatar" fill className="object-cover" />
+                ) : (
+                  <span>{profileUser?.firstName ? profileUser.firstName[0].toUpperCase() : 'A'}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={avatarInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarFileChange}
+            />
+
+            {/* Actions */}
+            <div className="flex flex-col gap-3 w-full">
+              {avatarPreview ? (
+                <>
+                  <button
+                    onClick={handleSaveAvatar}
+                    disabled={avatarLoading}
+                    className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none shadow active:scale-95 disabled:opacity-60 text-center"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {avatarLoading ? "Uploading..." : "Done"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAvatarFile(null)
+                      setAvatarPreview(null)
+                    }}
+                    className="w-full bg-white border border-gray-250 text-gray-500 hover:text-gray-700 text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 text-center"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none shadow active:scale-95 text-center"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {profileUser?.avatar ? "Update Profile Picture" : "Add a Profile Picture"}
+                  </button>
+                  {profileUser?.avatar && (
+                    <button
+                      onClick={handleDeleteAvatar}
+                      disabled={avatarLoading}
+                      className="w-full bg-red-50 hover:bg-red-100 text-red-650 text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border border-red-200 active:scale-95 disabled:opacity-60 text-center"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      {avatarLoading ? "Deleting..." : "Delete Profile Picture"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setAvatarModalOpen(false)}
+                    className="w-full bg-white border border-gray-150 text-gray-400 hover:text-gray-600 text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 text-center"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  )
+}

@@ -9,6 +9,9 @@ export interface BuyerContextType {
   openChatWith: (name: string) => void
   setTimelineOpen: (open: boolean) => void
   timelineOpen: boolean
+  triggerProfileEdit?: () => void
+  followedArtisans?: string[]
+  setFollowedArtisans?: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 export const BuyerContext = createContext<BuyerContextType | null>(null)

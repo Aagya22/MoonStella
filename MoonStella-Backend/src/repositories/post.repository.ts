@@ -3,7 +3,7 @@ import { Post, IPost } from '../models/post.model'
 export const create = async (data: {
   userId: string
   description: string
-  category: string
+  category: 'Rings' | 'Necklaces' | 'Earrings' | 'Bracelets' | 'Pendants' | 'Complete Set' | 'Others'
   budget?: number | null
   price?: string | null
   materials: string[]
@@ -58,4 +58,16 @@ export const addComment = async (postId: string, comment: { userId: string; text
 export const deletePost = async (postId: string, userId: string): Promise<boolean> => {
   const result = await Post.deleteOne({ _id: postId, userId })
   return result.deletedCount > 0
+}
+
+export const updatePost = async (postId: string, userId: string, data: any): Promise<IPost | null> => {
+  const post = await Post.findOne({ _id: postId, userId })
+  if (!post) return null
+  if (data.description !== undefined) post.description = data.description
+  if (data.category !== undefined) post.category = data.category
+  if (data.budget !== undefined) post.budget = data.budget
+  if (data.price !== undefined) post.price = data.price
+  if (data.materials !== undefined) post.materials = data.materials
+  await post.save()
+  return findById(postId)
 }

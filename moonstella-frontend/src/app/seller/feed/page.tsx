@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import SellerOnboarding from '@/app/components/seller-onboarding'
+import SellerOnboarding from '@/app/components/seller/seller-onboarding'
 import { updateProfileApi } from '@/lib/api/auth'
 import { useSnackbar } from '@/context/SnackbarContext'
 

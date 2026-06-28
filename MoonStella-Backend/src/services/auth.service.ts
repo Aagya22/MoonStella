@@ -4,7 +4,7 @@ import { env } from '../config/env'
 import { AppError } from '../errors/app.error'
 import * as UserRepository from '../repositories/user.repository'
 import type { IUser } from '../models/user.model'
-import type { RegisterDto, LoginDto, UpdateProfileDto } from '../dtos/auth.dto'
+import type { RegisterDto, LoginDto, UpdateProfileDto, ChangePasswordDto } from '../dtos/auth.dto'
 
 const signToken = (id: string): string => {
   return jwt.sign({ id }, env.JWT_SECRET, { expiresIn: '30d' })
@@ -19,6 +19,7 @@ export const formatUser = (user: IUser) => ({
   role: user.role,
   avatar: user.avatar,
   location: user.location,
+  bio: user.bio,
   studioName: user.studioName,
   studioSpecialty: user.studioSpecialty,
   averageResponseTime: user.averageResponseTime,
@@ -79,4 +80,24 @@ export const checkUniqueness = async (email: string, phoneNumber: string) => {
   if (existingPhone) throw new AppError('An account with this phone number already exists', 409)
 
   return { unique: true }
+}
+
+export const getUserById = async (userId: string) => {
+  const user = await UserRepository.findById(userId)
+  if (!user) throw new AppError('User not found', 404)
+  return formatUser(user)
+}
+
+export const changePassword = async (userId: string, data: ChangePasswordDto) => {
+  const user = await UserRepository.findWithPasswordById(userId)
+  if (!user) throw new AppError('User not found', 404)
+
+  const isMatch = await user.comparePassword(data.oldPassword)
+  if (!isMatch) throw new AppError('Incorrect old password', 401)
+
+  const passwordHash = await bcrypt.hash(data.newPassword, 12)
+  user.passwordHash = passwordHash
+  await user.save()
+
+  return { success: true }
 }

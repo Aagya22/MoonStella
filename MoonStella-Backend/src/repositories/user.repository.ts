@@ -12,6 +12,10 @@ export const findById = async (id: string): Promise<IUser | null> => {
   return User.findById(id).select('-passwordHash')
 }
 
+export const findWithPasswordById = async (id: string): Promise<IUser | null> => {
+  return User.findById(id)
+}
+
 export const createUser = async (data: {
   firstName: string
   lastName: string
@@ -26,8 +30,13 @@ export const createUser = async (data: {
 export const updateUserProfile = async (
   id: string,
   data: {
+    firstName?: string
+    lastName?: string
+    email?: string
+    phoneNumber?: string
     avatar?: string | null
     location?: string | null
+    bio?: string | null
     studioName?: string | null
     studioSpecialty?: string | null
     averageResponseTime?: string | null

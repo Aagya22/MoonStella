@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import Navbar from '@/app/components/navbar'
-import StepProgressBar from '@/app/components/stepprogressbar'
+import Navbar from '@/app/components/shared/navbar'
+import StepProgressBar from '@/app/components/shared/stepprogressbar'
 import { checkUniqueApi } from '@/lib/api/auth'
 
 export default function SellerRegisterStepOne() {

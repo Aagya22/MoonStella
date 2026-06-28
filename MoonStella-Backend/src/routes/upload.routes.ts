@@ -15,9 +15,9 @@ cloudinary.v2.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary.v2,
   params: {
-    folder: 'moonstella/avatars',
+    folder: 'moonstella/uploads',
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [{ width: 400, height: 400, crop: 'fill', quality: 'auto' }],
+    transformation: [{ quality: 'auto' }],
   } as object,
 })
 

@@ -53,3 +53,14 @@ export const deletePost = async (req: Request, res: Response, next: NextFunction
     next(error)
   }
 }
+
+export const editPost = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user._id
+    const { id } = req.params
+    const post = await PostService.updateUserPost(id, String(userId), req.body)
+    res.json(post)
+  } catch (error) {
+    next(error)
+  }
+}

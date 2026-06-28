@@ -3,9 +3,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
-import BuyerOnboarding from '@/app/components/buyer-onboarding'
+import BuyerOnboarding from '@/app/components/buyer/buyer-onboarding'
 import { BuyerContext } from './BuyerContext'
-import { updateProfileApi } from '@/lib/api/auth'
+import { updateProfileApi, changePasswordApi } from '@/lib/api/auth'
 import { useSnackbar } from '@/context/SnackbarContext'
 
 export default function BuyerLayout({
@@ -17,16 +17,30 @@ export default function BuyerLayout({
   const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [editFirstName, setEditFirstName] = useState('')
+  const [editLastName, setEditLastName] = useState('')
+  const [editLocation, setEditLocation] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editBio, setEditBio] = useState('')
+  const [changePwOpen, setChangePwOpen] = useState(false)
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const { showSnackbar } = useSnackbar()
-  
+
   // Sidebar State
-  const [sidebarOpen, setSidebarOpen] = useState(false) 
-  
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   // Tracker and Chat States
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [activeChat, setActiveChat] = useState<any>(null)
   const [wishlist, setWishlist] = useState<any[]>([])
-  
+  const [followedArtisans, setFollowedArtisans] = useState<string[]>([])
+
   // Dropdown States
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([
@@ -57,7 +71,7 @@ export default function BuyerLayout({
     if (!parsed.onboarded) {
       setShowOnboarding(true)
     }
-  }, [router])
+  }, [router, pathname])
 
   // Scroll to bottom of chat when messages update
   useEffect(() => {
@@ -195,28 +209,108 @@ export default function BuyerLayout({
     setNotifications(notifications.map(n => ({ ...n, read: true })))
   }
 
+  useEffect(() => {
+    if (editProfileOpen && user) {
+      setEditFirstName(user.firstName || '')
+      setEditLastName(user.lastName || '')
+      setEditLocation(user.location || '')
+      setEditEmail(user.email || '')
+      setEditPhone(user.phoneNumber || '')
+      setEditBio(user.bio || '')
+      setChangePwOpen(false)
+      setOldPassword('')
+      setNewPassword('')
+      setConfirmNewPassword('')
+    }
+  }, [editProfileOpen, user])
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editFirstName.trim() || !editLastName.trim()) {
+      showSnackbar("First Name and Last Name are required.", "error")
+      return
+    }
+    try {
+      const token = localStorage.getItem('ms_token')
+      const updateData = {
+        firstName: editFirstName,
+        lastName: editLastName,
+        location: editLocation,
+        email: editEmail,
+        phoneNumber: editPhone,
+        bio: editBio
+      }
+      if (token && token !== 'mock_token_for_preview') {
+        const updatedUser = await updateProfileApi(updateData, token)
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setUser(updatedUser)
+      } else {
+        const updatedUser = { ...user, ...updateData }
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setUser(updatedUser)
+      }
+      showSnackbar('Profile updated successfully!', 'success')
+      setEditProfileOpen(false)
+    } catch (err: any) {
+      console.error('Failed to update profile:', err)
+      showSnackbar(err?.response?.data?.message || 'Failed to update profile. Please try again.', 'error')
+    }
+  }
+
+  const handleSavePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!oldPassword) {
+      showSnackbar("Please enter your current password.", "error")
+      return
+    }
+    if (newPassword.length < 8) {
+      showSnackbar("New password must be at least 8 characters.", "error")
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      showSnackbar("New passwords do not match.", "error")
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (token && token !== 'mock_token_for_preview') {
+        await changePasswordApi({ oldPassword, newPassword }, token)
+        showSnackbar("Password updated successfully!", "success")
+      } else {
+        showSnackbar("Password updated locally.", "success")
+      }
+      setOldPassword('')
+      setNewPassword('')
+      setConfirmNewPassword('')
+      setChangePwOpen(false)
+    } catch (err: any) {
+      console.error('Failed to change password:', err)
+      showSnackbar(err?.response?.data?.message || "Failed to change password. Ensure old password is correct.", "error")
+    }
+  }
+
   const toggleNotification = (id: number) => {
     setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n))
   }
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length
-
   if (!user) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs">Loading profile...</div>
 
   return (
-    <BuyerContext.Provider value={{ user, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen }}>
-      <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased overflow-x-hidden relative">
-        
+    <BuyerContext.Provider value={{ user, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans }}>
+      <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased relative">
+
 
 
         {/* ========================================================================= */}
         {/* 1. SHARED COMPACT TOP NAVBAR (h-14) */}
         {/* ========================================================================= */}
         <header className="w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.01)] px-6 flex items-center justify-between sticky top-0 z-40 h-14 transition-all duration-300">
-          
+
           <div className="flex items-center gap-4">
             {/* Hamburger Menu */}
-            <button 
+            <button
               onClick={handleHamburgerClick}
               className="text-gray-700 hover:text-[#3D0C1F] transition-all cursor-pointer p-1.5 rounded hover:bg-gray-50 flex items-center justify-center relative z-50"
               title="Menu"
@@ -225,9 +319,9 @@ export default function BuyerLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            
+
             {/* Small Brand Logo */}
-            <span 
+            <span
               className="text-lg font-black tracking-[0.2em] text-[#3D0C1F] cursor-pointer uppercase select-none"
               style={{ fontFamily: 'var(--font-playfair)' }}
               onClick={() => { router.push('/buyer/feed'); closeSidebar(); }}
@@ -244,8 +338,8 @@ export default function BuyerLayout({
                 <path d="M21 21l-4.35-4.35" />
               </svg>
             </div>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search for a seller"
               className="w-full bg-[#FAF8F5] border border-transparent rounded-full py-1.5 pl-10 pr-4 text-xs text-gray-755 focus:outline-none focus:bg-white focus:border-gray-200 transition-all duration-300"
               style={{ fontFamily: 'var(--font-montserrat)' }}
@@ -256,7 +350,7 @@ export default function BuyerLayout({
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
                 className="text-gray-600 hover:text-[#3D0C1F] relative p-1.5 rounded-full hover:bg-gray-50 transition-all cursor-pointer"
               >
@@ -274,7 +368,7 @@ export default function BuyerLayout({
                   <div className="px-3.5 py-1.5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
                     <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider" style={{ fontFamily: 'var(--font-montserrat)' }}>Notifications</span>
                     {unreadNotificationsCount > 0 && (
-                      <button 
+                      <button
                         onClick={markAllNotificationsRead}
                         className="text-[9px] text-[#3D0C1F] hover:underline font-bold cursor-pointer"
                       >
@@ -284,8 +378,8 @@ export default function BuyerLayout({
                   </div>
                   <div className="max-h-56 overflow-y-auto">
                     {notifications.map((n) => (
-                      <div 
-                        key={n.id} 
+                      <div
+                        key={n.id}
                         onClick={() => toggleNotification(n.id)}
                         className="px-3.5 py-2 border-b border-gray-50 text-[10px] hover:bg-gray-50 transition-colors cursor-pointer flex gap-1.5 items-start"
                       >
@@ -301,37 +395,32 @@ export default function BuyerLayout({
               )}
             </div>
 
-            {/* Profile / Logout Button */}
-            <button 
-              onClick={handleLogout}
-              title="Sign Out"
-              className="w-7.5 h-7.5 rounded-full bg-gradient-to-tr from-[#E9D7C3] to-white border border-gray-100 flex items-center justify-center font-bold text-xs text-[#3D0C1F] hover:border-[#3D0C1F] transition-all cursor-pointer"
+            {/* Profile Circle */}
+            <div
+              title="User Initials"
+              className="w-7.5 h-7.5 rounded-full bg-gradient-to-tr from-[#E9D7C3] to-white border border-gray-100 flex items-center justify-center font-bold text-xs text-[#3D0C1F] select-none"
             >
-              A
-            </button>
+              {user.firstName ? user.firstName[0].toUpperCase() : 'A'}
+            </div>
           </div>
         </header>
 
-        {/* ========================================================================= */}
-        {/* 2. REFINED SLIDE-OUT LEFT SIDEBAR PANEL (SHARED BY ALL PAGES) */}
-        {/* ========================================================================= */}
-        {/* FIXED: Removed onMouseEnter from backdrop overlay to allow sidebar to close cleanly on hover-out */}
+
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-45 transition-all duration-300"
             onClick={closeSidebar}
           />
         )}
 
-        <aside 
-          className={`fixed top-0 left-0 h-screen w-60 bg-white border-r border-gray-100 shadow-2xl z-50 flex flex-col justify-between py-8 transition-transform duration-300 ease-in-out ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        <aside
+          className={`fixed top-0 left-0 h-screen w-60 bg-white border-r border-gray-100 shadow-2xl z-50 flex flex-col justify-between py-8 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
         >
           <div>
             {/* Elegant padding and spacing after brand title */}
             <div className="px-6 mt-2" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem', marginBottom: '2.5rem' }}>
-              <span 
+              <span
                 className="text-xl font-extrabold tracking-[0.2em] text-[#3D0C1F] block text-center uppercase select-none"
                 style={{ fontFamily: 'var(--font-playfair)' }}
               >
@@ -407,20 +496,19 @@ export default function BuyerLayout({
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                   ),
-                  onClick: () => { handleLogout(); }
+                  onClick: () => { router.push('/buyer/profile'); closeSidebar(); }
                 }
               ].map((item) => {
-                const isActive = (item.id === 'home' && pathname === '/buyer/dashboard') || 
-                                 (item.id === 'discovery' && pathname === '/buyer/feed')
+                const isActive = (item.id === 'home' && pathname === '/buyer/dashboard') ||
+                  (item.id === 'discovery' && pathname === '/buyer/feed')
                 return (
                   <button
                     key={item.id}
                     onClick={item.onClick}
-                    className={`w-full flex items-center gap-4 px-6 py-3 rounded-lg text-left text-[11px] font-semibold tracking-[0.15em] transition-all duration-205 cursor-pointer ${
-                      isActive 
-                        ? 'text-[#3D0C1F] bg-[#FAF8F5]' 
-                        : 'text-[#5A5A5A] hover:text-[#3D0C1F] hover:bg-[#FAF8F5]/50'
-                    }`}
+                    className={`w-full flex items-center gap-4 px-6 py-3 rounded-lg text-left text-[11px] font-semibold tracking-[0.15em] transition-all duration-205 cursor-pointer ${isActive
+                      ? 'text-[#3D0C1F] bg-[#FAF8F5]'
+                      : 'text-[#5A5A5A] hover:text-[#3D0C1F] hover:bg-[#FAF8F5]/50'
+                      }`}
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     <span className={isActive ? 'text-[#3D0C1F]' : 'text-[#8A8A8A]'}>{item.icon}</span>
@@ -435,19 +523,26 @@ export default function BuyerLayout({
           <div className="px-6 border-t border-gray-50 pt-5 flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <div className="w-8.5 h-8.5 rounded-full bg-[#FAF8F5] border border-gray-150 flex items-center justify-center font-extrabold text-xs text-[#3D0C1F]">
-                A
+                {user.firstName ? user.firstName[0].toUpperCase() : 'A'}
               </div>
               <div className="min-w-0">
                 <h4 className="text-[10px] font-bold text-gray-855 truncate max-w-[120px] leading-none mb-0.5">{user.firstName} {user.lastName}</h4>
                 <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Buyer Hub</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => { closeSidebar(); router.push('/seller/feed') }}
               className="w-full bg-[#3D0C1F] text-white hover:bg-[#2A0714] transition-all text-[9px] font-bold tracking-widest py-2 rounded uppercase text-center cursor-pointer shadow-sm"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               Switch to Seller
+            </button>
+            <button
+              onClick={() => { closeSidebar(); setShowLogoutConfirm(true); }}
+              className="w-full bg-white border border-gray-250 text-gray-500 hover:text-red-700 hover:border-red-250 hover:bg-red-50/5 transition-all text-[9px] font-bold tracking-widest py-2 rounded uppercase text-center cursor-pointer"
+              style={{ fontFamily: 'var(--font-montserrat)' }}
+            >
+              Log Out
             </button>
           </div>
         </aside>
@@ -493,12 +588,11 @@ export default function BuyerLayout({
                 const isUser = m.sender === 'user'
                 return (
                   <div key={idx} className={`flex flex-col max-w-[80%] ${isUser ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                    <div 
-                      className={`p-3 rounded-2xl text-xs leading-relaxed ${
-                        isUser 
-                          ? 'bg-[#3D0C1F] text-white rounded-br-none' 
-                          : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none shadow-sm'
-                      }`}
+                    <div
+                      className={`p-3 rounded-2xl text-xs leading-relaxed ${isUser
+                        ? 'bg-[#3D0C1F] text-white rounded-br-none'
+                        : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none shadow-sm'
+                        }`}
                     >
                       {m.text}
                     </div>
@@ -510,15 +604,15 @@ export default function BuyerLayout({
             </div>
 
             <form onSubmit={sendChatMessage} className="p-3 border-t border-gray-100 flex gap-2 bg-white">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Type your design inquiry..."
                 value={chatMessageInput}
                 onChange={(e) => setChatMessageInput(e.target.value)}
                 className="flex-1 border border-gray-100 bg-gray-50 rounded-full px-4 py-2 text-xs focus:outline-none focus:bg-white focus:border-gray-200 focus:ring-1 focus:ring-[#3D0C1F]/20"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               />
-              <button 
+              <button
                 type="submit"
                 className="bg-[#3D0C1F] text-white p-2 rounded-full hover:bg-[#2A0714] transition-colors cursor-pointer flex items-center justify-center w-8 h-8 flex-shrink-0 shadow"
               >
@@ -539,7 +633,7 @@ export default function BuyerLayout({
               <div className="bg-[#3D0C1F] text-white p-6 relative">
                 <h3 className="text-xl font-bold tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>Bespoke Tracker</h3>
                 <p className="text-[10px] text-[#E9D7C3] font-semibold uppercase tracking-widest mt-1">No Active Orders</p>
-                <button 
+                <button
                   onClick={() => setTimelineOpen(false)}
                   className="absolute top-6 right-6 text-white/70 hover:text-white cursor-pointer"
                 >
@@ -564,7 +658,7 @@ export default function BuyerLayout({
               </div>
 
               <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
-                <button 
+                <button
                   onClick={() => setTimelineOpen(false)}
                   className="bg-[#3D0C1F] text-white text-[10px] font-bold tracking-widest px-4 py-2.5 rounded uppercase cursor-pointer hover:bg-[#2A0714]"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
@@ -582,6 +676,294 @@ export default function BuyerLayout({
             onComplete={handleOnboardingComplete}
             onSkip={handleOnboardingSkip}
           />
+        )}
+
+        {/* 7. LOGOUT CONFIRMATION DIALOG */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-gray-100 animate-scale-up flex flex-col gap-6">
+              <div className="w-16 h-16 rounded-full bg-[#FAF8F5] flex items-center justify-center mx-auto text-[#3D0C1F]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900" style={{ fontFamily: 'var(--font-montserrat)' }}>Confirm Sign Out</h3>
+                <p className="text-[11px] text-gray-400 leading-relaxed mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  Are you sure you want to log out of your MoonStella account?
+                </p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 py-2.5 rounded-full border border-gray-200 text-gray-500 text-[10px] font-bold tracking-widest uppercase hover:bg-gray-50 cursor-pointer transition-all"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLogoutConfirm(false)
+                    handleLogout()
+                  }}
+                  className="flex-1 bg-[#3D0C1F] hover:bg-[#2A0714] text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all shadow border-none"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* 8. PROFILE CARD DISPLAY MODAL */}
+        {showProfileModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-gray-100 animate-scale-up flex flex-col gap-6 relative">
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(false)}
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+
+              <div className="text-center flex flex-col items-center gap-3">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#E9D7C3] to-white border-2 border-[#3D0C1F]/20 flex items-center justify-center font-extrabold text-2xl text-[#3D0C1F] shadow-inner select-none">
+                  {user.firstName ? user.firstName[0].toUpperCase() : 'A'}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: 'var(--font-montserrat)' }}>{user.firstName} {user.lastName}</h3>
+                  <p className="text-[9px] text-[#3D0C1F] font-bold tracking-widest uppercase mt-0.5">Connoisseur Member</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 border-t border-gray-50 pt-5 text-xs text-gray-600">
+                <div className="flex justify-between border-b border-gray-50 pb-2.5">
+                  <span className="font-semibold text-gray-400">Email Address</span>
+                  <span className="text-gray-800">{user.email}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-50 pb-2.5">
+                  <span className="font-semibold text-gray-400">Interests</span>
+                  <span className="text-gray-800 text-right max-w-[200px] truncate">
+                    {user.interests && user.interests.length > 0 ? user.interests.join(', ') : 'None specified'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-400">Member Status</span>
+                  <span className="text-emerald-600 font-bold uppercase tracking-wider text-[9px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Active</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(false)}
+                className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all text-center shadow border-none mt-2"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Close Profile
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 9. EDIT PROFILE MODAL */}
+        {editProfileOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-gray-100 animate-scale-up flex flex-col gap-6 relative max-h-[85vh] overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => setEditProfileOpen(false)}
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 cursor-pointer border-none bg-transparent"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 font-playfair" style={{ fontFamily: 'var(--font-playfair)' }}>Edit Profile</h3>
+                <p className="text-[10px] text-gray-400 font-medium tracking-wide mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  Update your contact details, active showroom location, and biography.
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>First Name</label>
+                  <input
+                    type="text"
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                    placeholder="Enter your first name"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Last Name</label>
+                  <input
+                    type="text"
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                    placeholder="Enter your last name"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Location</label>
+                  <input
+                    type="text"
+                    value={editLocation}
+                    onChange={(e) => setEditLocation(e.target.value)}
+                    className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                    placeholder="e.g. Kathmandu, Nepal"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  />
+                </div>
+
+                {/* Email field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Email Address</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                    placeholder="E.g. email@gmail.com"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                    required
+                  />
+                </div>
+
+                {/* Phone field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Phone Number</label>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                    placeholder="E.g. 9812345678"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  />
+                </div>
+
+                {/* Bio field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Biography</label>
+                  <textarea
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value)}
+                    rows={3}
+                    className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200 resize-none"
+                    placeholder="Tell the master artisans about your preferences, style, or collection vision..."
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  />
+                </div>
+
+                {/* Security Settings (Change Password) Accordion */}
+                <div className="border border-gray-150 rounded-2xl overflow-hidden mt-2 bg-[#FAF8F5]/30">
+                  <button
+                    type="button"
+                    onClick={() => setChangePwOpen(!changePwOpen)}
+                    className="w-full flex justify-between items-center px-4 py-3.5 text-[10px] font-extrabold text-[#3D0C1F] uppercase tracking-widest hover:bg-[#FAF8F5] transition-colors border-none bg-transparent cursor-pointer"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    <span>Security Settings (Change Password)</span>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className={`transform transition-transform duration-300 ${changePwOpen ? 'rotate-180' : ''}`}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+
+                  {changePwOpen && (
+                    <div className="p-4 border-t border-gray-100 flex flex-col gap-4 animate-fade-in bg-white">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Current Password</label>
+                        <input
+                          type="password"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                          style={{ fontFamily: 'var(--font-montserrat)' }}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>New Password</label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="•••••••• (Min 8 chars)"
+                          className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                          style={{ fontFamily: 'var(--font-montserrat)' }}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Confirm New Password</label>
+                        <input
+                          type="password"
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                          style={{ fontFamily: 'var(--font-montserrat)' }}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSavePassword}
+                        className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all shadow border-none mt-2 active:scale-95 text-center"
+                        style={{ fontFamily: 'var(--font-montserrat)' }}
+                      >
+                        Update Password
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditProfileOpen(false)}
+                    className="flex-1 py-2.5 rounded-full border border-gray-200 text-gray-500 text-[10px] font-bold tracking-widest uppercase hover:bg-gray-50 cursor-pointer transition-all bg-white"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-[#3D0C1F] hover:bg-[#2A0714] text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all shadow border-none"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
       </div>

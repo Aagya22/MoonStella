@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import Navbar from '@/app/components/navbar'
+import Navbar from '@/app/components/shared/navbar'
 
 export default function GetStartedPage() {
   return (

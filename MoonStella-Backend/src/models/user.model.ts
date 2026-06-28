@@ -11,6 +11,7 @@ export interface IUser extends Document{
     role:'buyer'| 'seller'|'admin'
     avatar?: string
     location?: string
+    bio?: string | null
     following: mongoose.Types.ObjectId[]
     studioName: string | null
     studioSpecialty?: 'custom' | 'ready-made' | 'both' | null
@@ -60,6 +61,10 @@ const UserSchema = new Schema<IUser>(
             default: null,
         },
         location: {
+            type: String,
+            default: null,
+        },
+        bio: {
             type: String,
             default: null,
         },
