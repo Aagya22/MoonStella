@@ -9,7 +9,7 @@ export interface IComment {
 export interface IPost extends Document {
   userId: mongoose.Types.ObjectId
   description: string
-  category: 'Rings' | 'Necklaces' | 'Earrings' | 'Bracelets' | 'Pendants' | 'Complete Set' | 'Others'
+  category: string
   budget?: number | null
   price?: string | null
   materials: string[]
@@ -51,7 +51,6 @@ const PostSchema = new Schema<IPost>(
     },
     category: {
       type: String,
-      enum: ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Pendants', 'Complete Set', 'Others'],
       required: true
     },
     budget: {

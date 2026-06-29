@@ -380,6 +380,7 @@ export default function BuyerFeedPage() {
                 toggleFollow={toggleFollow}
                 toggleLike={toggleLike}
                 toggleSave={toggleSave}
+                openChatWith={openChatWith}
                 setSelectedInspectPost={setSelectedInspectPost}
                 setActiveInspectIndex={setActiveInspectIndex}
               />

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { register, login, getMe, updateProfile, logout, checkUnique, getUserProfile, changePassword } from '../controllers/auth.controller'
+import { register, login, getMe, updateProfile, logout, checkUnique, getUserProfile, changePassword, toggleFollowUser } from '../controllers/auth.controller'
 import { protect } from '../middleware/auth.middleware'
 import { registerSchema, loginDto, checkUniqueSchema, changePasswordSchema } from '../dtos/auth.dto'
 import { validate } from '../middleware/validate.middleware'
@@ -22,6 +22,7 @@ router.get('/me', protect, getMe)
 router.patch('/profile', protect, updateProfile)
 router.get('/profile/:id', protect, getUserProfile)
 router.patch('/change-password', protect, validate(changePasswordSchema), changePassword)
+router.post('/follow/:id', protect, toggleFollowUser)
 router.post('/logout', protect, logout)
 
 export default router

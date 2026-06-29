@@ -56,6 +56,18 @@ export default function SellerLayout({
   const [chatMessageInput, setChatMessageInput] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
   const [buyersHistory, setBuyersHistory] = useState<any[]>([])
+  const [wishlist, setWishlist] = useState<string[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ms_wishlist')
+    if (saved) {
+      setWishlist(JSON.parse(saved))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('ms_wishlist', JSON.stringify(wishlist))
+  }, [wishlist])
 
   useEffect(() => {
     let storedUser = localStorage.getItem('ms_user')
@@ -290,7 +302,7 @@ export default function SellerLayout({
   if (!user) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs">Loading profile...</div>
 
   return (
-    <SellerContext.Provider value={{ user, openChatWith, triggerProfileEdit: () => setEditProfileOpen(true) }}>
+    <SellerContext.Provider value={{ user, wishlist, setWishlist, openChatWith, triggerProfileEdit: () => setEditProfileOpen(true) }}>
       <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased relative">
 
         {/* 1. SHARED COMPACT TOP NAVBAR (h-14) */}

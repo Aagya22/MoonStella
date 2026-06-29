@@ -40,6 +40,29 @@ function SellerProfileContent() {
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const isOwnProfile = !profileId || String(user?.id || user?._id) === String(profileId)
+  const isFollowing = user?.following?.some((id: any) => String(id) === String(profileUser?.id || profileUser?._id)) || false
+
+  const handleToggleFollow = async () => {
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (!token || token === 'mock_token_for_preview') {
+        showSnackbar("Please log in to follow other users.", "error")
+        return
+      }
+      const targetId = profileUser?.id || profileUser?._id
+      const res = await api.post(`/api/auth/follow/${targetId}`)
+      
+      const updatedFollowing = res.data?.data?.following || res.data?.following || []
+      const updatedUser = { ...user, following: updatedFollowing }
+      localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+      
+      showSnackbar(isFollowing ? "Unfollowed successfully." : "Followed successfully!", "success")
+      window.location.reload()
+    } catch (err) {
+      console.error('Failed to toggle follow status:', err)
+      showSnackbar("Failed to update follow status.", "error")
+    }
+  }
 
   const handleDeletePost = async (postId: string) => {
     if (!window.confirm("Are you sure you want to delete this portfolio piece?")) return
@@ -231,19 +254,7 @@ function SellerProfileContent() {
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 flex flex-col gap-8 animate-fade-in">
 
-      {/* 1. Header Greeting / Title */}
-      <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
-            {isOwnProfile ? 'My Studio Profile' : 'Artisan Portfolio'}
-          </h1>
-          <p className="text-xs text-gray-550 font-medium tracking-wide mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>
-            {isOwnProfile ? 'Manage your artisan studio listings, bids, and branding details.' : `Viewing ${profileUser?.firstName} ${profileUser?.lastName}'s jewelry workshop.`}
-          </p>
-        </div>
-      </div>
-
-      {/* 2. Unified Premium Profile Details Header */}
+      {/* Unified Premium Profile Details Header */}
       <div className="relative flex flex-col w-full bg-gradient-to-b from-white to-[#FAF8F5] rounded-3xl p-8 border border-gray-150 border-t-4 border-t-[#3D0C1F] shadow-[0_15px_40px_rgba(61,12,31,0.02)] transition-all hover:shadow-[0_20px_50px_rgba(61,12,31,0.035)] duration-500 animate-fade-in">
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -284,7 +295,7 @@ function SellerProfileContent() {
             {/* Profile Info Details */}
             <div className="flex flex-col gap-2.5 text-center md:text-left">
               <div className="flex flex-col gap-1">
-                {profileUser?.studioName && (
+                {profileUser?.role === 'seller' && profileUser?.studioName && (
                   <span className="text-[9px] font-extrabold tracking-[0.2em] text-[#3D0C1F] uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {profileUser.studioName}
                   </span>
@@ -293,8 +304,8 @@ function SellerProfileContent() {
                   <h2 className="text-2xl font-bold text-gray-900 leading-none font-playfair animate-fade-in" style={{ fontFamily: 'var(--font-playfair)' }}>
                     {profileUser?.firstName} {profileUser?.lastName}
                   </h2>
-                  <span className="text-[8px] font-extrabold tracking-widest text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                    {getSpecialtyLabel(profileUser?.studioSpecialty || 'both')}
+                  <span className="text-[8px] font-extrabold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-200/80 px-2.5 py-0.5 rounded-full uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    {profileUser?.role === 'seller' ? 'Artisan' : 'Buyer'}
                   </span>
                 </div>
               </div>
@@ -309,7 +320,7 @@ function SellerProfileContent() {
                   {profileUser?.location || 'Kathmandu, Nepal'}
                 </span>
                 
-                {profileUser?.averageResponseTime && (
+                {profileUser?.role === 'seller' && profileUser?.averageResponseTime && (
                   <span className="flex items-center gap-1.5 border border-gray-200/60 bg-white px-2.5 py-1 rounded-full text-gray-500 shadow-2xs">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#3D0C1F]">
                       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -379,13 +390,26 @@ function SellerProfileContent() {
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
-                  className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-sm active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
-                >
-                  Inquire Studio
-                </button>
+                <div className="flex flex-row gap-3">
+                  <button
+                    onClick={handleToggleFollow}
+                    className={`flex-1 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 border text-center ${
+                      isFollowing
+                        ? 'bg-[#3D0C1F] text-white border-[#3D0C1F] hover:bg-[#2A0714]'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                  <button
+                    onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
+                    className="flex-1 bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-sm active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Message
+                  </button>
+                </div>
               )}
             </div>
 

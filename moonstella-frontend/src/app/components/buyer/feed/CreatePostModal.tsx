@@ -20,7 +20,7 @@ export default function CreatePostModal({
   onSubmit,
 }: CreatePostModalProps) {
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('Rings')
+  const [categories, setCategories] = useState<string[]>(['Rings'])
   const [budget, setBudget] = useState('')
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([])
   const [uploadedImageFiles, setUploadedImageFiles] = useState<File[]>([])
@@ -29,6 +29,9 @@ export default function CreatePostModal({
   const [metalsDropdownOpen, setMetalsDropdownOpen] = useState(false)
   const [gemsDropdownOpen, setGemsDropdownOpen] = useState(false)
   const [previewZoomImage, setPreviewZoomImage] = useState<string | null>(null)
+
+  const extendedMetals = [...METALS, 'Other']
+  const extendedGemstones = [...GEMSTONES, 'Other']
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -50,13 +53,19 @@ export default function CreatePostModal({
     )
   }
 
+  const toggleCategory = (cat: string) => {
+    setCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    )
+  }
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!description.trim()) return
+    if (!description.trim() || categories.length === 0) return
 
     await onSubmit({
       description,
-      category,
+      category: categories.join(', '),
       budget,
       materials: selectedMaterials,
       imageFiles: uploadedImageFiles,
@@ -318,11 +327,11 @@ export default function CreatePostModal({
               </label>
               <div className="flex flex-wrap gap-2">
                 {['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Pendants', 'Complete Set', 'Others'].map((cat) => {
-                  const isSelected = category === cat
+                  const isSelected = categories.includes(cat)
                   return (
                     <div
                       key={cat}
-                      onClick={() => setCategory(cat)}
+                      onClick={() => toggleCategory(cat)}
                       className="rounded-full border px-3 py-1.5 flex items-center justify-center cursor-pointer transition-all hover:bg-[#FAF8F5] text-center text-[10px] font-bold uppercase tracking-wider"
                       style={{
                         fontFamily: 'var(--font-montserrat)',
@@ -373,8 +382,8 @@ export default function CreatePostModal({
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   <span className="truncate">
-                    {selectedMaterials.filter((m) => METALS.includes(m)).length > 0
-                      ? selectedMaterials.filter((m) => METALS.includes(m)).join(', ')
+                    {selectedMaterials.filter((m) => extendedMetals.includes(m)).length > 0
+                      ? selectedMaterials.filter((m) => extendedMetals.includes(m)).join(', ')
                       : 'Select Metals / Base Materials'}
                   </span>
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -383,7 +392,7 @@ export default function CreatePostModal({
                 </div>
                 {metalsDropdownOpen && (
                   <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
-                    {METALS.map((metal) => {
+                    {extendedMetals.map((metal) => {
                       const isChecked = selectedMaterials.includes(metal)
                       return (
                         <label key={metal} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#FAF8F5] rounded-xl cursor-pointer select-none">
@@ -412,8 +421,8 @@ export default function CreatePostModal({
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   <span className="truncate">
-                    {selectedMaterials.filter((m) => GEMSTONES.includes(m)).length > 0
-                      ? selectedMaterials.filter((m) => GEMSTONES.includes(m)).join(', ')
+                    {selectedMaterials.filter((m) => extendedGemstones.includes(m)).length > 0
+                      ? selectedMaterials.filter((m) => extendedGemstones.includes(m)).join(', ')
                       : 'Select Gemstones'}
                   </span>
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -421,8 +430,8 @@ export default function CreatePostModal({
                   </svg>
                 </div>
                 {gemsDropdownOpen && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
-                    {GEMSTONES.map((gem) => {
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-150 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
+                    {extendedGemstones.map((gem) => {
                       const isChecked = selectedMaterials.includes(gem)
                       return (
                         <label key={gem} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#FAF8F5] rounded-xl cursor-pointer select-none">

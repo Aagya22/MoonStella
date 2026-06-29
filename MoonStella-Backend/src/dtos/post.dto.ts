@@ -6,9 +6,8 @@ export const createPostDto = z.object({
     .min(1, 'Description cannot be empty')
     .trim(),
 
-  category: z.enum(['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Pendants', 'Complete Set', 'Others'], {
+  category: z.string({
     required_error: 'Category is required',
-    invalid_type_error: 'Invalid category',
   }),
 
   budget: z.number().optional().nullable(),

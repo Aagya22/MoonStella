@@ -109,3 +109,26 @@ export const changePassword = async (userId: string, data: ChangePasswordDto) =>
 
   return { success: true }
 }
+
+export const followUser = async (currentUserId: string, targetUserId: string) => {
+  const { User } = require('../models/user.model')
+  const currentUser = await User.findById(currentUserId)
+  if (!currentUser) throw new AppError('Current user not found', 404)
+
+  const targetUser = await User.findById(targetUserId)
+  if (!targetUser) throw new AppError('Target user not found', 404)
+
+  const isFollowing = currentUser.following.some((id: any) => String(id) === String(targetUserId))
+  if (isFollowing) {
+    currentUser.following = currentUser.following.filter((id: any) => String(id) !== String(targetUserId))
+  } else {
+    currentUser.following.push(targetUserId)
+  }
+  await currentUser.save()
+
+  const followersCount = await User.countDocuments({ following: targetUserId })
+  return {
+    following: currentUser.following,
+    followersCount
+  }
+}

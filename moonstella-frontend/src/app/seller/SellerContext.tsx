@@ -4,6 +4,8 @@ import { createContext, useContext } from 'react'
 
 export interface SellerContextType {
   user: any
+  wishlist: string[]
+  setWishlist: React.Dispatch<React.SetStateAction<string[]>>
   openChatWith: (name: string) => void
   triggerProfileEdit?: () => void
 }

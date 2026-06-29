@@ -65,3 +65,10 @@ export const checkUniqueApi = async (data: {
   const response = await api.post(ENDPOINTS.auth.checkUnique, data)
   return response.data.data
 }
+
+export const toggleFollowUserApi = async (id: string, token: string): Promise<any> => {
+  const response = await api.post(`/api/auth/follow/${id}`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return response.data.data
+}

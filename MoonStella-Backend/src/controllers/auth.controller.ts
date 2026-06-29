@@ -108,3 +108,18 @@ export const changePassword = async (
     next(err)
   }
 }
+
+export const toggleFollowUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const currentUserId = String((req.user as any)._id)
+    const targetUserId = req.params.id
+    const result = await AuthService.followUser(currentUserId, targetUserId)
+    ok(res, result, 'Follow status updated successfully')
+  } catch (err) {
+    next(err)
+  }
+}

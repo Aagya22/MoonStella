@@ -46,6 +46,18 @@ export default function BuyerLayout({
   const [timelineOpen, setTimelineOpen] = useState(false)
   const [activeChat, setActiveChat] = useState<any>(null)
   const [wishlist, setWishlist] = useState<any[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ms_wishlist')
+    if (saved) {
+      setWishlist(JSON.parse(saved))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('ms_wishlist', JSON.stringify(wishlist))
+  }, [wishlist])
+
   const [followedArtisans, setFollowedArtisans] = useState<string[]>([])
 
   // Dropdown States

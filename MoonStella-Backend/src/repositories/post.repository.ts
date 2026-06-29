@@ -3,7 +3,7 @@ import { Post, IPost } from '../models/post.model'
 export const create = async (data: {
   userId: string
   description: string
-  category: 'Rings' | 'Necklaces' | 'Earrings' | 'Bracelets' | 'Pendants' | 'Complete Set' | 'Others'
+  category: string
   budget?: number | null
   price?: string | null
   materials: string[]

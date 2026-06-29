@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation'
 interface PostCardProps {
   post: any
   user: any
-  followedArtisans: string[]
-  wishlist: string[]
-  toggleFollow: (artisanName: string) => void
+  followedClients: string[]
+  toggleFollowClient: (clientName: string) => void
   toggleLike: (postId: string) => void
+  wishlist: string[]
   toggleSave: (postId: string) => void
   openChatWith: (name: string) => void
   setSelectedInspectPost: (post: any) => void
@@ -18,10 +18,10 @@ interface PostCardProps {
 export default function PostCard({
   post,
   user,
-  followedArtisans,
-  wishlist,
-  toggleFollow,
+  followedClients = [],
+  toggleFollowClient,
   toggleLike,
+  wishlist = [],
   toggleSave,
   openChatWith,
   setSelectedInspectPost,
@@ -31,11 +31,11 @@ export default function PostCard({
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const imagesList = post.images || (post.image ? [post.image] : [])
-  const isFollowing = followedArtisans.includes(post.artisanName)
-  const currentUserName = user ? `${user.firstName} ${user.lastName}` : 'Connoisseur Member'
-  const isMyPost = post.artisanName === currentUserName || String(post.userId?._id || post.userId) === String(user?.id || user?._id)
+  const isFollowing = followedClients.includes(post.artisanName)
   const isSaved = wishlist.includes(post.id)
   const savesCount = isSaved ? 1 : 0
+  const currentUserName = user ? `${user.firstName} ${user.lastName}` : ''
+  const isMyPost = post.artisanName === currentUserName || String(post.userId?._id || post.userId) === String(user?.id || user?._id)
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -55,7 +55,7 @@ export default function PostCard({
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => {
             if (post.userId) {
-              router.push(`/buyer/profile?id=${post.userId}`)
+              router.push(`/seller/profile?id=${post.userId}`)
             }
           }}
         >
@@ -78,22 +78,16 @@ export default function PostCard({
             >
               {post.artisanName}
             </h4>
-            {post.artisanTitle === 'MASTER ARTISAN' ? (
-              <span className="text-[8px] font-extrabold text-[#3D0C1F] bg-[#3D0C1F]/5 px-2.5 py-0.5 rounded tracking-widest uppercase mt-1 inline-block select-none">
-                {post.artisanTitle}
-              </span>
-            ) : (
-              <span className="text-[8px] font-extrabold text-[#3D0C1F] bg-[#3D0C1F]/5 px-2.5 py-0.5 rounded tracking-widest uppercase mt-1 inline-block select-none">
-                Client Brief
-              </span>
-            )}
+            <span className="text-[8px] font-extrabold text-[#3D0C1F] bg-[#3D0C1F]/5 px-2.5 py-0.5 rounded tracking-widest uppercase mt-1 inline-block select-none">
+              {post.artisanTitle === 'MASTER ARTISAN' ? 'Master Artisan' : 'Client Brief'}
+            </span>
           </div>
         </div>
 
-        {/* Follow Button */}
-        {!isMyPost && post.artisanTitle === 'MASTER ARTISAN' && (
+        {/* Follow Client Action */}
+        {!isMyPost && (
           <button
-            onClick={() => toggleFollow(post.artisanName)}
+            onClick={() => toggleFollowClient(post.artisanName)}
             className={`text-[9px] font-bold tracking-widest px-4 py-2 rounded-full uppercase transition-all duration-300 cursor-pointer border ${
               isFollowing
                 ? 'bg-[#3D0C1F] text-white border-[#3D0C1F]'
@@ -106,7 +100,7 @@ export default function PostCard({
         )}
       </div>
 
-      {/* Post Image Collage / Slider */}
+      {/* Sketch Collage / Slider */}
       {imagesList.length > 0 && (
         <div
           className="relative w-full aspect-[4/3] bg-[#FAF8F5] overflow-hidden group select-none border-y border-gray-50 flex items-center justify-center"
@@ -114,7 +108,7 @@ export default function PostCard({
         >
           <Image
             src={imagesList[currentIndex]}
-            alt="Bespoke jewelry design"
+            alt="Client brief sketches"
             fill
             className="object-contain transition-all duration-500 ease-out cursor-pointer"
             onClick={() => {
@@ -123,14 +117,12 @@ export default function PostCard({
             }}
           />
 
-          {/* Image Index Indicator (e.g. 1/3) */}
           {imagesList.length > 1 && (
             <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-full z-10 tracking-widest select-none">
               {currentIndex + 1}/{imagesList.length}
             </span>
           )}
 
-          {/* Navigation Chevrons */}
           {imagesList.length > 1 && (
             <>
               <button
@@ -152,7 +144,6 @@ export default function PostCard({
             </>
           )}
 
-          {/* Slider Pagination Dots Indicator */}
           {imagesList.length > 1 && (
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
               {imagesList.map((_: any, idx: number) => (
@@ -180,12 +171,12 @@ export default function PostCard({
         </div>
       )}
 
-      {/* Post Actions & Comments */}
+      {/* Post Actions & Details */}
       <div className="p-5 flex flex-col gap-4">
         {/* Category & Budget Indicator */}
         <div className="flex justify-between items-center text-[10px] font-bold tracking-widest uppercase mb-1">
-          <span className="text-[#3D0C1F] bg-[#3D0C1F]/[0.02] border border-[#3D0C1F]/10 px-2.5 py-1 rounded">
-            {post.category || 'Bespoke Request'}
+          <span className="text-[#3D0C1F] bg-[#3D0C1F]/[0.02] border border-[#3D0C1F]/10 px-2.5 py-1 rounded select-none">
+            {post.category || 'Bespoke Brief'}
           </span>
           <span className="bg-[#FAF8F5] border border-amber-250/70 text-amber-800 font-extrabold text-[9px] px-3 py-1 rounded-full normal-case tracking-normal select-none">
             {post.artisanTitle === 'MASTER ARTISAN' ? 'Price' : 'Est. Budget'}: {post.price || 'Contact'}
@@ -220,7 +211,7 @@ export default function PostCard({
             </div>
           </div>
         ) : (
-          /* Interactive Toggle Actions for Other Sellers' Posts */
+          /* Interactive Toggle Actions for Other User Posts */
           <div className="flex items-center gap-6 border-b border-gray-50 pb-4">
             <button
               onClick={() => toggleLike(post.id)}
@@ -257,11 +248,12 @@ export default function PostCard({
           </div>
         )}
 
+        {/* Materials and time chips */}
         <div className="flex flex-wrap gap-2">
           {post.materials.map((mat: string) => (
             <span
               key={mat}
-              className="text-[9px] font-bold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-100 px-2 py-0.5 rounded uppercase"
+              className="text-[9px] font-bold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-100 px-2 py-0.5 rounded uppercase select-none"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               {mat}
@@ -270,19 +262,12 @@ export default function PostCard({
           <span className="text-[10px] text-gray-400 font-semibold ml-auto">{post.time}</span>
         </div>
 
-        {/* Order Now & Inquire Now for Seller Posts viewed by Buyers */}
-        {!isMyPost && post.artisanTitle === 'MASTER ARTISAN' && (
-          <div className="flex gap-3 mt-4 border-t border-gray-50 pt-4 select-none">
+        {/* Inquire Now for Buyer Posts viewed by Sellers */}
+        {!isMyPost && post.artisanTitle !== 'MASTER ARTISAN' && (
+          <div className="mt-4 border-t border-gray-50 pt-4 select-none">
             <button
               onClick={() => openChatWith(post.artisanName)}
-              className="flex-1 bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none text-center shadow-xs"
-              style={{ fontFamily: 'var(--font-montserrat)' }}
-            >
-              Order Now
-            </button>
-            <button
-              onClick={() => openChatWith(post.artisanName)}
-              className="flex-1 bg-white border border-[#3D0C1F] text-[#3D0C1F] hover:bg-[#3D0C1F]/5 text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all text-center shadow-2xs"
+              className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none text-center shadow-xs"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               Inquire Now
