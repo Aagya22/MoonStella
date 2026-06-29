@@ -2,19 +2,70 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import SellerOnboarding from '@/app/components/seller/seller-onboarding'
+import { updateProfileApi } from '@/lib/api/auth'
+import { useSnackbar } from '@/context/SnackbarContext'
 
 export default function SellerFeedPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const { showSnackbar } = useSnackbar()
 
   useEffect(() => {
     const storedUser = localStorage.getItem('ms_user')
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      const parsed = JSON.parse(storedUser)
+      setUser(parsed)
+      if (!parsed.onboarded) {
+        setShowOnboarding(true)
+      }
     } else {
       router.push('/login')
     }
   }, [router])
+
+  const handleOnboardingComplete = async (specialty: string, responseTime: string) => {
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (token && user) {
+        const updatedUser = await updateProfileApi({
+          onboarded: true,
+          studioSpecialty: specialty,
+          averageResponseTime: responseTime
+        }, token)
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setUser(updatedUser)
+        showSnackbar('Artisan profile launched successfully!', 'success')
+      }
+    } catch (err) {
+      console.error('Failed to complete seller onboarding', err)
+      showSnackbar('Failed to launch profile in database.', 'error')
+    } finally {
+      setShowOnboarding(false)
+    }
+  }
+
+  const handleOnboardingSkip = async () => {
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (token && user) {
+        const updatedUser = await updateProfileApi({
+          onboarded: true,
+          studioSpecialty: 'both',
+          averageResponseTime: 'Within 24 Hours'
+        }, token)
+        localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+        setUser(updatedUser)
+        showSnackbar('Onboarding skipped.', 'info')
+      }
+    } catch (err) {
+      console.error('Failed to skip seller onboarding', err)
+      showSnackbar('Failed to update onboarding settings.', 'error')
+    } finally {
+      setShowOnboarding(false)
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -30,6 +81,7 @@ export default function SellerFeedPage() {
     
     localStorage.removeItem('ms_token')
     localStorage.removeItem('ms_user')
+    showSnackbar('Logged out successfully.', 'success')
     router.push('/login')
   }
 
@@ -65,6 +117,17 @@ export default function SellerFeedPage() {
           <div>
             <span className="font-semibold text-gray-700">Location:</span> {user.location || 'N/A'}
           </div>
+          {user.studioSpecialty && (
+            <div>
+              <span className="font-semibold text-gray-700">Specialty:</span>{' '}
+              <span className="capitalize">{user.studioSpecialty === 'both' ? 'Custom & Ready-made' : user.studioSpecialty}</span>
+            </div>
+          )}
+          {user.averageResponseTime && (
+            <div>
+              <span className="font-semibold text-gray-700">Response Time:</span> {user.averageResponseTime}
+            </div>
+          )}
         </div>
 
         {/* Logout Button */}
@@ -80,6 +143,13 @@ export default function SellerFeedPage() {
           Log Out
         </button>
       </div>
+
+      {showOnboarding && (
+        <SellerOnboarding
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
     </div>
   )
 }

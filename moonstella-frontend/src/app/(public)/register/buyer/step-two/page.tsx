@@ -3,10 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import Navbar from '@/app/components/navbar'
-import StepProgressBar from '@/app/components/stepprogressbar'
+import Navbar from '@/app/components/shared/navbar'
+import StepProgressBar from '@/app/components/shared/stepprogressbar'
 import { registerApi, updateProfileApi } from '@/lib/api/auth'
 import { nepalLocations, districts } from '@/lib/nepal-locations/location'
+import { useSnackbar } from '@/context/SnackbarContext'
 
 export default function BuyerRegisterStepTwo() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function BuyerRegisterStepTwo() {
   const [locality, setLocality] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { showSnackbar } = useSnackbar()
 
   useEffect(() => {
     const saved = sessionStorage.getItem('buyer_step_one')
@@ -94,9 +96,12 @@ export default function BuyerRegisterStepTwo() {
 
       sessionStorage.removeItem('buyer_step_one')
       sessionStorage.removeItem('buyer_step_two')
+      showSnackbar('Welcome to MoonStella! Your account has been registered.', 'success')
       router.push('/buyer/feed')
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Something went wrong. Please try again.')
+      const errMsg = err?.response?.data?.message || 'Something went wrong. Please try again.'
+      setError(errMsg)
+      showSnackbar(errMsg, 'error')
     } finally {
       setLoading(false)
     }

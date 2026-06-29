@@ -32,11 +32,30 @@ export const updateProfileApi = async (data: {
   avatar?: string | null
   location?: string | null
   studioName?: string | null
+  studioSpecialty?: string | null
+  averageResponseTime?: string | null
+  onboarded?: boolean
+  interests?: string[]
+  firstName?: string | null
+  lastName?: string | null
+  email?: string | null
+  phoneNumber?: string | null
+  bio?: string | null
 }, token: string): Promise<AuthResponse['user']> => {
   const response = await api.patch(ENDPOINTS.auth.profile, data, {
     headers: { Authorization: `Bearer ${token}` }
   })
   return response.data.data
+}
+
+export const changePasswordApi = async (data: {
+  oldPassword: string
+  newPassword: string
+}, token: string): Promise<any> => {
+  const response = await api.patch('/api/auth/change-password', data, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return response.data
 }
 
 export const checkUniqueApi = async (data: {

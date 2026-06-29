@@ -80,3 +80,31 @@ export const checkUnique = async (
     next(err)
   }
 }
+
+export const getUserProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.params.id
+    const result = await AuthService.getUserById(userId)
+    ok(res, result, 'Profile retrieved successfully')
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = String((req.user as any)._id)
+    const result = await AuthService.changePassword(userId, req.body)
+    ok(res, result, 'Password changed successfully')
+  } catch (err) {
+    next(err)
+  }
+}

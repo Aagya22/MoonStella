@@ -3,10 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import Navbar from '@/app/components/navbar'
-import StepProgressBar from '@/app/components/stepprogressbar'
+import Navbar from '@/app/components/shared/navbar'
+import StepProgressBar from '@/app/components/shared/stepprogressbar'
 import { registerApi, updateProfileApi } from '@/lib/api/auth'
 import { nepalLocations, districts } from '@/lib/nepal-locations/location'
+import { useSnackbar } from '@/context/SnackbarContext'
 
 export default function SellerRegisterStepTwo() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function SellerRegisterStepTwo() {
   const [locality, setLocality] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { showSnackbar } = useSnackbar()
 
   useEffect(() => {
     const saved = sessionStorage.getItem('seller_step_one')
@@ -101,9 +103,12 @@ export default function SellerRegisterStepTwo() {
 
       sessionStorage.removeItem('seller_step_one')
       sessionStorage.removeItem('seller_step_two')
+      showSnackbar('Welcome to MoonStella! Your artisan account has been registered.', 'success')
       router.push('/seller/feed')
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Something went wrong. Please try again.')
+      const errMsg = err?.response?.data?.message || 'Something went wrong. Please try again.'
+      setError(errMsg)
+      showSnackbar(errMsg, 'error')
     } finally {
       setLoading(false)
     }

@@ -54,9 +54,25 @@ export const loginDto = z.object({
     .min(1, 'Password is required'),
 })
 export const updateProfileDto=z.object({
-  avatar:z.string().optional(),
-  location:z.string().optional(),
-  studioName:z.string().optional(),
+  avatar:z.string().optional().nullable(),
+  location:z.string().optional().nullable(),
+  studioName:z.string().optional().nullable(),
+  studioSpecialty:z.string().optional().nullable(),
+  averageResponseTime:z.string().optional().nullable(),
+  onboarded:z.boolean().optional(),
+  interests:z.array(z.string()).optional(),
+  firstName:z.string().optional(),
+  lastName:z.string().optional(),
+  email:z.string().email().optional(),
+  phoneNumber:z.string().optional(),
+  bio:z.string().optional().nullable(),
+})
+
+export const changePasswordSchema = z.object({
+  oldPassword: z.string({ required_error: 'Old password is required' }),
+  newPassword: z
+    .string({ required_error: 'New password must be specified' })
+    .min(8, 'New password must be at least 8 characters'),
 })
 
 export const checkUniqueSchema = z.object({
@@ -72,3 +88,4 @@ export const checkUniqueSchema = z.object({
 export type RegisterDto = z.infer<typeof registerSchema>
 export type LoginDto = z.infer<typeof loginDto>
 export type UpdateProfileDto=z.infer<typeof updateProfileDto>
+export type ChangePasswordDto = z.infer<typeof changePasswordSchema>
