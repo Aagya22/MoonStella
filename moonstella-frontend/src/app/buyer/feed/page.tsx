@@ -94,6 +94,16 @@ export default function BuyerFeedPage() {
     }
   }, [user])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('newRequest') === 'true') {
+        setShowCreateModal(true)
+        router.replace('/buyer/feed')
+      }
+    }
+  }, [router])
+
   // Toggle Follow
   const toggleFollow = (artisanName: string) => {
     if (!setFollowedArtisans) return

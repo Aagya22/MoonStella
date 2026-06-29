@@ -25,6 +25,7 @@ export const formatUser = (user: IUser) => ({
   averageResponseTime: user.averageResponseTime,
   onboarded: user.onboarded,
   interests: user.interests,
+  following: user.following || [],
   createdAt: user.createdAt,
 })
 
@@ -85,7 +86,14 @@ export const checkUniqueness = async (email: string, phoneNumber: string) => {
 export const getUserById = async (userId: string) => {
   const user = await UserRepository.findById(userId)
   if (!user) throw new AppError('User not found', 404)
-  return formatUser(user)
+  
+  const { User } = require('../models/user.model')
+  const followersCount = await User.countDocuments({ following: userId })
+  
+  return {
+    ...formatUser(user),
+    followersCount
+  }
 }
 
 export const changePassword = async (userId: string, data: ChangePasswordDto) => {
