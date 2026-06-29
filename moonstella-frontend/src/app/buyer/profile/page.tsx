@@ -7,6 +7,7 @@ import { useBuyerContext } from '../BuyerContext'
 import api from '@/lib/api/axios'
 import { useSnackbar } from '@/context/SnackbarContext'
 import { updateProfileApi } from '@/lib/api/auth'
+import FollowModal from '@/app/components/profile/FollowModal'
 
 export default function BuyerProfilePage() {
   return (
@@ -17,7 +18,7 @@ export default function BuyerProfilePage() {
 }
 
 function BuyerProfileContent() {
-  const { user, wishlist, openChatWith, setTimelineOpen, triggerProfileEdit, followedArtisans = [] } = useBuyerContext()
+  const { user, setUser, wishlist, openChatWith, setTimelineOpen, triggerProfileEdit, followedArtisans = [] } = useBuyerContext()
   const router = useRouter()
   const { showSnackbar } = useSnackbar()
   const searchParams = useSearchParams()
@@ -39,6 +40,16 @@ function BuyerProfileContent() {
   const [avatarLoading, setAvatarLoading] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
+  const [followModalOpen, setFollowModalOpen] = useState(false)
+  const [followModalTitle, setFollowModalTitle] = useState('')
+  const [followModalList, setFollowModalList] = useState<any[]>([])
+
+  const handleOpenFollowModal = (title: string, list: any[]) => {
+    setFollowModalTitle(title)
+    setFollowModalList(list)
+    setFollowModalOpen(true)
+  }
+
   const isOwnProfile = !profileId || String(user?.id || user?._id) === String(profileId)
   const isFollowing = user?.following?.some((id: any) => String(id) === String(profileUser?.id || profileUser?._id)) || false
 
@@ -55,6 +66,7 @@ function BuyerProfileContent() {
       const updatedFollowing = res.data?.data?.following || res.data?.following || []
       const updatedUser = { ...user, following: updatedFollowing }
       localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+      setUser(updatedUser)
       
       showSnackbar(isFollowing ? "Unfollowed successfully." : "Followed successfully!", "success")
       window.location.reload()
@@ -346,22 +358,28 @@ function BuyerProfileContent() {
           {/* Right Part: Integrated Premium Stats & Action Buttons */}
           <div className="flex flex-col items-stretch gap-4 w-full md:w-96 shrink-0 select-none">
             
-            {/* Stats Box (Abit Bigger) */}
-            <div className="grid grid-cols-2 gap-4 bg-white border border-gray-150 p-5 rounded-2xl shadow-3xs">
-              <div className="flex flex-col items-center justify-center text-center p-1.5 hover:bg-[#FAF8F5]/50 rounded-xl transition-all duration-300">
-                <div className="text-2xl font-extrabold text-[#3D0C1F] font-playfair leading-none" style={{ fontFamily: 'var(--font-playfair)' }}>
-                  {profileUser?.following?.length || 0}
-                </div>
-                <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>Following</div>
-              </div>
-              
-              <div className="flex flex-col items-center justify-center text-center p-1.5 hover:bg-[#FAF8F5]/50 rounded-xl transition-all duration-300 border-l border-gray-100">
-                <div className="text-2xl font-extrabold text-[#3D0C1F] font-playfair leading-none" style={{ fontFamily: 'var(--font-playfair)' }}>
-                  {profileUser?.followersCount || 0}
-                </div>
-                <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>Followers</div>
-              </div>
-            </div>
+             {/* Stats Box (Abit Bigger) */}
+             <div className="grid grid-cols-2 gap-4 bg-white border border-gray-150 p-5 rounded-2xl shadow-3xs select-none">
+               <div 
+                 onClick={() => handleOpenFollowModal('Following', profileUser?.followingList || [])}
+                 className="flex flex-col items-center justify-center text-center p-1.5 hover:bg-[#FAF8F5]/50 rounded-xl transition-all duration-300 cursor-pointer"
+               >
+                 <div className="text-2xl font-extrabold text-[#3D0C1F] font-playfair leading-none" style={{ fontFamily: 'var(--font-playfair)' }}>
+                   {profileUser?.following?.length || 0}
+                 </div>
+                 <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>Following</div>
+               </div>
+               
+               <div 
+                 onClick={() => handleOpenFollowModal('Followers', profileUser?.followersList || [])}
+                 className="flex flex-col items-center justify-center text-center p-1.5 hover:bg-[#FAF8F5]/50 rounded-xl transition-all duration-300 border-l border-gray-100 cursor-pointer"
+               >
+                 <div className="text-2xl font-extrabold text-[#3D0C1F] font-playfair leading-none" style={{ fontFamily: 'var(--font-playfair)' }}>
+                   {profileUser?.followersCount || 0}
+                 </div>
+                 <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>Followers</div>
+               </div>
+             </div>
 
             {/* Actions Row */}
             <div className="w-full">
@@ -787,6 +805,15 @@ function BuyerProfileContent() {
           </div>
         </div>
       )}
+
+      {/* Followers & Following Lists Modal */}
+      <FollowModal
+        isOpen={followModalOpen}
+        title={followModalTitle}
+        list={followModalList}
+        onClose={() => setFollowModalOpen(false)}
+        roleContext="buyer"
+      />
 
     </div>
   )

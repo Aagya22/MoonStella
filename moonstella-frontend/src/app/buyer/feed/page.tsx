@@ -17,6 +17,7 @@ export default function BuyerFeedPage() {
   const router = useRouter()
   const {
     user,
+    setUser,
     wishlist,
     setWishlist,
     openChatWith,
@@ -105,14 +106,30 @@ export default function BuyerFeedPage() {
   }, [router])
 
   // Toggle Follow
-  const toggleFollow = (artisanName: string) => {
-    if (!setFollowedArtisans) return
-    if (followedArtisans.includes(artisanName)) {
-      setFollowedArtisans(followedArtisans.filter((name) => name !== artisanName))
-      showSnackbar(`Unfollowed ${artisanName}.`, 'info')
-    } else {
-      setFollowedArtisans([...followedArtisans, artisanName])
-      showSnackbar(`You followed ${artisanName}!`, 'success')
+  const toggleFollow = async (targetId: string) => {
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (!token || token === 'mock_token_for_preview') {
+        showSnackbar("Please log in to follow other users.", "error")
+        return
+      }
+
+      const res = await api.post(`/api/auth/follow/${targetId}`)
+      const following = res.data?.data?.following || res.data?.following || []
+
+      const updatedUser = { ...user, following }
+      localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+
+      const isNowFollowing = following.includes(targetId)
+      if (isNowFollowing) {
+        showSnackbar('You followed this user!', 'success')
+      } else {
+        showSnackbar('You unfollowed this user.', 'info')
+      }
+    } catch (err) {
+      console.error('Failed to toggle follow status:', err)
+      showSnackbar('Failed to update follow status.', 'error')
     }
   }
 

@@ -11,13 +11,13 @@ import api from '@/lib/api/axios'
 // Subcomponents
 import FeedHeader from '@/app/components/seller/feed/FeedHeader'
 import PostCard from '@/app/components/seller/feed/PostCard'
-import SuggestedSellers from '@/app/components/seller/feed/SuggestedSellers'
+import SuggestedBuyers from '@/app/components/seller/feed/SuggestedBuyers'
 import CreatePostModal from '@/app/components/seller/feed/CreatePostModal'
 import InspectPostModal from '@/app/components/seller/feed/InspectPostModal'
 
 export default function SellerFeedPage() {
   const router = useRouter()
-  const { user, wishlist = [], setWishlist, openChatWith } = useSellerContext()
+  const { user, setUser, wishlist = [], setWishlist, openChatWith } = useSellerContext()
   const [localUser, setLocalUser] = useState<any>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const { showSnackbar } = useSnackbar()
@@ -35,7 +35,7 @@ export default function SellerFeedPage() {
   // Feed Curation States
   const [selectedCuration, setSelectedCuration] = useState('latest') // 'latest', 'following', 'my-designs'
   const [posts, setPosts] = useState<any[]>([])
-  const [suggestedSellers, setSuggestedSellers] = useState<any[]>([])
+  const [suggestedBuyers, setSuggestedBuyers] = useState<any[]>([])
   const [followedClients, setFollowedClients] = useState<string[]>([])
 
   // Modal creation and zoom inspect states
@@ -93,20 +93,20 @@ export default function SellerFeedPage() {
         }))
         setPosts(formatted)
 
-        // Compile suggested active sellers (excluding ourselves)
-        const sellersMap = new Map()
+        // Compile suggested active buyers/clients (excluding ourselves)
+        const buyersMap = new Map()
         response.data.forEach((p: any) => {
-          if (p.userId && p.userId.role === 'seller') {
+          if (p.userId && p.userId.role === 'buyer') {
             if (String(p.userId._id) === String(user?.id || user?._id)) return
             const nameStr = `${p.userId.firstName} ${p.userId.lastName}`
-            sellersMap.set(p.userId._id, {
+            buyersMap.set(p.userId._id, {
               id: p.userId._id,
               name: nameStr,
               image: p.userId.avatar || null,
             })
           }
         })
-        setSuggestedSellers(Array.from(sellersMap.values()))
+        setSuggestedBuyers(Array.from(buyersMap.values()))
       } catch (err) {
         console.error('Failed to load feed posts:', err)
       }
@@ -118,17 +118,31 @@ export default function SellerFeedPage() {
   }, [user])
 
   // 3. Toggle Follow Client Action
-  const toggleFollowClient = (clientName: string) => {
-    let updatedList: string[] = []
-    if (followedClients.includes(clientName)) {
-      updatedList = followedClients.filter((name) => name !== clientName)
-      showSnackbar(`Unfollowed client ${clientName}.`, 'info')
-    } else {
-      updatedList = [...followedClients, clientName]
-      showSnackbar(`You followed client ${clientName}!`, 'success')
+  const toggleFollowClient = async (targetId: string) => {
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (!token || token === 'mock_token_for_preview') {
+        showSnackbar("Please log in to follow other users.", "error")
+        return
+      }
+
+      const res = await api.post(`/api/auth/follow/${targetId}`)
+      const following = res.data?.data?.following || res.data?.following || []
+
+      const updatedUser = { ...user, following }
+      localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+
+      const isNowFollowing = following.includes(targetId)
+      if (isNowFollowing) {
+        showSnackbar('You followed this client!', 'success')
+      } else {
+        showSnackbar('You unfollowed this client.', 'info')
+      }
+    } catch (err) {
+      console.error('Failed to toggle follow status:', err)
+      showSnackbar('Failed to update follow status.', 'error')
     }
-    setFollowedClients(updatedList)
-    localStorage.setItem('ms_followed_clients', JSON.stringify(updatedList))
   }
 
   // 4. Toggle Like Action
@@ -384,9 +398,9 @@ export default function SellerFeedPage() {
         )}
       </main>
 
-      {/* RIGHT COLUMN: SUGGESTED SELLERS */}
-      <SuggestedSellers
-        suggestedSellers={suggestedSellers}
+      {/* RIGHT COLUMN: SUGGESTED BUYERS */}
+      <SuggestedBuyers
+        suggestedBuyers={suggestedBuyers}
         openChatWith={openChatWith}
         setSelectedCuration={setSelectedCuration}
       />

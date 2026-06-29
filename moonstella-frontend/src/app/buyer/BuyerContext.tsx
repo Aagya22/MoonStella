@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react'
 
 export interface BuyerContextType {
   user: any
+  setUser: React.Dispatch<React.SetStateAction<any>>
   wishlist: any[]
   setWishlist: React.Dispatch<React.SetStateAction<any[]>>
   openChatWith: (name: string) => void

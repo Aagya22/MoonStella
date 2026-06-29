@@ -31,7 +31,7 @@ export default function PostCard({
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const imagesList = post.images || (post.image ? [post.image] : [])
-  const isFollowing = followedArtisans.includes(post.artisanName)
+  const isFollowing = user?.following?.some((id: any) => String(id) === String(post.userId)) || false
   const currentUserName = user ? `${user.firstName} ${user.lastName}` : 'Connoisseur Member'
   const isMyPost = post.artisanName === currentUserName || String(post.userId?._id || post.userId) === String(user?.id || user?._id)
   const isSaved = wishlist.includes(post.id)
@@ -93,7 +93,7 @@ export default function PostCard({
         {/* Follow Button */}
         {!isMyPost && post.artisanTitle === 'MASTER ARTISAN' && (
           <button
-            onClick={() => toggleFollow(post.artisanName)}
+            onClick={() => toggleFollow(post.userId)}
             className={`text-[9px] font-bold tracking-widest px-4 py-2 rounded-full uppercase transition-all duration-300 cursor-pointer border ${
               isFollowing
                 ? 'bg-[#3D0C1F] text-white border-[#3D0C1F]'

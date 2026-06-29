@@ -87,12 +87,33 @@ export const getUserById = async (userId: string) => {
   const user = await UserRepository.findById(userId)
   if (!user) throw new AppError('User not found', 404)
   
+  const mongoose = require('mongoose')
   const { User } = require('../models/user.model')
-  const followersCount = await User.countDocuments({ following: userId })
+  const userObjectId = new mongoose.Types.ObjectId(userId)
+  const followersCount = await User.countDocuments({ following: userObjectId })
   
+  const followersList = await User.find({ following: userObjectId }).select('_id firstName lastName avatar role location')
+  const followingList = await User.find({ _id: { $in: user.following || [] } }).select('_id firstName lastName avatar role location')
+
   return {
     ...formatUser(user),
-    followersCount
+    followersCount,
+    followersList: followersList.map((u: any) => ({
+      id: u._id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      avatar: u.avatar,
+      role: u.role,
+      location: u.location
+    })),
+    followingList: followingList.map((u: any) => ({
+      id: u._id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      avatar: u.avatar,
+      role: u.role,
+      location: u.location
+    }))
   }
 }
 
@@ -111,6 +132,7 @@ export const changePassword = async (userId: string, data: ChangePasswordDto) =>
 }
 
 export const followUser = async (currentUserId: string, targetUserId: string) => {
+  const mongoose = require('mongoose')
   const { User } = require('../models/user.model')
   const currentUser = await User.findById(currentUserId)
   if (!currentUser) throw new AppError('Current user not found', 404)
@@ -118,17 +140,28 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
   const targetUser = await User.findById(targetUserId)
   if (!targetUser) throw new AppError('Target user not found', 404)
 
+  const targetObjectId = new mongoose.Types.ObjectId(targetUserId)
   const isFollowing = currentUser.following.some((id: any) => String(id) === String(targetUserId))
   if (isFollowing) {
     currentUser.following = currentUser.following.filter((id: any) => String(id) !== String(targetUserId))
   } else {
-    currentUser.following.push(targetUserId)
+    currentUser.following.push(targetObjectId as any)
   }
   await currentUser.save()
 
-  const followersCount = await User.countDocuments({ following: targetUserId })
+  const followersCount = await User.countDocuments({ following: targetObjectId })
+  const followersList = await User.find({ following: targetObjectId }).select('_id firstName lastName avatar role location')
+
   return {
     following: currentUser.following,
-    followersCount
+    followersCount,
+    followersList: followersList.map((u: any) => ({
+      id: u._id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      avatar: u.avatar,
+      role: u.role,
+      location: u.location
+    }))
   }
 }
