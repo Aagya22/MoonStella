@@ -13,6 +13,7 @@ interface PostCardProps {
   openChatWith: (name: string) => void
   setSelectedInspectPost: (post: any) => void
   setActiveInspectIndex: (index: number) => void
+  onShowLikes?: (likesList: any[]) => void
 }
 
 export default function PostCard({
@@ -26,6 +27,7 @@ export default function PostCard({
   openChatWith,
   setSelectedInspectPost,
   setActiveInspectIndex,
+  onShowLikes,
 }: PostCardProps) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -200,14 +202,18 @@ export default function PostCard({
         {isMyPost ? (
           /* Read-Only Stats for User's Own Post */
           <div className="flex items-center gap-6 border-b border-gray-50 pb-4">
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 tracking-wide select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+            <div 
+              onClick={() => onShowLikes && onShowLikes(post.likesList || [])}
+              className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer select-none" 
+              style={{ fontFamily: 'var(--font-montserrat)' }}
+            >
               <svg
                 width="18" height="18" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" strokeWidth="2.2"
               >
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
-              <span>{post.likes} {post.likes === 1 ? 'Like' : 'Likes'}</span>
+              <span className="hover:underline">{post.likes} {post.likes === 1 ? 'Like' : 'Likes'}</span>
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 tracking-wide select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
               <svg
@@ -222,22 +228,28 @@ export default function PostCard({
         ) : (
           /* Interactive Toggle Actions for Other Sellers' Posts */
           <div className="flex items-center gap-6 border-b border-gray-50 pb-4">
-            <button
-              onClick={() => toggleLike(post.id)}
-              className={`flex items-center gap-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer border-none bg-transparent ${
-                post.liked ? 'text-red-500 hover:text-red-650' : 'text-gray-500 hover:text-red-500'
-              }`}
-              style={{ fontFamily: 'var(--font-montserrat)' }}
-            >
-              <svg
-                width="18" height="18" viewBox="0 0 24 24"
-                fill={post.liked ? 'currentColor' : 'none'}
-                stroke="currentColor" strokeWidth="2.2"
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-wide">
+              <button
+                onClick={() => toggleLike(post.id)}
+                className={`flex items-center hover:scale-110 transition-transform cursor-pointer border-none bg-transparent ${
+                  post.liked ? 'text-red-500 hover:text-red-650' : 'text-gray-500 hover:text-red-500'
+                }`}
               >
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-              <span>{post.likes} {post.likes === 1 ? 'Like' : 'Likes'}</span>
-            </button>
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24"
+                  fill={post.liked ? 'currentColor' : 'none'}
+                  stroke="currentColor" strokeWidth="2.2"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </button>
+              <span 
+                className="text-gray-500 select-none"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                {post.likes} {post.likes === 1 ? 'Like' : 'Likes'}
+              </span>
+            </div>
             <button
               onClick={() => toggleSave(post.id)}
               className={`flex items-center gap-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer border-none bg-transparent ${

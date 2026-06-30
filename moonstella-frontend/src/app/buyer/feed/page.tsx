@@ -12,6 +12,7 @@ import PostCard from '@/app/components/buyer/feed/PostCard'
 import SuggestedSellers from '@/app/components/buyer/feed/SuggestedSellers'
 import CreatePostModal from '@/app/components/buyer/feed/CreatePostModal'
 import InspectPostModal from '@/app/components/buyer/feed/InspectPostModal'
+import FollowModal from '@/app/components/profile/FollowModal'
 
 export default function BuyerFeedPage() {
   const router = useRouter()
@@ -37,6 +38,15 @@ export default function BuyerFeedPage() {
   const [selectedInspectPost, setSelectedInspectPost] = useState<any>(null)
   const [activeInspectIndex, setActiveInspectIndex] = useState(0)
 
+  // Likes Modal States
+  const [likesModalOpen, setLikesModalOpen] = useState(false)
+  const [likesModalList, setLikesModalList] = useState<any[]>([])
+
+  const handleShowLikes = (likesList: any[]) => {
+    setLikesModalList(likesList)
+    setLikesModalOpen(true)
+  }
+
   // Load Posts & Compile Suggested Sellers
   useEffect(() => {
     const fetchPosts = async () => {
@@ -60,6 +70,14 @@ export default function BuyerFeedPage() {
           liked: p.likes?.some(
             (like: any) => String(like._id || like) === String(user?.id || user?._id || '')
           ),
+          likesList: p.likes?.map((u: any) => ({
+            id: u._id || u,
+            firstName: u.firstName || 'Anonymous',
+            lastName: u.lastName || '',
+            avatar: u.avatar || null,
+            role: u.role || 'buyer',
+            location: u.location || 'Nepal'
+          })) || [],
           comments: p.comments || [],
           time: new Date(p.createdAt).toLocaleDateString(),
           rawDate: p.createdAt,
@@ -174,6 +192,14 @@ export default function BuyerFeedPage() {
               liked: p.likes?.some(
                 (like: any) => String(like._id || like) === String(user?.id || user?._id || '')
               ),
+              likesList: p.likes?.map((u: any) => ({
+                id: u._id || u,
+                firstName: u.firstName || 'Anonymous',
+                lastName: u.lastName || '',
+                avatar: u.avatar || null,
+                role: u.role || 'buyer',
+                location: u.location || 'Nepal'
+              })) || [],
             }
           }
           return post
@@ -318,7 +344,8 @@ export default function BuyerFeedPage() {
 
     // 3. Following Feed filter logic shows ONLY following sellers
     if (selectedCuration === 'following') {
-      if (!followedArtisans.includes(post.artisanName)) return false
+      const isFollowingArtisan = user?.following?.some((id: any) => String(id) === String(post.userId))
+      if (!isFollowingArtisan) return false
     }
 
     // 4. Material tags filter
@@ -400,6 +427,7 @@ export default function BuyerFeedPage() {
                 openChatWith={openChatWith}
                 setSelectedInspectPost={setSelectedInspectPost}
                 setActiveInspectIndex={setActiveInspectIndex}
+                onShowLikes={handleShowLikes}
               />
             ))
           )}
@@ -435,6 +463,14 @@ export default function BuyerFeedPage() {
           handleUpdatePost={handleUpdatePost}
         />
       )}
+      {/* 6. LIKES MODAL */}
+      <FollowModal
+        isOpen={likesModalOpen}
+        title="Liked By"
+        list={likesModalList}
+        onClose={() => setLikesModalOpen(false)}
+        roleContext="buyer"
+      />
 
     </div>
   )

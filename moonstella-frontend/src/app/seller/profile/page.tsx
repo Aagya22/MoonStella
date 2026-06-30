@@ -18,7 +18,7 @@ export default function SellerProfilePage() {
 }
 
 function SellerProfileContent() {
-  const { user, setUser, openChatWith, triggerProfileEdit } = useSellerContext()
+  const { user, setUser, openChatWith, triggerProfileEdit, wishlist = [] } = useSellerContext()
   const router = useRouter()
   const { showSnackbar } = useSnackbar()
   const searchParams = useSearchParams()
@@ -44,6 +44,9 @@ function SellerProfileContent() {
   const [followModalTitle, setFollowModalTitle] = useState('')
   const [followModalList, setFollowModalList] = useState<any[]>([])
 
+  const [likesModalOpen, setLikesModalOpen] = useState(false)
+  const [likesModalList, setLikesModalList] = useState<any[]>([])
+
   const handleOpenFollowModal = (title: string, list: any[]) => {
     setFollowModalTitle(title)
     setFollowModalList(list)
@@ -62,12 +65,12 @@ function SellerProfileContent() {
       }
       const targetId = profileUser?.id || profileUser?._id
       const res = await api.post(`/api/auth/follow/${targetId}`)
-      
+
       const updatedFollowing = res.data?.data?.following || res.data?.following || []
       const updatedUser = { ...user, following: updatedFollowing }
       localStorage.setItem('ms_user', JSON.stringify(updatedUser))
       setUser(updatedUser)
-      
+
       showSnackbar(isFollowing ? "Unfollowed successfully." : "Followed successfully!", "success")
       window.location.reload()
     } catch (err) {
@@ -242,6 +245,14 @@ function SellerProfileContent() {
             materials: p.materials?.length > 0 ? p.materials : ['Bespoke Custom'],
             likes: p.likes?.length || 0,
             liked: p.likes?.some((like: any) => String(like._id || like) === String(user?.id || user?._id || '')),
+            likesList: p.likes?.map((u: any) => ({
+              id: u._id || u,
+              firstName: u.firstName || 'Anonymous',
+              lastName: u.lastName || '',
+              avatar: u.avatar || null,
+              role: u.role || 'buyer',
+              location: u.location || 'Nepal'
+            })) || [],
             comments: p.comments || [],
             time: new Date(p.createdAt).toLocaleDateString()
           }))
@@ -266,38 +277,45 @@ function SellerProfileContent() {
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 flex flex-col gap-8 animate-fade-in">
 
-      {/* Unified Premium Profile Details Header */}
-      <div className="relative flex flex-col w-full bg-gradient-to-b from-white to-[#FAF8F5] rounded-3xl p-8 border border-gray-150 border-t-4 border-t-[#3D0C1F] shadow-[0_15px_40px_rgba(61,12,31,0.02)] transition-all hover:shadow-[0_20px_50px_rgba(61,12,31,0.035)] duration-500 animate-fade-in">
-        
+      {/* Unified Premium Profile Details Header — Glassmorphism */}
+      <div className="relative flex flex-col w-full bg-gradient-to-br from-[#3D0C1F]/90 via-[#2E0715]/85 to-[#3D0C1F]/90 backdrop-blur-xl text-[#FAF8F5] rounded-3xl p-8 shadow-[0_15px_45px_rgba(61,12,31,0.15)] transition-all hover:shadow-[0_20px_60px_rgba(61,12,31,0.22)] duration-500 animate-fade-in border border-white/[0.06] overflow-hidden">
+        {/* Glass light effects */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute -top-20 -left-20 w-60 h-60 bg-[#E9D7C3]/[0.04] rounded-full blur-3xl" />
+          <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-[#E9D7C3]/[0.03] rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+        </div>
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          
+
           <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
             {/* Avatar container */}
-            <div 
+            <div
               className={`relative ${isOwnProfile ? 'cursor-pointer group' : ''}`}
               onClick={isOwnProfile ? () => setAvatarModalOpen(true) : undefined}
             >
-              <div className="w-28 h-28 rounded-full overflow-hidden border border-gray-200 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-3xl select-none relative transition-transform duration-300 group-hover:scale-102 shadow-sm animate-scale-up">
+              <div className="w-28 h-28 rounded-full overflow-hidden border border-[#FAF8F5]/10 bg-[#E9D7C3] text-[#3D0C1F] flex items-center justify-center font-extrabold text-3xl select-none relative transition-transform duration-300 group-hover:scale-102 shadow-sm animate-scale-up">
                 {profileUser?.avatar ? (
-                  <Image
-                    src={profileUser.avatar}
-                    alt="Artisan Profile"
-                    fill
-                    className="object-cover"
-                  />
+                  <Image src={profileUser.avatar} alt={`${profileUser.firstName} ${profileUser.lastName}`} fill className="object-cover object-center" />
+                ) : profileUser?.firstName && profileUser?.lastName ? (
+                  <span>{profileUser.firstName[0].toUpperCase()}{profileUser.lastName[0].toUpperCase()}</span>
                 ) : (
                   <span>{profileUser?.firstName ? profileUser.firstName[0].toUpperCase() : 'A'}</span>
                 )}
                 {isOwnProfile && (
                   <div className="absolute inset-0 bg-black/45 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
                     </svg>
                   </div>
                 )}
               </div>
-              <div className="absolute bottom-1 right-1 bg-[#3D0C1F] text-white p-1.5 rounded-full border-2 border-white flex items-center justify-center shadow-md select-none pointer-events-none">
+              <div
+                title="Verified Master Artisan"
+                className="absolute bottom-1 right-1 bg-[#2E0715] text-[#E9D7C3] p-1.5 rounded-full border-2 border-[#3D0C1F] flex items-center justify-center shadow-md select-none cursor-help"
+              >
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="text-[#E9D7C3]">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -308,41 +326,41 @@ function SellerProfileContent() {
             <div className="flex flex-col gap-2.5 text-center md:text-left">
               <div className="flex flex-col gap-1">
                 {profileUser?.role === 'seller' && profileUser?.studioName && (
-                  <span className="text-[9px] font-extrabold tracking-[0.2em] text-[#3D0C1F] uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  <span className="text-[9px] font-extrabold tracking-[0.2em] text-[#E9D7C3] uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {profileUser.studioName}
                   </span>
                 )}
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                  <h2 className="text-2xl font-bold text-gray-900 leading-none font-playfair animate-fade-in" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  <h2 className="text-2xl font-bold text-[#E9D7C3] leading-none font-playfair animate-fade-in" style={{ fontFamily: 'var(--font-playfair)' }}>
                     {profileUser?.firstName} {profileUser?.lastName}
                   </h2>
-                  <span className="text-[8px] font-extrabold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-200/80 px-2.5 py-0.5 rounded-full uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  <span className="text-[8px] font-extrabold tracking-widest text-[#E9D7C3] bg-white/15 px-2.5 py-0.5 rounded-full uppercase select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {profileUser?.role === 'seller' ? 'Artisan' : 'Buyer'}
                   </span>
                 </div>
               </div>
 
               {/* Location and Date Chips */}
-              <div className="flex flex-wrap justify-center md:justify-start gap-2.5 items-center text-[9px] font-bold text-gray-405 uppercase tracking-widest select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                <span className="flex items-center gap-1.5 border border-gray-200/60 bg-white px-2.5 py-1 rounded-full text-gray-500 shadow-2xs">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#3D0C1F]">
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 items-center text-[10px] font-medium tracking-wide select-none text-[#FAF8F5]/70" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                <span className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#E9D7C3]">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
                   {profileUser?.location || 'Kathmandu, Nepal'}
                 </span>
-                
+
                 {profileUser?.role === 'seller' && profileUser?.averageResponseTime && (
-                  <span className="flex items-center gap-1.5 border border-gray-200/60 bg-white px-2.5 py-1 rounded-full text-gray-500 shadow-2xs">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#3D0C1F]">
+                  <span className="flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#E9D7C3]">
                       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                     </svg>
                     Responds: {profileUser.averageResponseTime}
                   </span>
                 )}
 
-                <span className="flex items-center gap-1.5 border border-gray-200/60 bg-white px-2.5 py-1 rounded-full text-gray-500 shadow-2xs">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#3D0C1F]">
+                <span className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#E9D7C3]">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
@@ -350,167 +368,215 @@ function SellerProfileContent() {
                 </span>
               </div>
 
-              {/* Bio styled as a quote */}
+              {/* Bio quote on its own line below, styled cleanly */}
               {profileUser?.bio && (
-                <div className="relative mt-2 pl-4 border-l-2 border-[#3D0C1F]/30 max-w-lg select-none animate-fade-in text-left">
-                  <p className="text-[11px] text-gray-550 font-medium italic leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                    "{profileUser.bio}"
-                  </p>
-                </div>
+                <p className="text-xs text-[#FAF8F5]/85 font-playfair italic mt-3 select-none leading-relaxed" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  "{profileUser.bio}"
+                </p>
               )}
             </div>
 
           </div>
 
-          {/* Right Part: Integrated Premium Stats & Action Buttons */}
-          <div className="flex flex-col items-stretch gap-4 w-full md:w-96 shrink-0 select-none">
-            
-             {/* Stats Box (Abit Bigger) */}
-             <div className="grid grid-cols-2 gap-4 bg-white border border-gray-150 p-5 rounded-2xl shadow-3xs select-none">
-               <div 
-                 onClick={() => handleOpenFollowModal('Followers', profileUser?.followersList || [])}
-                 className="flex flex-col items-center justify-center text-center p-1.5 hover:bg-[#FAF8F5]/50 rounded-xl transition-all duration-300 cursor-pointer"
-               >
-                 <div className="text-2xl font-extrabold text-[#3D0C1F] font-playfair leading-none" style={{ fontFamily: 'var(--font-playfair)' }}>
-                   {profileUser?.followersCount || 0}
-                 </div>
-                 <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>Followers</div>
-               </div>
-               
-               <div 
-                 onClick={() => handleOpenFollowModal('Following', profileUser?.followingList || [])}
-                 className="flex flex-col items-center justify-center text-center p-1.5 hover:bg-[#FAF8F5]/50 rounded-xl transition-all duration-300 border-l border-gray-100 cursor-pointer"
-               >
-                 <div className="text-2xl font-extrabold text-[#3D0C1F] font-playfair leading-none" style={{ fontFamily: 'var(--font-playfair)' }}>
-                   {profileUser?.following?.length || 0}
-                 </div>
-                 <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5" style={{ fontFamily: 'var(--font-montserrat)' }}>Following</div>
-               </div>
-             </div>
-
-            {/* Actions Row */}
-            <div className="w-full">
-              {isOwnProfile ? (
-                <div className="flex flex-row gap-3">
-                  <button
-                    onClick={triggerProfileEdit}
-                    className="flex-1 bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-sm active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={() => router.push('/seller/feed')}
-                    className="flex-1 bg-white border border-[#3D0C1F] text-[#3D0C1F] hover:bg-[#3D0C1F]/5 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 text-center shadow-xs transform hover:-translate-y-[1px]"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    Add Portfolio
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-row gap-3">
-                  <button
-                    onClick={handleToggleFollow}
-                    className={`flex-1 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 border text-center ${
-                      isFollowing
-                        ? 'bg-[#3D0C1F] text-white border-[#3D0C1F] hover:bg-[#2A0714]'
-                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+          {/* Right Part: Action Buttons */}
+          <div className="flex flex-col gap-3 w-full md:w-80 shrink-0 select-none">
+            {isOwnProfile ? (
+              <div className="flex flex-row gap-3 w-full">
+                <button
+                  onClick={triggerProfileEdit}
+                  className="flex-1 bg-[#E9D7C3] hover:bg-white text-[#3D0C1F] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs transform hover:-translate-y-[1px] active:scale-98 border-none text-center"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => router.push('/seller/feed')}
+                  className="flex-1 bg-transparent border border-[#E9D7C3] text-[#E9D7C3] hover:bg-white/10 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 text-center transform hover:-translate-y-[1px]"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Add Portfolio
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-row gap-3 w-full">
+                <button
+                  onClick={handleToggleFollow}
+                  className={`flex-1 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 text-center border ${isFollowing
+                    ? 'bg-transparent text-white border-white/30 hover:bg-white/10'
+                    : 'bg-[#E9D7C3] text-[#3D0C1F] border-[#E9D7C3] hover:bg-white'
                     }`}
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </button>
-                  <button
-                    onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
-                    className="flex-1 bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-sm active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    Message
-                  </button>
-                </div>
-              )}
-            </div>
-
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
+                <button
+                  onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
+                  className="w-full bg-[#E9D7C3] hover:bg-white text-[#3D0C1F] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Message
+                </button>
+              </div>
+            )}
           </div>
 
+        </div>
+
+        {/* Stats Row Divided Strip */}
+        <div className="flex gap-8 items-center pt-5 border-t border-white/10 mt-6 select-none w-full">
+          <div
+            onClick={() => handleOpenFollowModal('Following', profileUser?.followingList || [])}
+            className="flex items-baseline gap-1.5 cursor-pointer hover:underline"
+          >
+            <span className="text-lg font-black text-[#E9D7C3] font-playfair">{profileUser?.following?.length || 0}</span>
+            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Following</span>
+          </div>
+
+          <div
+            onClick={() => handleOpenFollowModal('Followers', profileUser?.followersList || [])}
+            className="flex items-baseline gap-1.5 cursor-pointer hover:underline border-l border-white/10 pl-6"
+          >
+            <span className="text-lg font-black text-[#E9D7C3] font-playfair">{profileUser?.followersCount || 0}</span>
+            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Followers</span>
+          </div>
+
+          <div className="flex items-baseline gap-1.5 border-l border-white/10 pl-6">
+            <span className="text-lg font-black text-[#E9D7C3] font-playfair">{posts.length}</span>
+            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Designs</span>
+          </div>
         </div>
 
       </div>
 
-      {/* 3. Portfolio Collection Grid Section (Full-Width) */}
-      <div className="flex flex-col gap-6 w-full mt-6">
-        <div className="border-b border-gray-100 pb-3 flex justify-between items-center select-none">
-          <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
+      <div className="flex flex-col gap-6 w-full mt-10 animate-fade-in">
+        {/* Section divider/transition rhythm */}
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4"></div>
+
+        <div className="flex justify-between items-center select-none w-full mb-2">
+          <h3 className="text-xl font-bold font-playfair text-[#3D0C1F] tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
             {isOwnProfile ? 'My Crafting Portfolio' : 'Bespoke Studio Collection'}
           </h3>
-          <span className="text-[9px] font-bold text-gray-400 bg-gray-50 border border-gray-150 px-2.5 py-0.5 rounded">
+          <span className="text-[9px] font-bold text-[#3D0C1F] bg-[#3D0C1F]/5 border border-[#3D0C1F]/15 px-3 py-1 rounded-full uppercase tracking-wider animate-fade-in" style={{ fontFamily: 'var(--font-montserrat)' }}>
             {posts.length} {posts.length === 1 ? 'Design' : 'Designs'}
           </span>
         </div>
 
-        {posts.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2 md:gap-4 animate-scale-up">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                onClick={() => {
-                  setSelectedInspectPost(post)
-                  setActiveInspectIndex(0)
-                }}
-                className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group bg-[#FAF8F5] border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md"
-              >
-                {post.image ? (
-                  <Image
-                    src={post.image}
-                    alt="Crafting piece"
-                    fill
-                    className="object-contain p-2 transition-transform duration-500 ease-out group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-[#FAF8F5] p-5 flex flex-col justify-between border border-gray-150 rounded-2xl select-none group-hover:bg-[#FAF8F5]/80 transition-colors">
-                    <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.category}</span>
-                    <p className="text-[10px] text-gray-650 font-medium leading-relaxed line-clamp-4 my-auto" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.description}</p>
-                    <span className="text-[9px] font-extrabold text-[#3D0C1F] tracking-wide" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.price}</span>
-                  </div>
-                )}
+        {(posts.length > 0) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto">
+            {posts.map((post) => {
+              return (
+                <div
+                  key={post.id}
+                  onClick={() => {
+                    setSelectedInspectPost(post)
+                    setActiveInspectIndex(0)
+                    setIsEditing(false)
+                    setMenuOpen(false)
+                  }}
+                  className="flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden cursor-pointer shadow-sm transition-all duration-300 group hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-gray-200 hover:-translate-y-0.5"
+                >
+                  {/* Standardized image container — no border-bottom, centered crop */}
+                  <div className="relative aspect-[16/10] bg-[#FAF8F5] overflow-hidden">
+                    {post.image ? (
+                      <Image
+                        src={post.image}
+                        alt={post.category}
+                        fill
+                        className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-[#3D0C1F]/10">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="9" cy="9" r="2" />
+                          <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
+                      </div>
+                    )}
 
-                {post.images && post.images.length > 1 && (
-                  <div className="absolute top-2.5 right-2.5 bg-black/40 backdrop-blur-md p-1 rounded-lg text-white z-10">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <rect x="3" y="3" width="13" height="13" rx="1.5" />
-                      <path d="M8 8H18V18" />
-                    </svg>
+                    {/* Photo count indicator — consistent on all multi-image cards */}
+                    {post.images && post.images.length > 1 && (
+                      <div
+                        title={`${post.images.length} photos attached`}
+                        className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full text-white z-10 flex items-center gap-1 select-none"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <rect x="3" y="3" width="13" height="13" rx="1.5" />
+                          <path d="M8 8H19a1 1 0 0 1 1 1V19" />
+                        </svg>
+                        <span className="text-[8px] font-bold tracking-wide" style={{ fontFamily: 'var(--font-montserrat)' }}>{post.images.length}</span>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-6 text-white text-xs font-bold">
-                  <span className="flex items-center gap-1.5">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-[#E9D7C3]">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                    {post.likes}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-[#E9D7C3]">
-                      <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z" />
-                    </svg>
-                    {post.comments.length}
-                  </span>
+                  {/* Card content */}
+                  <div className="p-5 flex-1 flex flex-col gap-2.5">
+                    {/* Category pill */}
+                    <div className="flex items-center">
+                      {(() => {
+                        const normCat = (post.category || '').toLowerCase()
+                        let pillStyles = 'bg-amber-50 text-amber-700 border-amber-200/60'
+                        if (normCat.includes('earring')) {
+                          pillStyles = 'bg-pink-50 text-pink-700 border-pink-200/60'
+                        } else if (normCat.includes('ring')) {
+                          pillStyles = 'bg-purple-50 text-purple-700 border-purple-200/60'
+                        } else if (normCat.includes('pendant') || normCat.includes('necklace')) {
+                          pillStyles = 'bg-rose-50 text-rose-700 border-rose-200/60'
+                        } else if (normCat.includes('bracelet')) {
+                          pillStyles = 'bg-cyan-50 text-cyan-700 border-cyan-200/60'
+                        }
+                        return (
+                          <span className={`text-[8px] font-extrabold tracking-widest border px-2.5 py-1 rounded-full uppercase ${pillStyles}`} style={{ fontFamily: 'var(--font-montserrat)' }}>
+                            {post.category}
+                          </span>
+                        )
+                      })()}
+                    </div>
+
+                    {/* Title and description */}
+                    {(() => {
+                      const descLines = post.description.split('\n')
+                      const cardTitle = descLines[0]
+                      const cardBody = descLines.slice(1).join('\n') || post.description
+                      return (
+                        <>
+                          <h4 className="text-sm font-bold text-[#3D0C1F] line-clamp-1 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
+                            {cardTitle}
+                          </h4>
+                          <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                            {cardBody}
+                          </p>
+                        </>
+                      )
+                    })()}
+
+                    {/* Footer — date (muted gray left), price (bold dark right) */}
+                    <div className="border-t border-gray-100 pt-3 mt-auto flex justify-between items-center">
+                      <span className="text-[10px] text-gray-400 font-medium tracking-wide" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                        {post.time}
+                      </span>
+                      <span className="text-[11px] font-bold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                        {post.price}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white border border-dashed border-gray-200 rounded-3xl flex flex-col items-center gap-4 shadow-sm select-none">
-            <div className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center text-gray-300 border border-gray-50 shadow-inner">
+          <div className="text-center py-16 bg-[#FAF8F5]/30 border border-dashed border-gray-200 rounded-3xl flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-gray-300 border border-gray-100">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
               </svg>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-gray-800" style={{ fontFamily: 'var(--font-montserrat)' }}>No Portfolio Items Shared</h4>
-              <p className="text-[10px] text-gray-400 mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>Your bespoke studio jewelry creations will appear in a grid format here.</p>
+              <h4 className="text-xs font-bold text-gray-800" style={{ fontFamily: 'var(--font-montserrat)' }}>No Designs Shared Yet</h4>
+              <p className="text-[10px] text-gray-400 mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>Your bespoke designs will appear in a clean grid layout format here.</p>
             </div>
           </div>
         )}
@@ -544,7 +610,7 @@ function SellerProfileContent() {
               )}
 
               <button
-                onClick={() => setSelectedInspectPost(null)}
+                onClick={() => { setSelectedInspectPost(null); setIsEditing(false); setMenuOpen(false) }}
                 className="absolute top-4 left-4 text-white bg-black/40 p-2.5 rounded-full hover:bg-black/60 cursor-pointer md:hidden"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -611,7 +677,7 @@ function SellerProfileContent() {
                       </div>
                     )}
 
-                    <button onClick={() => setSelectedInspectPost(null)} className="text-gray-450 hover:text-gray-650 cursor-pointer hidden md:block border-none bg-transparent">
+                    <button onClick={() => { setSelectedInspectPost(null); setIsEditing(false); setMenuOpen(false) }} className="text-gray-450 hover:text-gray-650 cursor-pointer hidden md:block border-none bg-transparent">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
@@ -665,10 +731,34 @@ function SellerProfileContent() {
                         ))}
                       </div>
 
-                      <p className="text-xs text-gray-600 font-medium leading-relaxed font-sans">{selectedInspectPost.description}</p>
+                      <p className="text-xs text-gray-600 font-medium leading-relaxed font-sans mt-3">{selectedInspectPost.description}</p>
                     </>
                   )}
                 </div>
+
+                {!isEditing && (
+                  <div className="border-t border-gray-100 pt-4 mt-6 flex justify-between items-center text-xs font-semibold text-gray-500 pb-1">
+                    <div
+                      onClick={isOwnProfile ? () => {
+                        setLikesModalList(selectedInspectPost.likesList || [])
+                        setLikesModalOpen(true)
+                      } : undefined}
+                      className={`flex items-center gap-2 select-none ${isOwnProfile ? 'cursor-pointer hover:text-gray-700 transition-colors' : ''}`}
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-400">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      </svg>
+                      <span className={isOwnProfile ? 'hover:underline' : ''}>{selectedInspectPost.likes} {selectedInspectPost.likes === 1 ? 'Like' : 'Likes'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-400">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <span>{wishlist.includes(selectedInspectPost.id) ? 1 : 0} Saves</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {!isEditing && (
@@ -779,6 +869,15 @@ function SellerProfileContent() {
         title={followModalTitle}
         list={followModalList}
         onClose={() => setFollowModalOpen(false)}
+        roleContext="seller"
+      />
+
+      {/* Likes Modal */}
+      <FollowModal
+        isOpen={likesModalOpen}
+        title="Liked By"
+        list={likesModalList}
+        onClose={() => setLikesModalOpen(false)}
         roleContext="seller"
       />
 

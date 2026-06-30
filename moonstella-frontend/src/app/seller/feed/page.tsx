@@ -14,6 +14,7 @@ import PostCard from '@/app/components/seller/feed/PostCard'
 import SuggestedBuyers from '@/app/components/seller/feed/SuggestedBuyers'
 import CreatePostModal from '@/app/components/seller/feed/CreatePostModal'
 import InspectPostModal from '@/app/components/seller/feed/InspectPostModal'
+import FollowModal from '@/app/components/profile/FollowModal'
 
 export default function SellerFeedPage() {
   const router = useRouter()
@@ -42,6 +43,15 @@ export default function SellerFeedPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedInspectPost, setSelectedInspectPost] = useState<any>(null)
   const [activeInspectIndex, setActiveInspectIndex] = useState(0)
+
+  // Likes Modal States
+  const [likesModalOpen, setLikesModalOpen] = useState(false)
+  const [likesModalList, setLikesModalList] = useState<any[]>([])
+
+  const handleShowLikes = (likesList: any[]) => {
+    setLikesModalList(likesList)
+    setLikesModalOpen(true)
+  }
 
   // 1. Initial Authentication & Onboarding Checks
   useEffect(() => {
@@ -87,6 +97,14 @@ export default function SellerFeedPage() {
           liked: p.likes?.some(
             (like: any) => String(like._id || like) === String(user?.id || user?._id || '')
           ),
+          likesList: p.likes?.map((u: any) => ({
+            id: u._id || u,
+            firstName: u.firstName || 'Anonymous',
+            lastName: u.lastName || '',
+            avatar: u.avatar || null,
+            role: u.role || 'buyer',
+            location: u.location || 'Nepal'
+          })) || [],
           comments: p.comments || [],
           time: new Date(p.createdAt).toLocaleDateString(),
           rawDate: p.createdAt,
@@ -175,6 +193,14 @@ export default function SellerFeedPage() {
               liked: p.likes?.some(
                 (like: any) => String(like._id || like) === String(user?.id || user?._id || '')
               ),
+              likesList: p.likes?.map((u: any) => ({
+                id: u._id || u,
+                firstName: u.firstName || 'Anonymous',
+                lastName: u.lastName || '',
+                avatar: u.avatar || null,
+                role: u.role || 'buyer',
+                location: u.location || 'Nepal'
+              })) || [],
             }
           }
           return post
@@ -302,7 +328,7 @@ export default function SellerFeedPage() {
     // 2. Following Feed shows only clients followed by this seller
     if (selectedCuration === 'following') {
       if (isMyPost) return false
-      return followedClients.includes(post.artisanName)
+      return user?.following?.some((id: any) => String(id) === String(post.userId)) || false
     }
 
     // 3. Latest Feed curation shows all client requests (non-seller posts)
@@ -392,6 +418,7 @@ export default function SellerFeedPage() {
                 openChatWith={openChatWith}
                 setSelectedInspectPost={setSelectedInspectPost}
                 setActiveInspectIndex={setActiveInspectIndex}
+                onShowLikes={handleShowLikes}
               />
             ))}
           </div>
@@ -430,6 +457,15 @@ export default function SellerFeedPage() {
           onSkip={handleOnboardingSkip}
         />
       )}
+
+      {/* 6. LIKES MODAL */}
+      <FollowModal
+        isOpen={likesModalOpen}
+        title="Liked By"
+        list={likesModalList}
+        onClose={() => setLikesModalOpen(false)}
+        roleContext="seller"
+      />
 
     </div>
   )

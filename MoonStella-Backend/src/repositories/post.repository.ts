@@ -14,15 +14,17 @@ export const create = async (data: {
 
 export const findAll = async (): Promise<IPost[]> => {
   return Post.find()
-    .populate('userId', 'firstName lastName avatar role')
-    .populate('comments.userId', 'firstName lastName avatar role')
+    .populate('userId', 'firstName lastName avatar role location')
+    .populate('comments.userId', 'firstName lastName avatar role location')
+    .populate('likes', 'firstName lastName avatar role location')
     .sort({ createdAt: -1 })
 }
 
 export const findById = async (id: string): Promise<IPost | null> => {
   return Post.findById(id)
-    .populate('userId', 'firstName lastName avatar role')
-    .populate('comments.userId', 'firstName lastName avatar role')
+    .populate('userId', 'firstName lastName avatar role location')
+    .populate('comments.userId', 'firstName lastName avatar role location')
+    .populate('likes', 'firstName lastName avatar role location')
 }
 
 export const toggleLike = async (postId: string, userId: string): Promise<IPost | null> => {
