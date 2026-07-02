@@ -26,6 +26,7 @@ export const formatUser = (user: IUser) => ({
   onboarded: user.onboarded,
   interests: user.interests,
   following: user.following || [],
+  savedPosts: user.savedPosts || [],
   createdAt: user.createdAt,
 })
 

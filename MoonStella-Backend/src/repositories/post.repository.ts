@@ -73,3 +73,11 @@ export const updatePost = async (postId: string, userId: string, data: any): Pro
   await post.save()
   return findById(postId)
 }
+
+export const findSavedPosts = async (postIds: any[]): Promise<IPost[]> => {
+  return Post.find({ _id: { $in: postIds } })
+    .populate('userId', 'firstName lastName avatar role location')
+    .populate('comments.userId', 'firstName lastName avatar role location')
+    .populate('likes', 'firstName lastName avatar role location')
+    .sort({ createdAt: -1 })
+}

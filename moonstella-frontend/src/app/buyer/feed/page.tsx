@@ -152,13 +152,38 @@ export default function BuyerFeedPage() {
   }
 
   // Toggle Save
-  const toggleSave = (postId: string) => {
-    if (wishlist.includes(postId)) {
-      setWishlist(wishlist.filter((id) => id !== postId))
+  const toggleSave = async (postId: string) => {
+    const isCurrentlySaved = wishlist.includes(postId)
+
+    // Optimistic Update
+    if (isCurrentlySaved) {
+      setWishlist(prev => prev.filter((id) => id !== postId))
       showSnackbar('Removed from saved collection.', 'info')
     } else {
-      setWishlist([...wishlist, postId])
+      setWishlist(prev => [...prev, postId])
       showSnackbar('Saved to your bespoke collection!', 'success')
+    }
+
+    try {
+      const res = await api.patch(`/api/posts/${postId}/save`)
+      const updatedSavedList = res.data?.savedPosts || res.data?.data?.savedPosts || []
+
+      // Update locally
+      setWishlist(updatedSavedList)
+
+      const updatedUser = { ...user, savedPosts: updatedSavedList }
+      localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+    } catch (err) {
+      console.error('Failed to toggle save status on backend:', err)
+      showSnackbar('Failed to sync save status with server.', 'error')
+
+      // Revert optimistic update
+      if (isCurrentlySaved) {
+        setWishlist(prev => [...prev, postId])
+      } else {
+        setWishlist(prev => prev.filter((id) => id !== postId))
+      }
     }
   }
 
@@ -250,8 +275,8 @@ export default function BuyerFeedPage() {
         artisanName: p.userId
           ? `${p.userId.firstName} ${p.userId.lastName}`
           : user?.firstName
-          ? `${user.firstName} ${user.lastName}`
-          : 'Connoisseur Member',
+            ? `${user.firstName} ${user.lastName}`
+            : 'Connoisseur Member',
         artisanTitle: p.userId?.role === 'seller' ? 'MASTER ARTISAN' : 'CONNOISSEUR MEMBER',
         avatar: p.userId?.avatar || user?.avatar || null,
         image: p.images?.[0] || '/recom_emerald.png',
@@ -299,7 +324,7 @@ export default function BuyerFeedPage() {
         budget: budgetNum,
         price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote',
       })
-      
+
       const updatedPosts = posts.map((p) => {
         if (p.id === postId) {
           return {
@@ -312,13 +337,13 @@ export default function BuyerFeedPage() {
         return p
       })
       setPosts(updatedPosts)
-      
+
       setSelectedInspectPost((prev: any) => ({
         ...prev,
         description: newDesc,
         price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote',
       }))
-      
+
       showSnackbar('Changes saved successfully!', 'success')
     } catch (err) {
       console.error('Error updating post:', err)
@@ -361,17 +386,19 @@ export default function BuyerFeedPage() {
   }
 
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 grid grid-cols-1 lg:grid-cols-4 gap-10">
-      
+    <div className="flex-1 w-full mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-[1fr_3.5fr_1fr] gap-8">
+
       {/* LEFT COLUMN: CURATION MENU */}
-      <FeedHeader
-        selectedCuration={selectedCuration}
-        setSelectedCuration={setSelectedCuration}
-        setShowCreateModal={setShowCreateModal}
-      />
+      <div className="w-full">
+        <FeedHeader
+          selectedCuration={selectedCuration}
+          setSelectedCuration={setSelectedCuration}
+          setShowCreateModal={setShowCreateModal}
+        />
+      </div>
 
       {/* MIDDLE COLUMN: SHARE BOX & FEED POSTS */}
-      <main className="lg:col-span-2 flex flex-col gap-6 relative">
+      <main className="w-full flex flex-col gap-6 relative">
         <div
           onClick={() => setShowCreateModal(true)}
           className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-100 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#3D0C1F]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
@@ -393,7 +420,7 @@ export default function BuyerFeedPage() {
             className="bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 flex-shrink-0 border-none shadow-sm"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
-            Draft
+            Share
           </button>
         </div>
 
@@ -409,7 +436,7 @@ export default function BuyerFeedPage() {
               <div>
                 <h4 className="text-sm font-bold text-gray-855 mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>Showcase Feed is Empty</h4>
                 <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
-                  There are no masterpieces posted yet. Be the first to share your bespoke jewelry inspiration!
+                  There are no masterpieces posted yet. Be the first to share your jewelry inspiration!
                 </p>
               </div>
             </div>
@@ -434,13 +461,15 @@ export default function BuyerFeedPage() {
         </div>
       </main>
 
-      {/* RIGHT COLUMN: SUGGESTED SELLERS */}
-      <SuggestedSellers
-        suggestedSellers={suggestedSellers}
-        openChatWith={openChatWith}
-        setSelectedCuration={setSelectedCuration}
-        setSelectedMaterial={setSelectedMaterial}
-      />
+      {/* RIGHT COLUMN: SUGGESTED LIST */}
+      <div className="w-full">
+        <SuggestedSellers
+          suggestedSellers={suggestedSellers}
+          openChatWith={openChatWith}
+          setSelectedCuration={setSelectedCuration}
+          setSelectedMaterial={setSelectedMaterial}
+        />
+      </div>
 
       {/* 4. POST CREATION OVERLAY MODAL */}
       {showCreateModal && (

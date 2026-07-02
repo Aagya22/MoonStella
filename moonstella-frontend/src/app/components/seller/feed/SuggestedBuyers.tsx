@@ -16,9 +16,9 @@ export default function SuggestedBuyers({
   const router = useRouter()
 
   return (
-    <aside className="lg:col-span-1">
+    <aside className="w-full">
       <div className="sticky top-20 h-fit flex flex-col gap-6">
-        <div className="bg-white rounded-3xl border border-gray-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
           <h3
             className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase mb-5"
             style={{ fontFamily: 'var(--font-montserrat)' }}
@@ -45,7 +45,7 @@ export default function SuggestedBuyers({
                   }}
                   className="flex items-center gap-3.5 group cursor-pointer p-1.5 rounded-xl hover:bg-[#FAF8F5] transition-all"
                 >
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
                     {buyer.image ? (
                       <Image src={buyer.image} alt={buyer.name} fill className="object-cover object-center" />
                     ) : (
@@ -54,7 +54,6 @@ export default function SuggestedBuyers({
                   </div>
                   <div className="flex-1 min-w-0 select-none">
                     <h4 className="text-xs font-bold text-gray-855 truncate">{buyer.name}</h4>
-                    <p className="text-[9px] text-gray-400 font-semibold tracking-wider uppercase mt-0.5">Connoisseur Buyer</p>
                   </div>
                 </div>
               ))}
@@ -65,7 +64,7 @@ export default function SuggestedBuyers({
             onClick={() => {
               setSelectedCuration('latest')
             }}
-            className="w-full text-center text-[10px] font-extrabold tracking-widest text-[#3D0C1F] hover:text-[#8A2B49] transition-colors uppercase pt-5 mt-4 border-t border-gray-50 cursor-pointer block bg-transparent"
+            className="w-full text-center text-[10px] font-bold tracking-widest text-[#3D0C1F] hover:bg-[#3D0C1F] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#3D0C1F]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All

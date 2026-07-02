@@ -23,13 +23,38 @@ export default function SellerFeedPage() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const { showSnackbar } = useSnackbar()
 
-  const toggleSave = (postId: string) => {
-    if (wishlist.includes(postId)) {
-      setWishlist(wishlist.filter((id) => id !== postId))
-      showSnackbar('Removed from your private vault.', 'info')
+  const toggleSave = async (postId: string) => {
+    const isCurrentlySaved = wishlist.includes(postId)
+
+    // Optimistic Update
+    if (isCurrentlySaved) {
+      setWishlist(prev => prev.filter((id) => id !== postId))
+      showSnackbar('Removed from saved posts.', 'info')
     } else {
-      setWishlist([...wishlist, postId])
-      showSnackbar('Saved to your private vault!', 'success')
+      setWishlist(prev => [...prev, postId])
+      showSnackbar('Saved to your saved posts collection.', 'success')
+    }
+
+    try {
+      const res = await api.patch(`/api/posts/${postId}/save`)
+      const updatedSavedList = res.data?.savedPosts || res.data?.data?.savedPosts || []
+
+      // Update locally
+      setWishlist(updatedSavedList)
+
+      const updatedUser = { ...user, savedPosts: updatedSavedList }
+      localStorage.setItem('ms_user', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+    } catch (err) {
+      console.error('Failed to toggle save status on backend:', err)
+      showSnackbar('Failed to sync save status with server.', 'error')
+
+      // Revert optimistic update
+      if (isCurrentlySaved) {
+        setWishlist(prev => [...prev, postId])
+      } else {
+        setWishlist(prev => prev.filter((id) => id !== postId))
+      }
     }
   }
 
@@ -78,7 +103,7 @@ export default function SellerFeedPage() {
     const fetchFeedPosts = async () => {
       try {
         const response = await api.get('/api/posts')
-        
+
         const formatted = response.data.map((p: any) => ({
           id: p._id,
           userId: p.userId?._id || p.userId,
@@ -111,20 +136,58 @@ export default function SellerFeedPage() {
         }))
         setPosts(formatted)
 
-        // Compile suggested active buyers/clients (excluding ourselves)
+        // Compile suggested active buyers/clients (excluding ourselves and already followed clients)
         const buyersMap = new Map()
+        const followingList = user?.following || []
+        const latestPostAuthorId = response.data[0]?.userId?._id || response.data[0]?.userId
+
         response.data.forEach((p: any) => {
           if (p.userId && p.userId.role === 'buyer') {
-            if (String(p.userId._id) === String(user?.id || user?._id)) return
+            const buyerIdStr = String(p.userId._id)
+            if (buyerIdStr === String(user?.id || user?._id)) return
+            // Exclude already followed buyers
+            if (followingList.some((f: any) => String(f._id || f) === buyerIdStr || String(f) === buyerIdStr)) return
+
             const nameStr = `${p.userId.firstName} ${p.userId.lastName}`
+            const avatarUrl = p.userId.avatar || null
+            // If the user's avatar is one of the post's images, fallback to initial letter avatar
+            const isPostImage = p.images?.includes(avatarUrl)
+
             buyersMap.set(p.userId._id, {
               id: p.userId._id,
               name: nameStr,
-              image: p.userId.avatar || null,
+              image: isPostImage ? null : avatarUrl,
             })
           }
         })
-        setSuggestedBuyers(Array.from(buyersMap.values()))
+        let compiledBuyers = Array.from(buyersMap.values())
+
+        // Fallback: If all active buyers in the feed are already followed, show them as suggested anyway instead of showing an empty sidebar
+        if (compiledBuyers.length === 0) {
+          response.data.forEach((p: any) => {
+            if (p.userId && p.userId.role === 'buyer') {
+              const buyerIdStr = String(p.userId._id)
+              if (buyerIdStr === String(user?.id || user?._id)) return
+
+              const nameStr = `${p.userId.firstName} ${p.userId.lastName}`
+              const avatarUrl = p.userId.avatar || null
+              const isPostImage = p.images?.includes(avatarUrl)
+
+              buyersMap.set(p.userId._id, {
+                id: p.userId._id,
+                name: nameStr,
+                image: isPostImage ? null : avatarUrl,
+              })
+            }
+          })
+          compiledBuyers = Array.from(buyersMap.values())
+        }
+
+        // Filter out the author of the latest post if we have other suggestions to avoid duplicate names in the viewport
+        if (compiledBuyers.length > 1 && latestPostAuthorId) {
+          compiledBuyers = compiledBuyers.filter(b => String(b.id) !== String(latestPostAuthorId))
+        }
+        setSuggestedBuyers(compiledBuyers)
       } catch (err) {
         console.error('Failed to load feed posts:', err)
       }
@@ -348,20 +411,22 @@ export default function SellerFeedPage() {
   if (!localUser) return null
 
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 grid grid-cols-1 lg:grid-cols-4 gap-10">
-      
+    <div className="flex-1 w-full mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-[1fr_3.5fr_1fr] gap-8">
+
       {/* LEFT COLUMN: CURATION MENU */}
-      <FeedHeader
-        selectedCuration={selectedCuration}
-        setSelectedCuration={setSelectedCuration}
-        setShowCreateModal={setShowCreateModal}
-      />
+      <div className="w-full">
+        <FeedHeader
+          selectedCuration={selectedCuration}
+          setSelectedCuration={setSelectedCuration}
+          setShowCreateModal={setShowCreateModal}
+        />
+      </div>
 
       {/* MIDDLE COLUMN: SHARE BOX & FEED POSTS */}
-      <main className="lg:col-span-2 flex flex-col gap-6 relative">
+      <main className="w-full flex flex-col gap-6 relative">
         <div
           onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-150 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#3D0C1F]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
+          className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-100 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#3D0C1F]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
         >
           <div className="w-10 h-10 rounded-full bg-[#3D0C1F] text-[#E9D7C3] font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm select-none">
             {user?.firstName ? user.firstName[0].toUpperCase() : 'A'}
@@ -380,7 +445,7 @@ export default function SellerFeedPage() {
             className="bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 flex-shrink-0 border-none shadow-sm"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
-            DRAFT
+            Share
           </button>
         </div>
 
@@ -426,11 +491,13 @@ export default function SellerFeedPage() {
       </main>
 
       {/* RIGHT COLUMN: SUGGESTED BUYERS */}
-      <SuggestedBuyers
-        suggestedBuyers={suggestedBuyers}
-        openChatWith={openChatWith}
-        setSelectedCuration={setSelectedCuration}
-      />
+      <div className="w-full">
+        <SuggestedBuyers
+          suggestedBuyers={suggestedBuyers}
+          openChatWith={openChatWith}
+          setSelectedCuration={setSelectedCuration}
+        />
+      </div>
 
       {/* Inspect zoom brief modal */}
       {selectedInspectPost && (

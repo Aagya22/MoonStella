@@ -518,35 +518,58 @@ function SellerProfileContent() {
                         const normCat = (post.category || '').toLowerCase()
                         let pillStyles = 'bg-amber-50 text-amber-700 border-amber-200/60'
                         if (normCat.includes('earring')) {
-                          pillStyles = 'bg-pink-50 text-pink-700 border-pink-200/60'
-                        } else if (normCat.includes('ring')) {
-                          pillStyles = 'bg-purple-50 text-purple-700 border-purple-200/60'
-                        } else if (normCat.includes('pendant') || normCat.includes('necklace')) {
                           pillStyles = 'bg-rose-50 text-rose-700 border-rose-200/60'
-                        } else if (normCat.includes('bracelet')) {
-                          pillStyles = 'bg-cyan-50 text-cyan-700 border-cyan-200/60'
+                        } else if (normCat.includes('ring')) {
+                          pillStyles = 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                        } else if (normCat.includes('pendant') || normCat.includes('necklace')) {
+                          pillStyles = 'bg-indigo-50 text-indigo-700 border-indigo-200/60'
+                        } else if (normCat.includes('bracelet') || normCat.includes('bangle')) {
+                          pillStyles = 'bg-purple-50 text-purple-700 border-purple-200/60'
                         }
+
                         return (
-                          <span className={`text-[8px] font-extrabold tracking-widest border px-2.5 py-1 rounded-full uppercase ${pillStyles}`} style={{ fontFamily: 'var(--font-montserrat)' }}>
-                            {post.category}
+                          <span
+                            className={`text-[8.5px] font-extrabold tracking-widest uppercase border px-3 py-1 rounded-full ${pillStyles}`}
+                            style={{ fontFamily: 'var(--font-montserrat)' }}
+                          >
+                            {post.category || 'Bespoke Request'}
                           </span>
                         )
                       })()}
                     </div>
 
-                    {/* Title and description */}
+                    {/* Brief text or custom title dynamically parsed */}
                     {(() => {
-                      const descLines = post.description.split('\n')
-                      const cardTitle = descLines[0]
-                      const cardBody = descLines.slice(1).join('\n') || post.description
+                      const limit = 90
+                      let cardTitle = 'Custom Jewelry Request'
+                      let cardBody = ''
+
+                      if (post.description) {
+                        const cleaned = post.description.replace(/^Title:\s*/i, '')
+                        if (cleaned.length <= limit) {
+                          cardTitle = cleaned
+                        } else {
+                          const sentences = cleaned.split(/(?<=[.!?])\s+/)
+                          if (sentences[0].length <= limit) {
+                            cardTitle = sentences[0]
+                            cardBody = sentences.slice(1).join(' ')
+                          } else {
+                            cardTitle = cleaned.substring(0, limit) + '...'
+                            cardBody = cleaned.substring(limit)
+                          }
+                        }
+                      }
+
                       return (
                         <>
                           <h4 className="text-sm font-bold text-[#3D0C1F] line-clamp-1 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
                             {cardTitle}
                           </h4>
-                          <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                            {cardBody}
-                          </p>
+                          {cardBody && (
+                            <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                              {cardBody}
+                            </p>
+                          )}
                         </>
                       )
                     })()}

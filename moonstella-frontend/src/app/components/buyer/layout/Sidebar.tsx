@@ -34,7 +34,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen w-60 bg-white border-r border-gray-100 shadow-2xl z-50 flex flex-col justify-between py-8 transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-screen w-60 bg-[#FAF0F3]/95 backdrop-blur-md border-r border-[#3D0C1F]/10 shadow-2xl z-50 flex flex-col justify-between py-8 transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -94,7 +94,7 @@ export default function Sidebar({
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
                 ),
-                onClick: () => { router.push('/buyer/dashboard'); closeSidebar(); }
+                onClick: () => { router.push('/buyer/wishlist'); closeSidebar(); }
               },
               {
                 id: 'myorder',
@@ -126,13 +126,13 @@ export default function Sidebar({
                 <button
                   key={item.id}
                   onClick={item.onClick}
-                  className={`w-full flex items-center gap-4 px-6 py-3 rounded-lg text-left text-[11px] font-semibold tracking-[0.15em] transition-all duration-205 cursor-pointer border-none ${isActive
-                    ? 'text-[#3D0C1F] bg-[#FAF8F5]'
-                    : 'text-[#5A5A5A] hover:text-[#3D0C1F] hover:bg-[#FAF8F5]/50'
+                  className={`w-full flex items-center gap-4 px-6 py-3 rounded-xl text-left text-[11px] font-semibold tracking-[0.15em] transition-all duration-205 cursor-pointer border-none ${isActive
+                    ? 'text-[#FAF8F5] bg-[#3D0C1F] shadow-sm shadow-[#3D0C1F]/15 font-bold border border-[#3D0C1F]'
+                    : 'text-gray-700 hover:text-[#3D0C1F] hover:bg-[#3D0C1F]/5'
                     }`}
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
-                  <span className={isActive ? 'text-[#3D0C1F]' : 'text-[#8A8A8A]'}>{item.icon}</span>
+                  <span className={isActive ? 'text-[#FAF8F5]' : 'text-gray-400'}>{item.icon}</span>
                   <span>{item.label}</span>
                 </button>
               )
@@ -141,20 +141,20 @@ export default function Sidebar({
         </div>
 
         {/* Sidebar Footer details */}
-        <div className="px-6 border-t border-gray-50 pt-5 flex flex-col gap-4">
+        <div className="px-6 border-t border-[#3D0C1F]/10 pt-5 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8.5 h-8.5 rounded-full bg-[#FAF8F5] border border-gray-150 flex items-center justify-center font-extrabold text-xs text-[#3D0C1F]">
+            <div className="w-8.5 h-8.5 rounded-full bg-[#3D0C1F] flex items-center justify-center font-extrabold text-xs text-[#FAF8F5]">
               {user.firstName ? user.firstName[0].toUpperCase() : 'A'}
             </div>
             <div className="min-w-0">
-              <h4 className="text-[10px] font-bold text-gray-855 truncate max-w-[120px] leading-none mb-0.5">{user.firstName} {user.lastName}</h4>
+              <h4 className="text-[10px] font-bold text-gray-800 truncate max-w-[120px] leading-none mb-0.5">{user.firstName} {user.lastName}</h4>
               <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">Buyer Hub</span>
             </div>
           </div>
 
           <button
             onClick={() => { closeSidebar(); setShowLogoutConfirm(true); }}
-            className="w-full bg-white border border-gray-250 text-gray-500 hover:text-red-700 hover:border-red-250 hover:bg-red-50/5 transition-all text-[9px] font-bold tracking-widest py-2 rounded uppercase text-center cursor-pointer"
+            className="w-full bg-white border border-[#3D0C1F]/20 text-[#3D0C1F] hover:bg-[#3D0C1F] hover:text-white hover:border-[#3D0C1F] transition-all text-[9px] font-bold tracking-widest py-2.5 rounded-xl uppercase text-center cursor-pointer"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Sign Out

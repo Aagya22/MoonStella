@@ -3,3 +3,6 @@
 .env
 # NODE MODULES
 node_modules
+
+# BUILD OUTPUTS
+dist

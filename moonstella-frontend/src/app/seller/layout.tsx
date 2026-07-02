@@ -39,6 +39,26 @@ export default function SellerLayout({
     if (saved) {
       setWishlist(JSON.parse(saved))
     }
+
+    const syncProfile = async () => {
+      try {
+        const token = localStorage.getItem('ms_token')
+        if (token && token !== 'mock_token_for_preview') {
+          const res = await api.get('/api/auth/me')
+          const freshUser = res.data?.data || res.data
+          if (freshUser) {
+            setUser(freshUser)
+            localStorage.setItem('ms_user', JSON.stringify(freshUser))
+            if (freshUser.savedPosts) {
+              setWishlist(freshUser.savedPosts)
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to sync profile from backend:', err)
+      }
+    }
+    syncProfile()
   }, [])
 
   useEffect(() => {

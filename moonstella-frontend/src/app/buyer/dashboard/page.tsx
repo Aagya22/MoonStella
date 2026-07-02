@@ -1,9 +1,34 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import api from '@/lib/api/axios'
 import { useBuyerContext } from '../BuyerContext'
 
 export default function BuyerDashboardPage() {
+  const router = useRouter()
   const { user, wishlist, setWishlist, openChatWith, setTimelineOpen } = useBuyerContext()
+  const [savedPosts, setSavedPosts] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchSavedPosts = async () => {
+      try {
+        setLoading(true)
+        const token = localStorage.getItem('ms_token')
+        if (token && token !== 'mock_token_for_preview') {
+          const res = await api.get('/api/posts/saved')
+          setSavedPosts(res.data || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch saved posts:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSavedPosts()
+  }, [wishlist])
 
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 flex flex-col gap-8 animate-fade-in">
@@ -91,12 +116,71 @@ export default function BuyerDashboardPage() {
               <h3 className="text-xs font-bold tracking-widest text-[#3D0C1F] uppercase mb-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Bespoke Vault ({wishlist.length})
               </h3>
-              <div className="py-6 border border-dashed border-gray-100 rounded-xl text-center text-gray-400 text-xs bg-[#FAF8F5]/50 flex flex-col items-center justify-center gap-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300">
-                  <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                </svg>
-                <span className="text-[10px] font-medium tracking-wide">Your Vault is Empty</span>
-              </div>
+              {loading ? (
+                <div className="py-6 text-center text-gray-400 text-[10px] tracking-wide font-medium">
+                  Loading vault items...
+                </div>
+              ) : savedPosts.length === 0 ? (
+                <div className="py-6 border border-dashed border-gray-100 rounded-xl text-center text-gray-400 text-xs bg-[#FAF8F5]/50 flex flex-col items-center justify-center gap-2 animate-fade-in">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                  </svg>
+                  <span className="text-[10px] font-medium tracking-wide">Your Vault is Empty</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1">
+                  {savedPosts.map((post: any) => {
+                    const id = post._id || post.id
+                    const firstImage = post.images?.[0] || null
+                    
+                    return (
+                      <div 
+                        key={id} 
+                        className="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-[#FAF8F5]/50 transition-all cursor-pointer group"
+                        onClick={() => {
+                          if (post.userId?._id || post.userId) {
+                            router.push(`/buyer/profile?id=${post.userId?._id || post.userId}`)
+                          }
+                        }}
+                      >
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#FAF8F5] border border-gray-100 flex-shrink-0">
+                          {firstImage ? (
+                            <Image 
+                              src={firstImage} 
+                              alt={post.description || 'Saved design'} 
+                              fill 
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-300">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-[10px] font-bold text-gray-700 uppercase tracking-wider truncate">
+                            {post.category || 'Bespoke Item'}
+                          </h4>
+                          <p className="text-[11px] text-gray-500 truncate mt-0.5" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                            {post.description}
+                          </p>
+                          <span className="text-[9px] font-extrabold text-[#3D0C1F] block mt-0.5">
+                            {post.price || (post.budget ? `Rs. ${post.budget.toLocaleString()}` : 'Contact for Quote')}
+                          </span>
+                        </div>
+                        <div className="text-gray-300 group-hover:text-[#3D0C1F] transition-colors flex-shrink-0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="h-[1px] bg-gray-100 w-full" />

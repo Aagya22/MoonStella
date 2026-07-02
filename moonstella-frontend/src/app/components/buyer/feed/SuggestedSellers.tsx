@@ -15,7 +15,7 @@ export default function SuggestedSellers({
   setSelectedMaterial,
 }: SuggestedSellersProps) {
   return (
-    <aside className="lg:col-span-1">
+    <aside className="w-full">
       <div className="sticky top-20 h-fit flex flex-col gap-6">
         <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
           <h3
@@ -49,7 +49,6 @@ export default function SuggestedSellers({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-gray-800 truncate">{seller.name}</h4>
-                    <p className="text-[9px] text-gray-400 font-semibold tracking-wider uppercase mt-0.5">{seller.piecesCount}</p>
                   </div>
                 </div>
               ))}
@@ -61,7 +60,7 @@ export default function SuggestedSellers({
               setSelectedCuration('latest')
               setSelectedMaterial(null)
             }}
-            className="w-full text-center text-[10px] font-extrabold tracking-widest text-[#3D0C1F] hover:text-[#8A2B49] transition-colors uppercase pt-5 mt-4 border-t border-gray-50 cursor-pointer block bg-transparent"
+            className="w-full text-center text-[10px] font-bold tracking-widest text-[#3D0C1F] hover:bg-[#3D0C1F] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#3D0C1F]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All

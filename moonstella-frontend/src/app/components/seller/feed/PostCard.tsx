@@ -52,9 +52,9 @@ export default function PostCard({
   return (
     <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
       {/* Post Header */}
-      <div className="p-5 flex items-center justify-between">
+      <div className="p-5 flex items-center justify-between gap-4">
         <div
-          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity min-w-0"
           onClick={() => {
             if (post.userId) {
               router.push(`/seller/profile?id=${post.userId}`)
@@ -73,9 +73,9 @@ export default function PostCard({
               <span>{post.artisanName ? post.artisanName[0].toUpperCase() : 'A'}</span>
             )}
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h4
-              className="text-xs font-bold text-gray-800 tracking-wide"
+              className="text-xs font-bold text-gray-800 tracking-wide truncate"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               {post.artisanName}
@@ -90,11 +90,10 @@ export default function PostCard({
         {!isMyPost && (
           <button
             onClick={() => toggleFollowClient(post.userId)}
-            className={`text-[9px] font-bold tracking-widest px-4 py-2 rounded-full uppercase transition-all duration-300 cursor-pointer border ${
-              isFollowing
+            className={`text-[9px] font-bold tracking-widest px-4 py-2 rounded-full uppercase transition-all duration-300 cursor-pointer border ${isFollowing
                 ? 'bg-[#3D0C1F] text-white border-[#3D0C1F]'
                 : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-            }`}
+              }`}
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             {isFollowing ? 'Following' : 'Follow'}
@@ -119,17 +118,12 @@ export default function PostCard({
             }}
           />
 
-          {imagesList.length > 1 && (
-            <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-full z-10 tracking-widest select-none">
-              {currentIndex + 1}/{imagesList.length}
-            </span>
-          )}
-
+          {/* Navigation Chevrons */}
           {imagesList.length > 1 && (
             <>
               <button
                 onClick={handlePrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 hover:text-black flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10 border-none cursor-pointer"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-[#3D0C1F]/80 text-white backdrop-blur-[2px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border-none cursor-pointer z-10 active:scale-95"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="15 18 9 12 15 6" />
@@ -137,7 +131,7 @@ export default function PostCard({
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 hover:text-black flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10 border-none cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-[#3D0C1F]/80 text-white backdrop-blur-[2px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border-none cursor-pointer z-10 active:scale-95"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="9 18 15 12 9 6" />
@@ -151,9 +145,8 @@ export default function PostCard({
               {imagesList.map((_: any, idx: number) => (
                 <span
                   key={idx}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                    idx === currentIndex ? 'bg-white scale-125' : 'bg-white/40'
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-white scale-125' : 'bg-white/40'
+                    }`}
                 />
               ))}
             </div>
@@ -176,11 +169,11 @@ export default function PostCard({
       {/* Post Actions & Details */}
       <div className="p-5 flex flex-col gap-4">
         {/* Category & Budget Indicator */}
-        <div className="flex justify-between items-center text-[10px] font-bold tracking-widest uppercase mb-1">
-          <span className="text-[#3D0C1F] bg-[#3D0C1F]/[0.02] border border-[#3D0C1F]/10 px-2.5 py-1 rounded select-none">
+        <div className="flex justify-between items-center text-[9px] font-extrabold tracking-widest uppercase mb-1">
+          <span className="text-[#3D0C1F] bg-[#3D0C1F]/10 px-3 py-1 rounded-full select-none">
             {post.category || 'Bespoke Brief'}
           </span>
-          <span className="bg-[#FAF8F5] border border-amber-250/70 text-amber-800 font-extrabold text-[9px] px-3 py-1 rounded-full normal-case tracking-normal select-none">
+          <span className="text-amber-800 bg-amber-50 px-3 py-1 rounded-full normal-case tracking-normal select-none">
             {post.artisanTitle === 'MASTER ARTISAN' ? 'Price' : 'Est. Budget'}: {post.price || 'Contact'}
           </span>
         </div>
@@ -193,9 +186,9 @@ export default function PostCard({
         {isMyPost ? (
           /* Read-Only Stats for User's Own Post */
           <div className="flex items-center gap-6 border-b border-gray-50 pb-4">
-            <div 
+            <div
               onClick={() => onShowLikes && onShowLikes(post.likesList || [])}
-              className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer select-none" 
+              className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer select-none"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               <svg
@@ -222,9 +215,8 @@ export default function PostCard({
             <div className="flex items-center gap-2 text-xs font-semibold tracking-wide">
               <button
                 onClick={() => toggleLike(post.id)}
-                className={`flex items-center hover:scale-110 transition-transform cursor-pointer border-none bg-transparent ${
-                  post.liked ? 'text-red-500 hover:text-red-650' : 'text-gray-500 hover:text-red-500'
-                }`}
+                className={`flex items-center hover:scale-110 transition-transform cursor-pointer border-none bg-transparent ${post.liked ? 'text-red-500 hover:text-red-650' : 'text-gray-500 hover:text-red-500'
+                  }`}
               >
                 <svg
                   width="18" height="18" viewBox="0 0 24 24"
@@ -234,7 +226,7 @@ export default function PostCard({
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
               </button>
-              <span 
+              <span
                 className="text-gray-500 select-none"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
@@ -243,9 +235,8 @@ export default function PostCard({
             </div>
             <button
               onClick={() => toggleSave(post.id)}
-              className={`flex items-center gap-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer border-none bg-transparent ${
-                isSaved ? 'text-amber-600 hover:text-amber-700' : 'text-gray-500 hover:text-amber-600'
-              }`}
+              className={`flex items-center gap-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer border-none bg-transparent ${isSaved ? 'text-amber-600 hover:text-amber-700' : 'text-gray-500 hover:text-amber-600'
+                }`}
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               <svg
