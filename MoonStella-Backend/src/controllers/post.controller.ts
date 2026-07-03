@@ -64,3 +64,24 @@ export const editPost = async (req: Request, res: Response, next: NextFunction) 
     next(error)
   }
 }
+
+export const toggleSave = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user._id
+    const { id } = req.params
+    const savedPosts = await PostService.toggleSavePost(id, String(userId))
+    res.json({ success: true, savedPosts })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getSaved = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user._id
+    const posts = await PostService.getSavedPosts(String(userId))
+    res.json(posts)
+  } catch (error) {
+    next(error)
+  }
+}

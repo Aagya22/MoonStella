@@ -13,6 +13,7 @@ export interface IUser extends Document{
     location?: string
     bio?: string | null
     following: mongoose.Types.ObjectId[]
+    savedPosts: mongoose.Types.ObjectId[]
     studioName: string | null
     studioSpecialty?: 'custom' | 'ready-made' | 'both' | null
     averageResponseTime?: string | null
@@ -90,6 +91,12 @@ const UserSchema = new Schema<IUser>(
             {
                 type:Schema.Types.ObjectId,
                 ref:'User',
+            },
+        ],
+        savedPosts: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: 'Post',
             },
         ],
 

@@ -15,7 +15,7 @@ export default function SuggestedSellers({
   setSelectedMaterial,
 }: SuggestedSellersProps) {
   return (
-    <aside className="lg:col-span-1">
+    <aside className="w-full">
       <div className="sticky top-20 h-fit flex flex-col gap-6">
         <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
           <h3
@@ -40,7 +40,7 @@ export default function SuggestedSellers({
                   onClick={() => openChatWith(seller.name)}
                   className="flex items-center gap-3.5 group cursor-pointer p-1.5 rounded-xl hover:bg-[#FAF8F5] transition-all"
                 >
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
                     {seller.image ? (
                       <Image src={seller.image} alt={seller.name} fill className="object-cover object-center" />
                     ) : (
@@ -49,7 +49,6 @@ export default function SuggestedSellers({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-gray-800 truncate">{seller.name}</h4>
-                    <p className="text-[9px] text-gray-400 font-semibold tracking-wider uppercase mt-0.5">{seller.piecesCount}</p>
                   </div>
                 </div>
               ))}
@@ -61,7 +60,7 @@ export default function SuggestedSellers({
               setSelectedCuration('latest')
               setSelectedMaterial(null)
             }}
-            className="w-full text-center text-[10px] font-extrabold tracking-widest text-[#3D0C1F] hover:text-[#8A2B49] transition-colors uppercase pt-5 mt-4 border-t border-gray-50 cursor-pointer block bg-transparent"
+            className="w-full text-center text-[10px] font-bold tracking-widest text-[#5F3041] hover:bg-[#5F3041] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#5F3041]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All

@@ -42,3 +42,17 @@ export const updateUserPost = async (postId: string, userId: string, data: any) 
   if (!post) throw new AppError('Post not found or unauthorized to edit', 403)
   return post
 }
+
+export const toggleSavePost = async (postId: string, userId: string) => {
+  const post = await PostRepository.findById(postId)
+  if (!post) throw new AppError('Post not found', 404)
+  const UserRepository = require('../repositories/user.repository')
+  return UserRepository.toggleSavePost(userId, postId)
+}
+
+export const getSavedPosts = async (userId: string) => {
+  const UserRepository = require('../repositories/user.repository')
+  const user = await UserRepository.findById(userId)
+  if (!user) throw new AppError('User not found', 404)
+  return PostRepository.findSavedPosts(user.savedPosts || [])
+}

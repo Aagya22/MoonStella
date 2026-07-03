@@ -66,7 +66,7 @@ export default function FeaturedCollections() {
         <div className="flex items-end justify-between pb-6 border-b border-gray-200 mb-10">
           <div>
             <p className="text-xs font-semibold tracking-widest mb-2"
-              style={{ color: '#3D0C1F', fontFamily: 'var(--font-montserrat)' }}>
+              style={{ color: '#5F3041', fontFamily: 'var(--font-montserrat)' }}>
               CURATED SELECTION
             </p>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900"

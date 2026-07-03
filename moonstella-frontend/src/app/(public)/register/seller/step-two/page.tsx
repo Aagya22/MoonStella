@@ -197,7 +197,7 @@ export default function SellerRegisterStepTwo() {
                   {/* Section 1 — Portrait */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#FCE8F0', color: '#3D0C1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>1</div>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#FCE8F0', color: '#5F3041', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>1</div>
                       <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Seller Portrait</h2>
                     </div>
 
@@ -285,7 +285,7 @@ export default function SellerRegisterStepTwo() {
                   {/* Section 2 — Location */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#FCE8F0', color: '#3D0C1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>2</div>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#FCE8F0', color: '#5F3041', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>2</div>
                       <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Seller Location</h2>
                     </div>
 
@@ -333,7 +333,7 @@ export default function SellerRegisterStepTwo() {
                       </div>
 
                       {district && locality && (
-                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#3D0C1F' }}>
+                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#5F3041' }}>
                           📍 {locality}, {district}, Nepal
                         </p>
                       )}
@@ -343,10 +343,10 @@ export default function SellerRegisterStepTwo() {
                   {error && <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#EF4444' }}>{error}</p>}
 
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <button type="button" onClick={handleBack} style={{ padding: '12px 28px', borderRadius: '4px', border: '2px solid #3D0C1F', color: '#3D0C1F', backgroundColor: 'transparent', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                    <button type="button" onClick={handleBack} style={{ padding: '12px 28px', borderRadius: '4px', border: '2px solid #5F3041', color: '#5F3041', backgroundColor: 'transparent', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
                       Back
                     </button>
-                    <button type="submit" disabled={loading} style={{ padding: '12px 32px', borderRadius: '4px', backgroundColor: '#3D0C1F', color: 'white', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, border: 'none' }}>
+                    <button type="submit" disabled={loading} style={{ padding: '12px 32px', borderRadius: '4px', backgroundColor: '#5F3041', color: 'white', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, border: 'none' }}>
                       {loading ? 'Creating account...' : 'Get Started'}
                     </button>
                   </div>

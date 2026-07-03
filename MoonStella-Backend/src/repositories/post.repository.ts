@@ -3,7 +3,7 @@ import { Post, IPost } from '../models/post.model'
 export const create = async (data: {
   userId: string
   description: string
-  category: 'Rings' | 'Necklaces' | 'Earrings' | 'Bracelets' | 'Pendants' | 'Complete Set' | 'Others'
+  category: string
   budget?: number | null
   price?: string | null
   materials: string[]
@@ -14,15 +14,17 @@ export const create = async (data: {
 
 export const findAll = async (): Promise<IPost[]> => {
   return Post.find()
-    .populate('userId', 'firstName lastName avatar role')
-    .populate('comments.userId', 'firstName lastName avatar role')
+    .populate('userId', 'firstName lastName avatar role location')
+    .populate('comments.userId', 'firstName lastName avatar role location')
+    .populate('likes', 'firstName lastName avatar role location')
     .sort({ createdAt: -1 })
 }
 
 export const findById = async (id: string): Promise<IPost | null> => {
   return Post.findById(id)
-    .populate('userId', 'firstName lastName avatar role')
-    .populate('comments.userId', 'firstName lastName avatar role')
+    .populate('userId', 'firstName lastName avatar role location')
+    .populate('comments.userId', 'firstName lastName avatar role location')
+    .populate('likes', 'firstName lastName avatar role location')
 }
 
 export const toggleLike = async (postId: string, userId: string): Promise<IPost | null> => {
@@ -70,4 +72,12 @@ export const updatePost = async (postId: string, userId: string, data: any): Pro
   if (data.materials !== undefined) post.materials = data.materials
   await post.save()
   return findById(postId)
+}
+
+export const findSavedPosts = async (postIds: any[]): Promise<IPost[]> => {
+  return Post.find({ _id: { $in: postIds } })
+    .populate('userId', 'firstName lastName avatar role location')
+    .populate('comments.userId', 'firstName lastName avatar role location')
+    .populate('likes', 'firstName lastName avatar role location')
+    .sort({ createdAt: -1 })
 }

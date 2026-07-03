@@ -89,7 +89,7 @@ export default function HeroSection() {
               <Link
                 href="/register/buyer/step-one"
                 style={{
-                  backgroundColor: '#3D0C1F',
+                  backgroundColor: '#5F3041',
                   color: '#FFFFFF',
                   fontFamily: 'var(--font-montserrat)',
                   fontSize: '14px',
@@ -106,8 +106,8 @@ export default function HeroSection() {
               <Link
                 href="/login"
                 style={{
-                  border: '1px solid #3D0C1F',
-                  color: '#3D0C1F',
+                  border: '1px solid #5F3041',
+                  color: '#5F3041',
                   backgroundColor: 'rgba(255,255,255,0.35)',
                   fontFamily: 'var(--font-montserrat)',
                   fontSize: '14px',

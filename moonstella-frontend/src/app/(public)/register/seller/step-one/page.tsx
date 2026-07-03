@@ -202,14 +202,14 @@ export default function SellerRegisterStepOne() {
                     type="submit"
                     disabled={loading}
                     className="w-full py-3.5 text-white rounded uppercase transition-opacity hover:opacity-90 mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: '#3D0C1F', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em' }}
+                    style={{ backgroundColor: '#5F3041', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em' }}
                   >
                     {loading ? 'Checking...' : 'Continue'}
                   </button>
 
                   <p className="text-center" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#6B7280' }}>
                     Already part of the Marketplace?{' '}
-                    <Link href="/login" style={{ color: '#3D0C1F', fontWeight: 600 }}>Sign In</Link>
+                    <Link href="/login" style={{ color: '#5F3041', fontWeight: 600 }}>Sign In</Link>
                   </p>
 
                 </form>

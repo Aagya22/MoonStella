@@ -108,7 +108,7 @@ export default function InspectPostModal({
                   }
                 }}
               >
-                <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none flex-shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none flex-shrink-0">
                   {selectedInspectPost.avatar ? (
                     <Image
                       src={selectedInspectPost.avatar}
@@ -125,7 +125,7 @@ export default function InspectPostModal({
                     {selectedInspectPost.artisanName}
                   </h4>
                   {selectedInspectPost.artisanTitle === 'MASTER ARTISAN' && (
-                    <p className="text-[9px] font-semibold text-[#3D0C1F] uppercase mt-0.5">
+                    <p className="text-[9px] font-semibold text-[#5F3041] uppercase mt-0.5">
                       {selectedInspectPost.artisanTitle}
                     </p>
                   )}
@@ -191,7 +191,7 @@ export default function InspectPostModal({
               >
                 {selectedInspectPost.category || 'Bespoke Brief'}
               </span>
-              <span className="text-[10px] font-extrabold text-[#3D0C1F] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
+              <span className="text-[10px] font-extrabold text-[#5F3041] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
                 Est. Budget: {selectedInspectPost.price || 'Contact'}
               </span>
             </div>
@@ -207,7 +207,7 @@ export default function InspectPostModal({
                 <textarea
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl p-3 bg-[#FAF8F5] focus:outline-none focus:border-[#3D0C1F] resize-none h-24"
+                  className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl p-3 bg-[#FAF8F5] focus:outline-none focus:border-[#5F3041] resize-none h-24"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 />
                 <label
@@ -220,7 +220,7 @@ export default function InspectPostModal({
                   type="number"
                   value={editBudget}
                   onChange={(e) => setEditBudget(e.target.value)}
-                  className="w-full text-xs text-gray-707 border border-gray-200 rounded-xl px-3 py-2 bg-[#FAF8F5] focus:outline-none focus:border-[#3D0C1F]"
+                  className="w-full text-xs text-gray-707 border border-gray-200 rounded-xl px-3 py-2 bg-[#FAF8F5] focus:outline-none focus:border-[#5F3041]"
                   placeholder="e.g. 50000"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 />
@@ -234,7 +234,7 @@ export default function InspectPostModal({
                   </button>
                   <button
                     onClick={onSaveChanges}
-                    className="px-4 py-2 rounded-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] text-xs font-semibold cursor-pointer border-none"
+                    className="px-4 py-2 rounded-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-xs font-semibold cursor-pointer border-none"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     Save Changes
@@ -256,7 +256,7 @@ export default function InspectPostModal({
               {selectedInspectPost.materials.map((m: string) => (
                 <span
                   key={m}
-                  className="text-[9px] font-bold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase"
+                  className="text-[9px] font-bold tracking-widest text-[#5F3041] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   {m}
@@ -293,7 +293,7 @@ export default function InspectPostModal({
                     openChatWith(selectedInspectPost.artisanName)
                     onClose()
                   }}
-                  className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-white text-[10px] font-bold tracking-widest py-3.5 rounded uppercase cursor-pointer transition-all text-center shadow border-none"
+                  className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-white text-[10px] font-bold tracking-widest py-3.5 rounded uppercase cursor-pointer transition-all text-center shadow border-none"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   Inquire Custom Commission

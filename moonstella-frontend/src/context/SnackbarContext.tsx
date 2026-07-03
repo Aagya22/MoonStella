@@ -60,7 +60,7 @@ export const SnackbarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                   ? '#EF4444'
                   : s.type === 'warning'
                   ? '#F59E0B'
-                  : '#3D0C1F', // Maroon theme accent
+                  : '#5F3041', // Maroon theme accent
             }}
           >
             <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export const SnackbarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 </svg>
               )}
               {s.type === 'info' && (
-                <svg className="w-5 h-5 text-[#3D0C1F]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                <svg className="w-5 h-5 text-[#5F3041]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}

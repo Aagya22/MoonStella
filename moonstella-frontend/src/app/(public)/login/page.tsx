@@ -210,7 +210,7 @@ export default function LoginPage() {
                   disabled={loading}
                   className="w-full py-3.5 text-white rounded transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed uppercase"
                   style={{
-                    backgroundColor: '#3D0C1F',
+                    backgroundColor: '#5F3041',
                     fontFamily: 'var(--font-montserrat)',
                     fontSize: '11px',
                     fontWeight: 700,
@@ -237,8 +237,8 @@ export default function LoginPage() {
                   href="/get-started"
                   className="w-full py-3.5 text-center rounded border-2 transition-colors hover:bg-gray-50 uppercase"
                   style={{
-                    borderColor: '#3D0C1F',
-                    color: '#3D0C1F',
+                    borderColor: '#5F3041',
+                    color: '#5F3041',
                     fontFamily: 'var(--font-montserrat)',
                     fontSize: '11px',
                     fontWeight: 700,

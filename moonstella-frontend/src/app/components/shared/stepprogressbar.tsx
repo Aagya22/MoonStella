@@ -32,8 +32,8 @@ export default function StepProgressBar({
               fontWeight: 700,
               letterSpacing: '0.1em',
               textTransform: 'uppercase' as const,
-              color: '#3D0C1F',
-              borderBottom: currentStep === 1 ? '2px solid #3D0C1F' : '2px solid transparent',
+              color: '#5F3041',
+              borderBottom: currentStep === 1 ? '2px solid #5F3041' : '2px solid transparent',
               paddingBottom: '2px',
             }}
           >
@@ -46,8 +46,8 @@ export default function StepProgressBar({
               fontWeight: currentStep === 2 ? 700 : 500,
               letterSpacing: '0.1em',
               textTransform: 'uppercase' as const,
-              color: currentStep === 2 ? '#3D0C1F' : '#9CA3AF',
-              borderBottom: currentStep === 2 ? '2px solid #3D0C1F' : '2px solid transparent',
+              color: currentStep === 2 ? '#5F3041' : '#9CA3AF',
+              borderBottom: currentStep === 2 ? '2px solid #5F3041' : '2px solid transparent',
               paddingBottom: '2px',
             }}
           >
@@ -83,7 +83,7 @@ export default function StepProgressBar({
           style={{
             height: '100%',
             width: currentStep === 1 ? '50%' : '100%',
-            backgroundColor: '#3D0C1F',
+            backgroundColor: '#5F3041',
             borderRadius: '2px',
             transition: 'width 0.4s ease',
           }}

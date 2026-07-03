@@ -59,7 +59,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
   }
 
   const btnStyleMaroon = {
-    backgroundColor: '#3D0C1F',
+    backgroundColor: '#5F3041',
     color: 'white',
     border: 'none',
     fontFamily: 'var(--font-montserrat)',
@@ -75,8 +75,8 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
 
   const btnStyleOutline = {
     backgroundColor: 'transparent',
-    color: '#3D0C1F',
-    border: '1.5px solid #3D0C1F',
+    color: '#5F3041',
+    border: '1.5px solid #5F3041',
     fontFamily: 'var(--font-montserrat)',
     fontSize: '11px',
     fontWeight: 700,
@@ -102,7 +102,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
           <button
             type="button"
             onClick={onSkip}
-            className="absolute top-6 right-8 z-30 px-5 py-2 rounded border border-gray-200 text-gray-400 hover:text-[#3D0C1F] hover:border-[#3D0C1F] transition-all font-semibold uppercase text-[10px] tracking-widest"
+            className="absolute top-6 right-8 z-30 px-5 py-2 rounded border border-gray-200 text-gray-400 hover:text-[#5F3041] hover:border-[#5F3041] transition-all font-semibold uppercase text-[10px] tracking-widest"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Skip
@@ -115,7 +115,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
             {/* Left Content */}
             <div className="w-1/2 p-12 md:p-16 flex flex-col justify-center">
               <span
-                className="text-xs uppercase tracking-widest text-[#3D0C1F] font-bold mb-3"
+                className="text-xs uppercase tracking-widest text-[#5F3041] font-bold mb-3"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
                 The Buyer's Journey
@@ -150,7 +150,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
                 {/* Dark Maroon Backdrop Card */}
                 <div 
                   className="absolute top-0 left-0 w-[88%] h-[88%] rounded-sm"
-                  style={{ backgroundColor: '#3D0C1F' }}
+                  style={{ backgroundColor: '#5F3041' }}
                 />
                 {/* Front Gemstone Image Card */}
                 <div className="absolute bottom-0 right-0 w-[88%] h-[88%] bg-white rounded-sm overflow-hidden shadow-lg border border-gray-100 flex items-center justify-center p-3">
@@ -185,7 +185,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
               >
                 The Buyer's Journey
               </h2>
-              <div className="w-12 h-[1.5px] bg-[#3D0C1F] mx-auto mt-3 mb-1" />
+              <div className="w-12 h-[1.5px] bg-[#5F3041] mx-auto mt-3 mb-1" />
             </div>
 
             {/* Benefit Grid */}
@@ -281,7 +281,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
                     className="bg-white rounded border p-6 flex flex-col items-center justify-between text-center cursor-pointer transition-all hover:shadow-md"
                     style={{
                       height: '240px',
-                      borderColor: isSelected ? '#3D0C1F' : '#E5E7EB',
+                      borderColor: isSelected ? '#5F3041' : '#E5E7EB',
                       borderWidth: isSelected ? '2px' : '1px',
                       transform: isSelected ? 'scale(1.02)' : 'none',
                       boxShadow: isSelected ? '0 4px 20px rgba(61,12,31,0.08)' : 'none'
@@ -290,8 +290,8 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
                     <div 
                       className="w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all"
                       style={{ 
-                        backgroundColor: isSelected ? '#3D0C1F' : '#FAF8F5', 
-                        color: isSelected ? 'white' : '#3D0C1F' 
+                        backgroundColor: isSelected ? '#5F3041' : '#FAF8F5', 
+                        color: isSelected ? 'white' : '#5F3041' 
                       }}
                     >
                       {purpose.icon}
@@ -311,7 +311,7 @@ export default function BuyerOnboarding({ onComplete, onSkip }: BuyerOnboardingP
                       </p>
                     </div>
                     {isSelected && (
-                      <div className="mt-3 text-[9px] font-bold tracking-widest text-[#3D0C1F] uppercase">
+                      <div className="mt-3 text-[9px] font-bold tracking-widest text-[#5F3041] uppercase">
                         Selected
                       </div>
                     )}
