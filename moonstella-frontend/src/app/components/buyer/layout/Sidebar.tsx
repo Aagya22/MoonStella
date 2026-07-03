@@ -34,7 +34,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen w-60 bg-[#FAF0F3]/95 backdrop-blur-md border-r border-[#3D0C1F]/10 shadow-2xl z-50 flex flex-col justify-between py-8 transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-screen w-60 bg-[#FAF0F3]/95 backdrop-blur-md border-r border-[#5F3041]/10 shadow-2xl z-50 flex flex-col justify-between py-8 transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -42,7 +42,7 @@ export default function Sidebar({
           {/* Elegant padding and spacing after brand title */}
           <div className="px-6 mt-2" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem', marginBottom: '2.5rem' }}>
             <span
-              className="text-xl font-extrabold tracking-[0.2em] text-[#3D0C1F] block text-center uppercase select-none"
+              className="text-xl font-extrabold tracking-[0.2em] text-[#5F3041] block text-center uppercase select-none"
               style={{ fontFamily: 'var(--font-playfair)' }}
             >
               MOONSTELLA
@@ -127,8 +127,8 @@ export default function Sidebar({
                   key={item.id}
                   onClick={item.onClick}
                   className={`w-full flex items-center gap-4 px-6 py-3 rounded-xl text-left text-[11px] font-semibold tracking-[0.15em] transition-all duration-205 cursor-pointer border-none ${isActive
-                    ? 'text-[#FAF8F5] bg-[#3D0C1F] shadow-sm shadow-[#3D0C1F]/15 font-bold border border-[#3D0C1F]'
-                    : 'text-gray-700 hover:text-[#3D0C1F] hover:bg-[#3D0C1F]/5'
+                    ? 'text-[#FAF8F5] bg-[#5F3041] shadow-sm shadow-[#5F3041]/15 font-bold border border-[#5F3041]'
+                    : 'text-gray-700 hover:text-[#5F3041] hover:bg-[#5F3041]/5'
                     }`}
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
@@ -141,9 +141,9 @@ export default function Sidebar({
         </div>
 
         {/* Sidebar Footer details */}
-        <div className="px-6 border-t border-[#3D0C1F]/10 pt-5 flex flex-col gap-4">
+        <div className="px-6 border-t border-[#5F3041]/10 pt-5 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8.5 h-8.5 rounded-full bg-[#3D0C1F] flex items-center justify-center font-extrabold text-xs text-[#FAF8F5]">
+            <div className="w-8.5 h-8.5 rounded-full bg-[#5F3041] flex items-center justify-center font-extrabold text-xs text-[#FAF8F5]">
               {user.firstName ? user.firstName[0].toUpperCase() : 'A'}
             </div>
             <div className="min-w-0">
@@ -154,7 +154,7 @@ export default function Sidebar({
 
           <button
             onClick={() => { closeSidebar(); setShowLogoutConfirm(true); }}
-            className="w-full bg-white border border-[#3D0C1F]/20 text-[#3D0C1F] hover:bg-[#3D0C1F] hover:text-white hover:border-[#3D0C1F] transition-all text-[9px] font-bold tracking-widest py-2.5 rounded-xl uppercase text-center cursor-pointer"
+            className="w-full bg-white border border-[#5F3041]/20 text-[#5F3041] hover:bg-[#5F3041] hover:text-white hover:border-[#5F3041] transition-all text-[9px] font-bold tracking-widest py-2.5 rounded-xl uppercase text-center cursor-pointer"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Sign Out

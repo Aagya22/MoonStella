@@ -61,7 +61,7 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
   }
 
   const btnStyleMaroon = {
-    backgroundColor: '#3D0C1F',
+    backgroundColor: '#5F3041',
     color: 'white',
     border: 'none',
     fontFamily: 'var(--font-montserrat)',
@@ -77,8 +77,8 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
 
   const btnStyleOutline = {
     backgroundColor: 'transparent',
-    color: '#3D0C1F',
-    border: '1.5px solid #3D0C1F',
+    color: '#5F3041',
+    border: '1.5px solid #5F3041',
     fontFamily: 'var(--font-montserrat)',
     fontSize: '11px',
     fontWeight: 700,
@@ -163,7 +163,7 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
               {/* Top Left text */}
               <div className="w-3/5">
                 <h2
-                  className="text-[#3D0C1F] font-bold text-3xl mb-4 leading-tight"
+                  className="text-[#5F3041] font-bold text-3xl mb-4 leading-tight"
                   style={{ fontFamily: 'var(--font-playfair)' }}
                 >
                   Crafting Without Borders
@@ -190,8 +190,8 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
             <div className="grid grid-cols-3 gap-6 my-6">
               {/* Card 1 */}
               <div className="bg-white p-5 rounded border border-gray-100 shadow-sm flex flex-col items-start text-left">
-                <div className="w-9 h-9 rounded-full bg-[#FAF8F5] flex items-center justify-center mb-4 border border-[#3D0C1F]/10">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D0C1F" strokeWidth="1.5">
+                <div className="w-9 h-9 rounded-full bg-[#FAF8F5] flex items-center justify-center mb-4 border border-[#5F3041]/10">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F3041" strokeWidth="1.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                   </svg>
                 </div>
@@ -205,8 +205,8 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
 
               {/* Card 2 */}
               <div className="bg-white p-5 rounded border border-gray-100 shadow-sm flex flex-col items-start text-left">
-                <div className="w-9 h-9 rounded-full bg-[#FAF8F5] flex items-center justify-center mb-4 border border-[#3D0C1F]/10">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D0C1F" strokeWidth="1.5">
+                <div className="w-9 h-9 rounded-full bg-[#FAF8F5] flex items-center justify-center mb-4 border border-[#5F3041]/10">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F3041" strokeWidth="1.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                   </svg>
                 </div>
@@ -220,8 +220,8 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
 
               {/* Card 3 */}
               <div className="bg-white p-5 rounded border border-gray-100 shadow-sm flex flex-col items-start text-left">
-                <div className="w-9 h-9 rounded-full bg-[#FAF8F5] flex items-center justify-center mb-4 border border-[#3D0C1F]/10">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D0C1F" strokeWidth="1.5">
+                <div className="w-9 h-9 rounded-full bg-[#FAF8F5] flex items-center justify-center mb-4 border border-[#5F3041]/10">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F3041" strokeWidth="1.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25" />
                   </svg>
                 </div>
@@ -299,7 +299,7 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
                 {/* Studio Specialty Row */}
                 <div className="mb-6">
                   <label
-                    className="block text-[9px] font-bold tracking-widest text-[#3D0C1F] uppercase mb-3"
+                    className="block text-[9px] font-bold tracking-widest text-[#5F3041] uppercase mb-3"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     Studio Specialty
@@ -314,13 +314,13 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
                           className="rounded border p-3 flex flex-col items-center justify-center cursor-pointer transition-all hover:shadow-md text-center"
                           style={{
                             height: '110px',
-                            backgroundColor: isSelected ? '#3D0C1F' : 'white',
-                            borderColor: isSelected ? '#3D0C1F' : '#E5E7EB',
+                            backgroundColor: isSelected ? '#5F3041' : 'white',
+                            borderColor: isSelected ? '#5F3041' : '#E5E7EB',
                             color: isSelected ? 'white' : '#374151',
                             boxShadow: isSelected ? '0 4px 12px rgba(61,12,31,0.2)' : 'none'
                           }}
                         >
-                          <div className={`mb-2 ${isSelected ? 'text-[#E9D7C3]' : 'text-[#3D0C1F]'}`}>
+                          <div className={`mb-2 ${isSelected ? 'text-[#E9D7C3]' : 'text-[#5F3041]'}`}>
                             {spec.svg}
                           </div>
                           <span
@@ -344,7 +344,7 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
                 {/* Response Time Custom Grid Selection */}
                 <div>
                   <label
-                    className="block text-[9px] font-bold tracking-widest text-[#3D0C1F] uppercase mb-3"
+                    className="block text-[9px] font-bold tracking-widest text-[#5F3041] uppercase mb-3"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     Average Response Time
@@ -362,8 +362,8 @@ export default function SellerOnboarding({ onComplete, onSkip }: SellerOnboardin
                             fontWeight: 700,
                             fontFamily: 'var(--font-montserrat)',
                             letterSpacing: '0.02em',
-                            backgroundColor: isSelected ? '#3D0C1F' : '#FAF8F5',
-                            borderColor: isSelected ? '#3D0C1F' : '#E5E7EB',
+                            backgroundColor: isSelected ? '#5F3041' : '#FAF8F5',
+                            borderColor: isSelected ? '#5F3041' : '#E5E7EB',
                             color: isSelected ? 'white' : '#4B5563',
                             boxShadow: isSelected ? '0 4px 10px rgba(61,12,31,0.15)' : 'none',
                             transition: 'all 0.2s ease'

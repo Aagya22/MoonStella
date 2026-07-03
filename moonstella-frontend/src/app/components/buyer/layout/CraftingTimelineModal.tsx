@@ -16,7 +16,7 @@ export default function CraftingTimelineModal({
       <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-gray-100">
         
         {/* Header */}
-        <div className="bg-[#3D0C1F] text-white p-6 relative">
+        <div className="bg-[#5F3041] text-white p-6 relative">
           <h3 className="text-xl font-bold tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>Bespoke Tracker</h3>
           <p className="text-[10px] text-[#E9D7C3] font-semibold uppercase tracking-widest mt-1">No Active Orders</p>
           <button
@@ -31,7 +31,7 @@ export default function CraftingTimelineModal({
 
         {/* Content */}
         <div className="p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[200px]">
-          <div className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#3D0C1F]/40">
+          <div className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/40">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l-7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
             </svg>
@@ -48,7 +48,7 @@ export default function CraftingTimelineModal({
         <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
           <button
             onClick={onClose}
-            className="bg-[#3D0C1F] text-white text-[10px] font-bold tracking-widest px-4 py-2.5 rounded uppercase cursor-pointer hover:bg-[#2A0714] border-none"
+            className="bg-[#5F3041] text-white text-[10px] font-bold tracking-widest px-4 py-2.5 rounded uppercase cursor-pointer hover:bg-[#4A2231] border-none"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Close

@@ -29,7 +29,6 @@ function BuyerProfileContent() {
   const [selectedInspectPost, setSelectedInspectPost] = useState<any>(null)
   const [activeInspectIndex, setActiveInspectIndex] = useState(0)
 
-
   const [menuOpen, setMenuOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editDesc, setEditDesc] = useState('')
@@ -268,12 +267,11 @@ function BuyerProfileContent() {
     }
   }, [profileUser, user])
 
-
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 flex flex-col gap-8 animate-fade-in">
 
       {/* Unified Premium Profile Details Header — Glassmorphism */}
-      <div className="relative flex flex-col w-full bg-gradient-to-br from-[#3D0C1F]/90 via-[#2E0715]/85 to-[#3D0C1F]/90 backdrop-blur-xl text-[#FAF8F5] rounded-3xl p-8 shadow-[0_15px_45px_rgba(61,12,31,0.15)] transition-all hover:shadow-[0_20px_60px_rgba(61,12,31,0.22)] duration-500 animate-fade-in border border-white/[0.06] overflow-hidden">
+      <div className="relative flex flex-col w-full bg-gradient-to-br from-[#5F3041]/90 via-[#2E0715]/85 to-[#5F3041]/90 backdrop-blur-xl text-[#FAF8F5] rounded-3xl p-8 shadow-[0_15px_45px_rgba(61,12,31,0.15)] transition-all hover:shadow-[0_20px_60px_rgba(61,12,31,0.22)] duration-500 animate-fade-in border border-white/[0.06] overflow-hidden">
         {/* Glass light effects */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <div className="absolute -top-20 -left-20 w-60 h-60 bg-[#E9D7C3]/[0.04] rounded-full blur-3xl" />
@@ -290,7 +288,7 @@ function BuyerProfileContent() {
               className={`relative ${isOwnProfile ? 'cursor-pointer group' : ''}`}
               onClick={isOwnProfile ? () => setAvatarModalOpen(true) : undefined}
             >
-              <div className="w-28 h-28 rounded-full overflow-hidden border border-[#FAF8F5]/10 bg-[#E9D7C3] text-[#3D0C1F] flex items-center justify-center font-extrabold text-3xl select-none relative transition-transform duration-300 group-hover:scale-102 shadow-sm animate-scale-up">
+              <div className="w-28 h-28 rounded-full overflow-hidden border border-[#FAF8F5]/10 bg-[#E9D7C3] text-[#5F3041] flex items-center justify-center font-extrabold text-3xl select-none relative transition-transform duration-300 group-hover:scale-102 shadow-sm animate-scale-up">
                 {profileUser?.avatar ? (
                   <Image src={profileUser.avatar} alt={`${profileUser.firstName} ${profileUser.lastName}`} fill className="object-cover object-center" />
                 ) : profileUser?.firstName && profileUser?.lastName ? (
@@ -309,7 +307,7 @@ function BuyerProfileContent() {
               </div>
               <div
                 title="Verified Connoisseur Member"
-                className="absolute bottom-1 right-1 bg-[#2E0715] text-[#E9D7C3] p-1.5 rounded-full border-2 border-[#3D0C1F] flex items-center justify-center shadow-md select-none cursor-help"
+                className="absolute bottom-1 right-1 bg-[#2E0715] text-[#E9D7C3] p-1.5 rounded-full border-2 border-[#5F3041] flex items-center justify-center shadow-md select-none cursor-help"
               >
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="text-[#E9D7C3]">
                   <polyline points="20 6 9 17 4 12" />
@@ -379,7 +377,7 @@ function BuyerProfileContent() {
               <div className="flex flex-row gap-3 w-full">
                 <button
                   onClick={triggerProfileEdit}
-                  className="flex-1 bg-[#E9D7C3] hover:bg-white text-[#3D0C1F] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs transform hover:-translate-y-[1px] active:scale-98 border-none text-center"
+                  className="flex-1 bg-[#E9D7C3] hover:bg-white text-[#5F3041] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs transform hover:-translate-y-[1px] active:scale-98 border-none text-center"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   Edit Profile
@@ -389,7 +387,7 @@ function BuyerProfileContent() {
                   className="flex-1 bg-transparent border border-[#E9D7C3] text-[#E9D7C3] hover:bg-white/10 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 text-center transform hover:-translate-y-[1px]"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
-                  Add Request
+                  Add Post
                 </button>
               </div>
             ) : (
@@ -398,7 +396,7 @@ function BuyerProfileContent() {
                   onClick={handleToggleFollow}
                   className={`flex-1 text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all active:scale-98 text-center border ${isFollowing
                     ? 'bg-transparent text-white border-white/30 hover:bg-white/10'
-                    : 'bg-[#E9D7C3] text-[#3D0C1F] border-[#E9D7C3] hover:bg-white'
+                    : 'bg-[#E9D7C3] text-[#5F3041] border-[#E9D7C3] hover:bg-white'
                     }`}
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
@@ -406,7 +404,7 @@ function BuyerProfileContent() {
                 </button>
                 <button
                   onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
-                  className="flex-1 bg-[#E9D7C3] hover:bg-white text-[#3D0C1F] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
+                  className="flex-1 bg-[#E9D7C3] hover:bg-white text-[#5F3041] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   Message
@@ -448,10 +446,10 @@ function BuyerProfileContent() {
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4"></div>
 
         <div className="flex justify-between items-center select-none w-full mb-2">
-          <h3 className="text-xl font-bold font-playfair text-[#3D0C1F] tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
-            {isOwnProfile ? 'My Bespoke Requests' : `${profileUser?.firstName}'s Bespoke Requests`}
+          <h3 className="text-xl font-bold font-playfair text-[#5F3041] tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
+            {isOwnProfile ? 'My Posts' : `${profileUser?.firstName}'s Posts`}
           </h3>
-          <span className="text-[9px] font-bold text-[#3D0C1F] bg-[#3D0C1F]/5 border border-[#3D0C1F]/15 px-3 py-1 rounded-full uppercase tracking-wider animate-fade-in" style={{ fontFamily: 'var(--font-montserrat)' }}>
+          <span className="text-[9px] font-bold text-[#5F3041] bg-[#5F3041]/5 border border-[#5F3041]/15 px-3 py-1 rounded-full uppercase tracking-wider animate-fade-in" style={{ fontFamily: 'var(--font-montserrat)' }}>
             {posts.length} {posts.length === 1 ? 'Request' : 'Requests'}
           </span>
         </div>
@@ -481,7 +479,7 @@ function BuyerProfileContent() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-[#3D0C1F]/10">
+                      <div className="absolute inset-0 flex items-center justify-center text-[#5F3041]/10">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                           <circle cx="9" cy="9" r="2" />
@@ -557,11 +555,11 @@ function BuyerProfileContent() {
 
                       return (
                         <>
-                          <h4 className="text-sm font-bold text-[#3D0C1F] line-clamp-1 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
+                          <h4 className="text-sm font-bold text-[#5F3041] line-clamp-1 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
                             {cardTitle}
                           </h4>
                           {cardBody && (
-                            <p className="text-[11px] text-[#3D0C1F]/60 line-clamp-2 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                            <p className="text-[11px] text-[#5F3041]/60 line-clamp-2 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
                               {cardBody}
                             </p>
                           )}
@@ -574,7 +572,7 @@ function BuyerProfileContent() {
                       <span className="text-[10px] text-gray-400 font-medium tracking-wide" style={{ fontFamily: 'var(--font-montserrat)' }}>
                         {post.time}
                       </span>
-                      <span className="text-[11px] font-bold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                      <span className="text-[11px] font-bold text-[#5F3041]" style={{ fontFamily: 'var(--font-montserrat)' }}>
                         {post.price}
                       </span>
                     </div>
@@ -600,7 +598,6 @@ function BuyerProfileContent() {
         )}
       </div>
 
-      {/* 4. DETAIL ZOOM MODAL OVERLAY */}
       {selectedInspectPost && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-5xl md:h-[650px] overflow-hidden shadow-2xl border border-gray-100 flex flex-col md:flex-row max-h-[90vh] animate-scale-up">
@@ -643,7 +640,7 @@ function BuyerProfileContent() {
               <div>
                 <div className="flex justify-between items-start border-b border-gray-100 pb-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none">
+                    <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none">
                       {selectedInspectPost.avatar ? (
                         <Image src={selectedInspectPost.avatar} alt="Artisan" fill className="object-cover object-center" />
                       ) : (
@@ -653,7 +650,7 @@ function BuyerProfileContent() {
                     <div>
                       <h4 className="text-xs font-bold text-gray-855" style={{ fontFamily: 'var(--font-montserrat)' }}>{selectedInspectPost.artisanName}</h4>
                       {selectedInspectPost.artisanTitle === 'MASTER ARTISAN' && (
-                        <p className="text-[9px] font-semibold text-[#3D0C1F] uppercase mt-0.5">{selectedInspectPost.artisanTitle}</p>
+                        <p className="text-[9px] font-semibold text-[#5F3041] uppercase mt-0.5">{selectedInspectPost.artisanTitle}</p>
                       )}
                     </div>
                   </div>
@@ -710,7 +707,7 @@ function BuyerProfileContent() {
                   <span className="text-[9px] font-bold text-amber-600 tracking-widest uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {selectedInspectPost.category || 'Bespoke Brief'}
                   </span>
-                  <span className="text-[10px] font-extrabold text-[#3D0C1F] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
+                  <span className="text-[10px] font-extrabold text-[#5F3041] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
                     Est. Budget: {selectedInspectPost.price || 'Contact'}
                   </span>
                 </div>
@@ -721,7 +718,7 @@ function BuyerProfileContent() {
                     <textarea
                       value={editDesc}
                       onChange={(e) => setEditDesc(e.target.value)}
-                      className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl p-3 bg-[#FAF8F5] focus:outline-none focus:border-[#3D0C1F] resize-none h-24"
+                      className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl p-3 bg-[#FAF8F5] focus:outline-none focus:border-[#5F3041] resize-none h-24"
                       style={{ fontFamily: 'var(--font-montserrat)' }}
                     />
                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>Edit Budget (Rs.)</label>
@@ -729,7 +726,7 @@ function BuyerProfileContent() {
                       type="number"
                       value={editBudget}
                       onChange={(e) => setEditBudget(e.target.value)}
-                      className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-[#FAF8F5] focus:outline-none focus:border-[#3D0C1F]"
+                      className="w-full text-xs text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-[#FAF8F5] focus:outline-none focus:border-[#5F3041]"
                       placeholder="e.g. 50000"
                       style={{ fontFamily: 'var(--font-montserrat)' }}
                     />
@@ -743,7 +740,7 @@ function BuyerProfileContent() {
                       </button>
                       <button
                         onClick={() => handleUpdatePost(selectedInspectPost.id)}
-                        className="px-4 py-2 rounded-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] text-xs font-semibold cursor-pointer border-none"
+                        className="px-4 py-2 rounded-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-xs font-semibold cursor-pointer border-none"
                         style={{ fontFamily: 'var(--font-montserrat)' }}
                       >
                         Save Changes
@@ -763,7 +760,7 @@ function BuyerProfileContent() {
                   {selectedInspectPost.materials.map((m: string) => (
                     <span
                       key={m}
-                      className="text-[9px] font-bold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase"
+                      className="text-[9px] font-bold tracking-widest text-[#5F3041] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase"
                       style={{ fontFamily: 'var(--font-montserrat)' }}
                     >
                       {m}
@@ -798,7 +795,6 @@ function BuyerProfileContent() {
         </div>
       )}
 
-      {/* 5. INTERACTIVE AVATAR MODAL OVERLAY */}
       {avatarModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-gray-100 animate-scale-up flex flex-col gap-6 relative text-center">
@@ -825,7 +821,7 @@ function BuyerProfileContent() {
 
             {/* Preview Section */}
             <div className="flex justify-center my-2">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#3D0C1F]/20 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-4xl relative shadow-inner select-none">
+              <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#5F3041]/20 bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-4xl relative shadow-inner select-none">
                 {avatarPreview ? (
                   <Image src={avatarPreview} alt="New Avatar Preview" fill className="object-cover" />
                 ) : profileUser?.avatar ? (
@@ -852,7 +848,7 @@ function BuyerProfileContent() {
                   <button
                     onClick={handleSaveAvatar}
                     disabled={avatarLoading}
-                    className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none shadow active:scale-95 disabled:opacity-60 text-center"
+                    className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none shadow active:scale-95 disabled:opacity-60 text-center"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     {avatarLoading ? "Uploading..." : "Done"}
@@ -872,7 +868,7 @@ function BuyerProfileContent() {
                 <>
                   <button
                     onClick={() => avatarInputRef.current?.click()}
-                    className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none shadow active:scale-95 text-center"
+                    className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all border-none shadow active:scale-95 text-center"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     {profileUser?.avatar ? "Update Profile Picture" : "Add a Profile Picture"}
@@ -902,7 +898,6 @@ function BuyerProfileContent() {
         </div>
       )}
 
-      {/* Followers & Following Lists Modal */}
       <FollowModal
         isOpen={followModalOpen}
         title={followModalTitle}

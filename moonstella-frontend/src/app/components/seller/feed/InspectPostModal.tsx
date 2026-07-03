@@ -75,7 +75,7 @@ export default function InspectPostModal({
                   }
                 }}
               >
-                <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none flex-shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none flex-shrink-0">
                   {selectedInspectPost.avatar ? (
                     <Image
                       src={selectedInspectPost.avatar}
@@ -91,7 +91,7 @@ export default function InspectPostModal({
                   <h4 className="text-xs font-bold text-gray-855" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {selectedInspectPost.artisanName}
                   </h4>
-                  <span className="text-[8px] font-extrabold text-[#3D0C1F] bg-[#3D0C1F]/5 px-2.5 py-0.5 rounded tracking-widest uppercase mt-1 inline-block select-none">
+                  <span className="text-[8px] font-extrabold text-[#5F3041] bg-[#5F3041]/5 px-2.5 py-0.5 rounded tracking-widest uppercase mt-1 inline-block select-none">
                     Connoisseur Client
                   </span>
                 </div>
@@ -115,7 +115,7 @@ export default function InspectPostModal({
               >
                 {selectedInspectPost.category || 'Bespoke Request'}
               </span>
-              <span className="text-[10px] font-extrabold text-[#3D0C1F] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
+              <span className="text-[10px] font-extrabold text-[#5F3041] bg-[#FAF8F5] border border-gray-150 px-2.5 py-1 rounded uppercase">
                 Est. Budget: {selectedInspectPost.price || 'Contact'}
               </span>
             </div>
@@ -131,7 +131,7 @@ export default function InspectPostModal({
               {selectedInspectPost.materials.map((m: string) => (
                 <span
                   key={m}
-                  className="text-[9px] font-bold tracking-widest text-[#3D0C1F] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase select-none"
+                  className="text-[9px] font-bold tracking-widest text-[#5F3041] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase select-none"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   {m}
@@ -146,7 +146,7 @@ export default function InspectPostModal({
                 openChatWith(selectedInspectPost.artisanName)
                 onClose()
               }}
-              className="w-full bg-[#3D0C1F] hover:bg-[#2A0714] text-white text-[10px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all text-center shadow border-none active:scale-95"
+              className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-white text-[10px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all text-center shadow border-none active:scale-95"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               Message Client

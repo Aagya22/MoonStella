@@ -33,7 +33,7 @@ export default function FollowModal({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in select-none">
       <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-gray-105 animate-scale-up flex flex-col overflow-hidden max-h-[80vh]">
         {/* Header */}
-        <div className="bg-[#3D0C1F] text-white p-5 relative flex-shrink-0 flex items-center justify-between">
+        <div className="bg-[#5F3041] text-white p-5 relative flex-shrink-0 flex items-center justify-between">
           <h3 className="text-sm font-bold tracking-widest uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
             {title} ({list.length})
           </h3>
@@ -61,7 +61,7 @@ export default function FollowModal({
                 onClick={() => handleUserClick(user.id)}
                 className="flex items-center gap-3.5 p-2 rounded-2xl hover:bg-[#FAF8F5] cursor-pointer transition-colors border border-transparent hover:border-gray-100"
               >
-                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm flex-shrink-0 border border-gray-100 shadow-2xs">
+                <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm flex-shrink-0 border border-gray-100 shadow-2xs">
                   {user.avatar ? (
                     <Image src={user.avatar} alt="User avatar" fill className="object-cover object-center" />
                   ) : (

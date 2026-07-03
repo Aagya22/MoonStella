@@ -266,13 +266,13 @@ export default function BuyerWishlistPage() {
             className="text-xs text-gray-500 font-medium tracking-wide flex items-center gap-2"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
-            <span className="w-2 h-2 rounded-full bg-[#3D0C1F] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#5F3041] animate-pulse" />
             Curated and saved designs from master artisans.
           </p>
         </div>
         <div className="bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center select-none">
           <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider" style={{ fontFamily: 'var(--font-montserrat)' }}>Vault items</span>
-          <span className="text-sm font-extrabold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-playfair)' }}>{posts.length} Saved</span>
+          <span className="text-sm font-extrabold text-[#5F3041]" style={{ fontFamily: 'var(--font-playfair)' }}>{posts.length} Saved</span>
         </div>
       </div>
 
@@ -289,14 +289,14 @@ export default function BuyerWishlistPage() {
             </svg>
           </div>
           <div className="text-center">
-            <h3 className="text-lg font-bold text-[#3D0C1F] font-playfair mb-1">Your Wishlist is Empty</h3>
+            <h3 className="text-lg font-bold text-[#5F3041] font-playfair mb-1">Your Wishlist is Empty</h3>
             <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)' }}>
               Explore the Request Feed and save master designs to curate your bespoke dream collection.
             </p>
           </div>
           <button
             onClick={() => router.push('/buyer/feed')}
-            className="mt-2 bg-[#3D0C1F] text-white hover:bg-[#2A0714] text-[10px] font-bold tracking-widest px-5 py-3 rounded uppercase transition-all duration-200 cursor-pointer shadow active:scale-95"
+            className="mt-2 bg-[#5F3041] text-white hover:bg-[#4A2231] text-[10px] font-bold tracking-widest px-5 py-3 rounded uppercase transition-all duration-200 cursor-pointer shadow active:scale-95"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore Feed
@@ -324,7 +324,7 @@ export default function BuyerWishlistPage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-[#3D0C1F]/10">
+                  <div className="absolute inset-0 flex items-center justify-center text-[#5F3041]/10">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <rect x="3" y="3" width="18" height="18" rx="2" />
                       <circle cx="9" cy="9" r="2" />
@@ -339,7 +339,7 @@ export default function BuyerWishlistPage() {
                     e.stopPropagation()
                     toggleSave(post.id)
                   }}
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-[#3D0C1F] backdrop-blur-sm shadow flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-20 border-none"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-[#5F3041] backdrop-blur-sm shadow flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-20 border-none"
                   title="Unsave design"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
@@ -414,7 +414,7 @@ export default function BuyerWishlistPage() {
 
                   return (
                     <>
-                      <h4 className="text-sm font-bold text-[#3D0C1F] line-clamp-1 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
+                      <h4 className="text-sm font-bold text-[#5F3041] line-clamp-1 leading-tight" style={{ fontFamily: 'var(--font-playfair)' }}>
                         {cardTitle}
                       </h4>
                       {cardBody && (
@@ -431,7 +431,7 @@ export default function BuyerWishlistPage() {
                   <span className="text-[10px] text-gray-400 font-medium tracking-wide" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {post.time}
                   </span>
-                  <span className="text-[11px] font-bold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  <span className="text-[11px] font-bold text-[#5F3041]" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {post.price}
                   </span>
                 </div>

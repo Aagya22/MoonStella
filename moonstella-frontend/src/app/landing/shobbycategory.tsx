@@ -67,7 +67,7 @@ export default function ShopByCategory() {
         <div className="text-center mb-12">
           <p
             className="text-xs font-semibold tracking-widest mb-3"
-            style={{ color: '#3D0C1F', fontFamily: 'var(--font-montserrat)' }}
+            style={{ color: '#5F3041', fontFamily: 'var(--font-montserrat)' }}
           >
             CURATION
           </p>

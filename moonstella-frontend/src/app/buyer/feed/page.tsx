@@ -388,7 +388,6 @@ export default function BuyerFeedPage() {
   return (
     <div className="flex-1 w-full mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-[1fr_3.5fr_1fr] gap-8">
 
-      {/* LEFT COLUMN: CURATION MENU */}
       <div className="w-full">
         <FeedHeader
           selectedCuration={selectedCuration}
@@ -397,13 +396,12 @@ export default function BuyerFeedPage() {
         />
       </div>
 
-      {/* MIDDLE COLUMN: SHARE BOX & FEED POSTS */}
       <main className="w-full flex flex-col gap-6 relative">
         <div
           onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-100 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#3D0C1F]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
+          className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-100 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#5F3041]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
         >
-          <div className="w-10 h-10 rounded-full bg-[#3D0C1F] text-[#E9D7C3] font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm select-none">
+          <div className="w-10 h-10 rounded-full bg-[#5F3041] text-[#E9D7C3] font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm select-none">
             {user?.firstName ? user.firstName[0].toUpperCase() : 'A'}
           </div>
           <div
@@ -417,7 +415,7 @@ export default function BuyerFeedPage() {
           </div>
           <button
             type="button"
-            className="bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 flex-shrink-0 border-none shadow-sm"
+            className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 flex-shrink-0 border-none shadow-sm"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Share
@@ -428,7 +426,7 @@ export default function BuyerFeedPage() {
         <div className="flex flex-col gap-8">
           {filteredPosts.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center flex flex-col items-center justify-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.01)] min-h-[320px]">
-              <div className="w-16 h-16 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#3D0C1F]/40">
+              <div className="w-16 h-16 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/40">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
@@ -461,7 +459,6 @@ export default function BuyerFeedPage() {
         </div>
       </main>
 
-      {/* RIGHT COLUMN: SUGGESTED LIST */}
       <div className="w-full">
         <SuggestedSellers
           suggestedSellers={suggestedSellers}
@@ -471,7 +468,6 @@ export default function BuyerFeedPage() {
         />
       </div>
 
-      {/* 4. POST CREATION OVERLAY MODAL */}
       {showCreateModal && (
         <CreatePostModal
           user={user}
@@ -480,7 +476,6 @@ export default function BuyerFeedPage() {
         />
       )}
 
-      {/* 5. POST INSPECTION / DETAIL ZOOM MODAL */}
       {selectedInspectPost && (
         <InspectPostModal
           selectedInspectPost={selectedInspectPost}
@@ -492,7 +487,7 @@ export default function BuyerFeedPage() {
           handleUpdatePost={handleUpdatePost}
         />
       )}
-      {/* 6. LIKES MODAL */}
+      
       <FollowModal
         isOpen={likesModalOpen}
         title="Liked By"

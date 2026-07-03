@@ -45,7 +45,7 @@ export default function SuggestedBuyers({
                   }}
                   className="flex items-center gap-3.5 group cursor-pointer p-1.5 rounded-xl hover:bg-[#FAF8F5] transition-all"
                 >
-                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
                     {buyer.image ? (
                       <Image src={buyer.image} alt={buyer.name} fill className="object-cover object-center" />
                     ) : (
@@ -64,7 +64,7 @@ export default function SuggestedBuyers({
             onClick={() => {
               setSelectedCuration('latest')
             }}
-            className="w-full text-center text-[10px] font-bold tracking-widest text-[#3D0C1F] hover:bg-[#3D0C1F] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#3D0C1F]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
+            className="w-full text-center text-[10px] font-bold tracking-widest text-[#5F3041] hover:bg-[#5F3041] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#5F3041]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All

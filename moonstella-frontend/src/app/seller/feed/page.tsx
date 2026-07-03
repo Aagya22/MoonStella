@@ -413,7 +413,6 @@ export default function SellerFeedPage() {
   return (
     <div className="flex-1 w-full mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-[1fr_3.5fr_1fr] gap-8">
 
-      {/* LEFT COLUMN: CURATION MENU */}
       <div className="w-full">
         <FeedHeader
           selectedCuration={selectedCuration}
@@ -422,13 +421,12 @@ export default function SellerFeedPage() {
         />
       </div>
 
-      {/* MIDDLE COLUMN: SHARE BOX & FEED POSTS */}
       <main className="w-full flex flex-col gap-6 relative">
         <div
           onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-100 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#3D0C1F]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
+          className="bg-gradient-to-r from-white to-[#FAF8F5] p-5 rounded-3xl border border-gray-100 shadow-[0_12px_35px_rgba(61,12,31,0.025)] flex gap-4 items-center cursor-pointer hover:border-[#5F3041]/20 hover:shadow-[0_12px_40px_rgba(61,12,31,0.04)] transition-all duration-300 z-10"
         >
-          <div className="w-10 h-10 rounded-full bg-[#3D0C1F] text-[#E9D7C3] font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm select-none">
+          <div className="w-10 h-10 rounded-full bg-[#5F3041] text-[#E9D7C3] font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm select-none">
             {user?.firstName ? user.firstName[0].toUpperCase() : 'A'}
           </div>
           <div
@@ -442,7 +440,7 @@ export default function SellerFeedPage() {
           </div>
           <button
             type="button"
-            className="bg-[#3D0C1F] hover:bg-[#2A0714] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 flex-shrink-0 border-none shadow-sm"
+            className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all active:scale-95 flex-shrink-0 border-none shadow-sm"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Share
@@ -490,7 +488,6 @@ export default function SellerFeedPage() {
         )}
       </main>
 
-      {/* RIGHT COLUMN: SUGGESTED BUYERS */}
       <div className="w-full">
         <SuggestedBuyers
           suggestedBuyers={suggestedBuyers}
@@ -499,7 +496,6 @@ export default function SellerFeedPage() {
         />
       </div>
 
-      {/* Inspect zoom brief modal */}
       {selectedInspectPost && (
         <InspectPostModal
           selectedInspectPost={selectedInspectPost}
@@ -508,7 +504,6 @@ export default function SellerFeedPage() {
         />
       )}
 
-      {/* Create Design Modal overlay */}
       {showCreateModal && (
         <CreatePostModal
           user={user}
@@ -517,7 +512,6 @@ export default function SellerFeedPage() {
         />
       )}
 
-      {/* Onboarding Overlay */}
       {showOnboarding && (
         <SellerOnboarding
           onComplete={handleOnboardingComplete}
@@ -525,7 +519,6 @@ export default function SellerFeedPage() {
         />
       )}
 
-      {/* 6. LIKES MODAL */}
       <FollowModal
         isOpen={likesModalOpen}
         title="Liked By"

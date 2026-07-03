@@ -38,7 +38,7 @@ export default function SuggestedSellers({
                   onClick={() => openChatWith(seller.name)}
                   className="flex items-center gap-3.5 group cursor-pointer p-1.5 rounded-xl hover:bg-[#FAF8F5] transition-all"
                 >
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
                     {seller.image ? (
                       <Image src={seller.image} alt={seller.name} fill className="object-cover object-center" />
                     ) : (
@@ -58,7 +58,7 @@ export default function SuggestedSellers({
             onClick={() => {
               setSelectedCuration('latest')
             }}
-            className="w-full text-center text-[10px] font-extrabold tracking-widest text-[#3D0C1F] hover:text-[#8A2B49] transition-colors uppercase pt-5 mt-4 border-t border-gray-50 cursor-pointer block bg-transparent"
+            className="w-full text-center text-[10px] font-extrabold tracking-widest text-[#5F3041] hover:text-[#8A2B49] transition-colors uppercase pt-5 mt-4 border-t border-gray-50 cursor-pointer block bg-transparent"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All

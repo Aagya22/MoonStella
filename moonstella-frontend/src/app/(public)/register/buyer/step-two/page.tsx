@@ -181,7 +181,7 @@ export default function BuyerRegisterStepTwo() {
                   {/* Section 1 — Profile Image */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#3D0C1F', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>1</div>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#5F3041', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>1</div>
                       <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Profile Image</h2>
                     </div>
 
@@ -206,10 +206,10 @@ export default function BuyerRegisterStepTwo() {
                           <Image src={preview} alt="Preview" fill className="object-cover" />
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', textAlign: 'center', padding: '10px' }}>
-                            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#3D0C1F" strokeWidth="1.5">
+                            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#5F3041" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                             </svg>
-                            <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: '#3D0C1F', textTransform: 'uppercase' }}>Upload</p>
+                            <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: '#5F3041', textTransform: 'uppercase' }}>Upload</p>
                           </div>
                         )}
                       </div>
@@ -269,7 +269,7 @@ export default function BuyerRegisterStepTwo() {
                   {/* Section 2 — Location */}
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#3D0C1F', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>2</div>
+                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#5F3041', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>2</div>
                       <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Location <span style={{ color: '#EF4444', fontSize: '13px' }}>*</span></h2>
                     </div>
 
@@ -301,7 +301,7 @@ export default function BuyerRegisterStepTwo() {
                       </div>
 
                       {district && locality && (
-                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#3D0C1F' }}>
+                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#5F3041' }}>
                           📍 {locality}, {district}, Nepal
                         </p>
                       )}
@@ -311,10 +311,10 @@ export default function BuyerRegisterStepTwo() {
                   {error && <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#EF4444' }}>{error}</p>}
 
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <button type="button" onClick={handleBack} style={{ padding: '12px 28px', borderRadius: '4px', border: '2px solid #3D0C1F', color: '#3D0C1F', backgroundColor: 'transparent', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                    <button type="button" onClick={handleBack} style={{ padding: '12px 28px', borderRadius: '4px', border: '2px solid #5F3041', color: '#5F3041', backgroundColor: 'transparent', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
                       Go Back
                     </button>
-                    <button type="submit" disabled={loading} style={{ padding: '12px 32px', borderRadius: '4px', backgroundColor: '#3D0C1F', color: 'white', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, border: 'none' }}>
+                    <button type="submit" disabled={loading} style={{ padding: '12px 32px', borderRadius: '4px', backgroundColor: '#5F3041', color: 'white', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, border: 'none' }}>
                       {loading ? 'Creating account...' : 'Get Started'}
                     </button>
                   </div>

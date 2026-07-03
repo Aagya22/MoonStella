@@ -57,7 +57,7 @@ export default function BuyerDashboardPage() {
           </div>
           <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider" style={{ fontFamily: 'var(--font-montserrat)' }}>Vault Saves</span>
-            <span className="text-sm font-extrabold text-[#3D0C1F]" style={{ fontFamily: 'var(--font-playfair)' }}>{wishlist.length} Items</span>
+            <span className="text-sm font-extrabold text-[#5F3041]" style={{ fontFamily: 'var(--font-playfair)' }}>{wishlist.length} Items</span>
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function BuyerDashboardPage() {
           
           {/* Premium Empty State: Ongoing Orders */}
           <div className="bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-gray-100 p-8 flex flex-col md:flex-row items-center gap-8 min-h-[260px]">
-            <div className="w-24 h-24 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#3D0C1F]/40 flex-shrink-0 border border-gray-50 shadow-inner">
+            <div className="w-24 h-24 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/40 flex-shrink-0 border border-gray-50 shadow-inner">
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
                 <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l-7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -78,13 +78,13 @@ export default function BuyerDashboardPage() {
             </div>
             <div className="flex-1 text-center md:text-left">
               <span className="text-[9px] font-extrabold tracking-[0.25em] text-amber-600 uppercase block mb-1">Ongoing Orders</span>
-              <h3 className="text-xl font-bold text-[#3D0C1F] mb-2" style={{ fontFamily: 'var(--font-playfair)' }}>No Active Bespoke Commissions</h3>
+              <h3 className="text-xl font-bold text-[#5F3041] mb-2" style={{ fontFamily: 'var(--font-playfair)' }}>No Active Bespoke Commissions</h3>
               <p className="text-xs text-gray-500 leading-relaxed mb-5" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Collaborate with a master artisan to custom craft a one-of-a-kind jewelry piece. You will be able to track every stage of design drawings, gemstone handpicking, goldsmithing, and delivery here in real time.
               </p>
               <button 
                 onClick={() => openChatWith('Julian Thorne')}
-                className="bg-[#3D0C1F] text-white hover:bg-[#2A0714] text-[10px] font-bold tracking-widest px-5 py-3 rounded uppercase transition-all duration-200 cursor-pointer shadow active:scale-95"
+                className="bg-[#5F3041] text-white hover:bg-[#4A2231] text-[10px] font-bold tracking-widest px-5 py-3 rounded uppercase transition-all duration-200 cursor-pointer shadow active:scale-95"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
                 Post a Request / Brief
@@ -96,7 +96,7 @@ export default function BuyerDashboardPage() {
           <div className="flex flex-col gap-6">
             <h3 className="text-2xl font-bold text-gray-900 tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>Recommended Gems</h3>
             <div className="bg-white rounded-2xl p-10 border border-gray-100 text-center flex flex-col items-center justify-center gap-3 min-h-[220px]">
-              <span className="text-[10px] font-bold tracking-widest text-[#3D0C1F] uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>Curating Custom Showcase</span>
+              <span className="text-[10px] font-bold tracking-widest text-[#5F3041] uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>Curating Custom Showcase</span>
               <p className="text-xs text-gray-400 max-w-sm leading-normal">
                 There are no custom recommended designs at the moment. Update your onboarding preferences to feed our artisan algorithms!
               </p>
@@ -113,7 +113,7 @@ export default function BuyerDashboardPage() {
             
             {/* Wishlist Section */}
             <div>
-              <h3 className="text-xs font-bold tracking-widest text-[#3D0C1F] uppercase mb-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
+              <h3 className="text-xs font-bold tracking-widest text-[#5F3041] uppercase mb-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Bespoke Vault ({wishlist.length})
               </h3>
               {loading ? (
@@ -167,11 +167,11 @@ export default function BuyerDashboardPage() {
                           <p className="text-[11px] text-gray-500 truncate mt-0.5" style={{ fontFamily: 'var(--font-montserrat)' }}>
                             {post.description}
                           </p>
-                          <span className="text-[9px] font-extrabold text-[#3D0C1F] block mt-0.5">
+                          <span className="text-[9px] font-extrabold text-[#5F3041] block mt-0.5">
                             {post.price || (post.budget ? `Rs. ${post.budget.toLocaleString()}` : 'Contact for Quote')}
                           </span>
                         </div>
-                        <div className="text-gray-300 group-hover:text-[#3D0C1F] transition-colors flex-shrink-0">
+                        <div className="text-gray-300 group-hover:text-[#5F3041] transition-colors flex-shrink-0">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6" />
                           </svg>
@@ -187,7 +187,7 @@ export default function BuyerDashboardPage() {
 
             {/* Saved Sellers Section */}
             <div>
-              <h3 className="text-xs font-bold tracking-widest text-[#3D0C1F] uppercase mb-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
+              <h3 className="text-xs font-bold tracking-widest text-[#5F3041] uppercase mb-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Partner Artisans
               </h3>
               <div className="py-4 text-center text-gray-400 text-[10px] font-medium tracking-wide">
@@ -199,7 +199,7 @@ export default function BuyerDashboardPage() {
 
           {/* Recent Inquiries List */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
-            <h3 className="text-xs font-bold tracking-widest text-[#3D0C1F] uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
+            <h3 className="text-xs font-bold tracking-widest text-[#5F3041] uppercase" style={{ fontFamily: 'var(--font-montserrat)' }}>
               Recent Inquiries
             </h3>
             <div className="py-6 text-center text-gray-400 text-[10px] font-medium tracking-wide border border-dashed border-gray-100 rounded-xl bg-[#FAF8F5]/50">

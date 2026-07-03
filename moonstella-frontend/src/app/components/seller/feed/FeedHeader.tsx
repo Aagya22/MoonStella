@@ -31,8 +31,8 @@ export default function FeedHeader({ selectedCuration, setSelectedCuration, setS
                   key={item.id}
                   onClick={() => setSelectedCuration(item.id)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${isActive
-                      ? 'bg-[#3D0C1F] text-[#FAF8F5] shadow-md shadow-[#3D0C1F]/15 font-bold border border-[#3D0C1F]'
-                      : 'text-gray-600 hover:bg-[#FAF6F0] hover:text-[#3D0C1F] border border-transparent font-medium'
+                      ? 'bg-[#5F3041] text-[#FAF8F5] shadow-md shadow-[#5F3041]/15 font-bold border border-[#5F3041]'
+                      : 'text-gray-600 hover:bg-[#FAF6F0] hover:text-[#5F3041] border border-transparent font-medium'
                     }`}
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
@@ -52,7 +52,7 @@ export default function FeedHeader({ selectedCuration, setSelectedCuration, setS
         <div className="border-t border-gray-100 pt-4 mt-1">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full bg-[#FAF6F0] hover:bg-[#3D0C1F] hover:text-[#FAF8F5] text-[#3D0C1F] border border-[#3D0C1F]/25 transition-all duration-300 text-[9px] font-bold tracking-widest py-3 rounded-xl uppercase text-center cursor-pointer shadow-[0_2px_8px_rgba(61,12,31,0.02)] flex items-center justify-center gap-1.5 active:scale-95"
+            className="w-full bg-[#FAF6F0] hover:bg-[#5F3041] hover:text-[#FAF8F5] text-[#5F3041] border border-[#5F3041]/25 transition-all duration-300 text-[9px] font-bold tracking-widest py-3 rounded-xl uppercase text-center cursor-pointer shadow-[0_2px_8px_rgba(61,12,31,0.02)] flex items-center justify-center gap-1.5 active:scale-95"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

@@ -74,18 +74,18 @@ export default function CreatePostModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-gray-100 animate-scale-up flex flex-col overflow-hidden">
+      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-gray-100/70 animate-scale-up flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-[#3D0C1F] text-white p-6 relative flex-shrink-0">
-          <h3 className="text-lg font-bold tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
+        <div className="bg-[#FAF0F3] p-6 relative flex-shrink-0 text-center border-b border-[#5F3041]/10">
+          <h3 className="text-xl font-bold tracking-wide text-[#5F3041]" style={{ fontFamily: 'var(--font-playfair)' }}>
             Create Bespoke Request
           </h3>
-          <p className="text-[10px] text-[#E9D7C3] font-semibold uppercase tracking-widest mt-1">
+          <p className="text-[10px] text-[#5F3041]/60 font-semibold uppercase tracking-widest mt-1">
             Publish a design brief for master artisans
           </p>
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 text-white/70 hover:text-white cursor-pointer bg-transparent border-none"
+            className="absolute top-6 right-6 text-[#5F3041]/70 hover:text-[#5F3041] cursor-pointer bg-transparent border-none transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -95,13 +95,13 @@ export default function CreatePostModal({
         </div>
 
         {/* Form - 2 Columns Side-by-Side */}
-        <form onSubmit={handleFormSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-white">
+        <form onSubmit={handleFormSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 bg-[#FDFBFB]">
           {/* Left Column: Description & Sketch */}
           <div className="flex flex-col gap-5">
             {/* Description */}
             <div className="flex flex-col gap-2">
               <label
-                className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+                className="text-[9px] font-bold text-[#5F3041]/60 uppercase tracking-[0.15em]"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
                 Description / Design Details
@@ -111,7 +111,7 @@ export default function CreatePostModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl p-4 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200 focus:ring-1 focus:ring-[#3D0C1F]/20"
+                className="w-full bg-[#FAF8F5] border border-gray-150 rounded-2xl p-4 text-xs text-gray-700 focus:outline-none focus:bg-white focus:border-[#5F3041]/40 focus:ring-1 focus:ring-[#5F3041]/10 transition-all duration-300"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
                 required
               />
@@ -120,7 +120,7 @@ export default function CreatePostModal({
             {/* Design Image Source Option */}
             <div className="flex flex-col gap-2">
               <label
-                className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+                className="text-[9px] font-bold text-[#5F3041]/60 uppercase tracking-[0.15em]"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
                 Design Sketch or Illustration
@@ -280,7 +280,7 @@ export default function CreatePostModal({
                       </div>
                     ))}
                     {/* Add more photo card */}
-                    <label className="w-12 h-12 rounded-lg border border-dashed border-gray-300 hover:border-[#3D0C1F] flex items-center justify-center cursor-pointer flex-shrink-0 bg-gray-50/50">
+                    <label className="w-12 h-12 rounded-lg border border-dashed border-gray-300 hover:border-[#5F3041] flex items-center justify-center cursor-pointer flex-shrink-0 bg-gray-50/50">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-400">
                         <line x1="12" y1="5" x2="12" y2="19" />
                         <line x1="5" y1="12" x2="19" y2="12" />
@@ -296,8 +296,8 @@ export default function CreatePostModal({
                   </div>
                 </div>
               ) : (
-                <label className="w-full flex items-center justify-center border-2 border-dashed border-gray-250 hover:border-[#3D0C1F] rounded-2xl p-6 cursor-pointer transition-all bg-[#FAF8F5]/30 h-[160px] text-center flex-col gap-2 group">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-400 group-hover:text-[#3D0C1F] transition-colors">
+                <label className="w-full flex items-center justify-center border-2 border-dashed border-gray-250 hover:border-[#5F3041] rounded-2xl p-6 cursor-pointer transition-all bg-[#FAF8F5]/30 h-[160px] text-center flex-col gap-2 group">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-400 group-hover:text-[#5F3041] transition-colors">
                     <path d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5h10.5a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0017.25 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5z" />
                   </svg>
                   <span className="text-[10px] font-bold text-gray-400 group-hover:text-gray-600 tracking-widest uppercase transition-colors" style={{ fontFamily: 'var(--font-montserrat)' }}>
@@ -322,7 +322,7 @@ export default function CreatePostModal({
           <div className="flex flex-col gap-5">
             {/* Category */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>
+              <label className="text-[9px] font-bold text-[#5F3041]/60 uppercase tracking-[0.15em]" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Category
               </label>
               <div className="flex flex-wrap gap-2">
@@ -332,12 +332,13 @@ export default function CreatePostModal({
                     <div
                       key={cat}
                       onClick={() => toggleCategory(cat)}
-                      className="rounded-full border px-3 py-1.5 flex items-center justify-center cursor-pointer transition-all hover:bg-[#FAF8F5] text-center text-[10px] font-bold uppercase tracking-wider"
+                      className="rounded-full border px-4 py-2 flex items-center justify-center cursor-pointer transition-all hover:bg-[#FAF0F3]/40 text-center text-[10px] font-bold uppercase tracking-wider select-none active:scale-95 duration-200"
                       style={{
                         fontFamily: 'var(--font-montserrat)',
-                        backgroundColor: isSelected ? '#3D0C1F' : 'white',
-                        borderColor: isSelected ? '#3D0C1F' : '#E5E7EB',
+                        backgroundColor: isSelected ? '#5F3041' : 'white',
+                        borderColor: isSelected ? '#5F3041' : '#E5E7EB',
                         color: isSelected ? 'white' : '#4B5563',
+                        boxShadow: isSelected ? '0 4px 12px rgba(61, 12, 31, 0.15)' : 'none',
                       }}
                     >
                       {cat}
@@ -349,17 +350,17 @@ export default function CreatePostModal({
 
             {/* Budget */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>
+              <label className="text-[9px] font-bold text-[#5F3041]/60 uppercase tracking-[0.15em]" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Target Budget (Rs)
               </label>
               <div className="relative">
-                <span className="absolute left-4 inset-y-0 flex items-center text-xs text-gray-400 font-bold">Rs.</span>
+                <span className="absolute left-4 inset-y-0 flex items-center text-xs text-[#5F3041]/60 font-bold">Rs.</span>
                 <input
                   type="number"
                   placeholder="Enter estimated budget in Nepalese Rupees (e.g. 50000)"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
-                  className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs text-gray-707 focus:outline-none focus:bg-white focus:border-gray-200"
+                  className="w-full bg-[#FAF8F5] border border-gray-150 rounded-2xl pl-10 pr-4 py-3 text-xs text-gray-700 focus:outline-none focus:bg-white focus:border-[#5F3041]/40 focus:ring-1 focus:ring-[#5F3041]/10 transition-all duration-300"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 />
               </div>
@@ -367,7 +368,7 @@ export default function CreatePostModal({
 
             {/* Materials & Gemstones Selection */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>
+              <label className="text-[9px] font-bold text-[#5F3041]/60 uppercase tracking-[0.15em]" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 Materials & Gemstones
               </label>
 
@@ -378,7 +379,7 @@ export default function CreatePostModal({
                     setMetalsDropdownOpen(!metalsDropdownOpen)
                     setGemsDropdownOpen(false)
                   }}
-                  className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-700 flex justify-between items-center cursor-pointer select-none"
+                  className="w-full bg-[#FAF8F5] border border-gray-150 rounded-2xl px-4 py-3 text-xs text-gray-700 flex justify-between items-center cursor-pointer select-none hover:border-gray-300 transition-all duration-300"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   <span className="truncate">
@@ -391,18 +392,18 @@ export default function CreatePostModal({
                   </svg>
                 </div>
                 {metalsDropdownOpen && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-[#5F3041]/10 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
                     {extendedMetals.map((metal) => {
                       const isChecked = selectedMaterials.includes(metal)
                       return (
-                        <label key={metal} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#FAF8F5] rounded-xl cursor-pointer select-none">
+                        <label key={metal} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#FAF0F3]/40 rounded-xl cursor-pointer select-none transition-colors">
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => toggleMaterial(metal)}
-                            className="accent-[#3D0C1F] cursor-pointer"
+                            className="accent-[#5F3041] cursor-pointer w-3.5 h-3.5 rounded border-gray-300 text-[#5F3041] focus:ring-[#5F3041]"
                           />
-                          <span className="text-gray-700 font-semibold">{metal}</span>
+                          <span className="text-gray-700 font-medium">{metal}</span>
                         </label>
                       )
                     })}
@@ -417,7 +418,7 @@ export default function CreatePostModal({
                     setGemsDropdownOpen(!gemsDropdownOpen)
                     setMetalsDropdownOpen(false)
                   }}
-                  className="w-full bg-[#FAF8F5] border border-gray-100 rounded-2xl px-4 py-3 text-xs text-gray-707 flex justify-between items-center cursor-pointer select-none"
+                  className="w-full bg-[#FAF8F5] border border-gray-150 rounded-2xl px-4 py-3 text-xs text-gray-700 flex justify-between items-center cursor-pointer select-none hover:border-gray-300 transition-all duration-300"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   <span className="truncate">
@@ -430,18 +431,18 @@ export default function CreatePostModal({
                   </svg>
                 </div>
                 {gemsDropdownOpen && (
-                  <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-150 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-[#5F3041]/10 rounded-2xl shadow-xl z-50 max-h-[160px] overflow-y-auto p-2.5 flex flex-col gap-1 text-xs">
                     {extendedGemstones.map((gem) => {
                       const isChecked = selectedMaterials.includes(gem)
                       return (
-                        <label key={gem} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#FAF8F5] rounded-xl cursor-pointer select-none">
+                        <label key={gem} className="flex items-center gap-2.5 px-3 py-2 hover:bg-[#FAF0F3]/40 rounded-xl cursor-pointer select-none transition-colors">
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => toggleMaterial(gem)}
-                            className="accent-[#3D0C1F] cursor-pointer"
+                            className="accent-[#5F3041] cursor-pointer w-3.5 h-3.5 rounded border-gray-300 text-[#5F3041] focus:ring-[#5F3041]"
                           />
-                          <span className="text-gray-700 font-semibold">{gem}</span>
+                          <span className="text-gray-700 font-medium">{gem}</span>
                         </label>
                       )
                     })}
@@ -452,18 +453,18 @@ export default function CreatePostModal({
           </div>
 
           {/* Bottom Actions */}
-          <div className="col-span-1 md:col-span-2 flex justify-end gap-3 border-t border-gray-50 pt-4 mt-2 flex-shrink-0">
+          <div className="col-span-1 md:col-span-2 flex justify-end gap-3 border-t border-[#5F3041]/10 pt-5 mt-3 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-full border border-gray-200 text-gray-500 text-[10px] font-bold tracking-widest uppercase hover:bg-gray-50 transition-all cursor-pointer bg-white"
+              className="px-6 py-3 rounded-full border border-gray-200 text-gray-500 hover:text-gray-700 text-[10px] font-bold tracking-widest uppercase hover:bg-[#FAF0F3]/30 transition-all duration-300 cursor-pointer bg-white"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-[#3D0C1F] hover:bg-[#2A0714] text-white text-[10px] font-bold tracking-widest px-5 py-2.5 rounded-full uppercase cursor-pointer transition-all shadow border-none"
+              className="bg-[#5F3041] hover:bg-[#4A2231] text-[#FAF8F5] hover:text-white text-[10px] font-bold tracking-widest px-6 py-3 rounded-full uppercase cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(61,12,31,0.15)] active:scale-95 border-none"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             >
               Publish Brief

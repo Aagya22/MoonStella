@@ -40,7 +40,7 @@ export default function SuggestedSellers({
                   onClick={() => openChatWith(seller.name)}
                   className="flex items-center gap-3.5 group cursor-pointer p-1.5 rounded-xl hover:bg-[#FAF8F5] transition-all"
                 >
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#3D0C1F] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-xs flex-shrink-0 border border-gray-100 shadow-sm select-none">
                     {seller.image ? (
                       <Image src={seller.image} alt={seller.name} fill className="object-cover object-center" />
                     ) : (
@@ -60,7 +60,7 @@ export default function SuggestedSellers({
               setSelectedCuration('latest')
               setSelectedMaterial(null)
             }}
-            className="w-full text-center text-[10px] font-bold tracking-widest text-[#3D0C1F] hover:bg-[#3D0C1F] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#3D0C1F]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
+            className="w-full text-center text-[10px] font-bold tracking-widest text-[#5F3041] hover:bg-[#5F3041] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#5F3041]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All
