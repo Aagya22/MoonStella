@@ -104,8 +104,11 @@ export default function SellerLayout({
   }
 
   // Open chat panel
-  const openChatWith = (name: string) => {
-    router.push(`/seller/messages?chatWith=${encodeURIComponent(name)}`)
+  const openChatWith = (name: string, userId?: string) => {
+    const query = userId
+      ? `?chatWith=${encodeURIComponent(name)}&userId=${userId}`
+      : `?chatWith=${encodeURIComponent(name)}`
+    router.push(`/seller/messages${query}`)
     closeSidebar()
   }
 

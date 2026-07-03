@@ -90,10 +90,11 @@ export default function Sidebar({
                 onClick: () => { router.push('/seller/profile'); closeSidebar(); }
               }
             ].map((item) => {
+              const isVisitingProfile = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')
               const isActive = (item.id === 'home' && pathname === '/seller/feed') ||
                 (item.id === 'messages' && pathname === '/seller/messages') ||
                 (item.id === 'saved' && pathname === '/seller/saved') ||
-                (item.id === 'profile' && pathname === '/seller/profile')
+                (item.id === 'profile' && pathname === '/seller/profile' && !isVisitingProfile)
               return (
                 <button
                   key={item.id}

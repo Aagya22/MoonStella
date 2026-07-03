@@ -4,131 +4,226 @@ import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { useSellerContext } from '../SellerContext'
+import api from '@/lib/api/axios'
+import { io, Socket } from 'socket.io-client'
 
 interface Message {
-  sender: 'user' | 'buyer'
+  _id: string
+  threadId: string
+  senderId: {
+    _id: string
+    firstName: string
+    lastName: string
+    avatar?: string
+    role: string
+  } | string
   text: string
-  time: string
+  createdAt: string
 }
 
-interface Chat {
-  id: string
-  name: string
-  specialty: string
-  avatar: string
-  online: boolean
-  messages: Message[]
+interface Thread {
+  _id: string
+  participants: Array<{
+    _id: string
+    firstName: string
+    lastName: string
+    email: string
+    role: string
+    avatar?: string
+    bio?: string
+    averageResponseTime?: string
+  }>
+  lastMessageText?: string
+  lastMessageAt?: string
 }
 
 export default function SellerMessagesPage() {
   const searchParams = useSearchParams()
   const chatWithParam = searchParams.get('chatWith')
+  const userIdParam = searchParams.get('userId')
   const { user } = useSellerContext()
 
-  const [chats, setChats] = useState<Chat[]>([])
-  const [activeChatId, setActiveChatId] = useState<string>('')
+  const [threads, setThreads] = useState<Thread[]>([])
+  const [activeThreadId, setActiveThreadId] = useState<string>('')
+  const [messages, setMessages] = useState<Message[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [chatInput, setChatInput] = useState('')
+
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const socketRef = useRef<Socket | null>(null)
 
-  // Initialize conversations
+  // Initialize socket connection
   useEffect(() => {
-    const stored = localStorage.getItem('ms_seller_chats')
-    let currentChats: Chat[] = stored ? JSON.parse(stored) : []
+    const token = localStorage.getItem('ms_token')
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const socket = io(socketUrl, {
+      auth: { token }
+    })
+    socketRef.current = socket
 
-    if (currentChats.some((c) => c.id === 'anya_stella' || c.id === 'liam_vance')) {
-      currentChats = []
-      localStorage.removeItem('ms_seller_chats')
+    socket.on('connect', () => {
+      console.log('Socket connected successfully')
+    })
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [])
+
+  // Listen for socket events
+  useEffect(() => {
+    if (!socketRef.current) return
+
+    const handleNewMessage = (msg: Message) => {
+      if (msg.threadId === activeThreadId) {
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev
+          return [...prev, msg]
+        })
+      }
+
+      setThreads((prev) =>
+        prev.map((t) => {
+          if (t._id === msg.threadId) {
+            return {
+              ...t,
+              lastMessageText: msg.text,
+              lastMessageAt: msg.createdAt
+            }
+          }
+          return t
+        }).sort((a, b) => new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime())
+      )
     }
 
-    if (chatWithParam) {
-      const existing = currentChats.find(
-        (c) => c.name.toLowerCase() === chatWithParam.toLowerCase()
-      )
-      if (existing) {
-        setActiveChatId(existing.id)
-      } else {
-        const newId = chatWithParam.toLowerCase().replace(/\s+/g, '_')
-        const newChat: Chat = {
-          id: newId,
-          name: chatWithParam,
-          specialty: 'Connoisseur Buyer',
-          avatar: '/buyersignup.png',
-          online: true,
-          messages: []
+    socketRef.current.on('new_message', handleNewMessage)
+
+    return () => {
+      socketRef.current?.off('new_message', handleNewMessage)
+    }
+  }, [activeThreadId])
+
+  // Load threads on mount / query param update
+  useEffect(() => {
+    const loadOrStartChat = async () => {
+      try {
+        const res = await api.get('/api/chat/threads')
+        if (res.data && res.data.success) {
+          const fetchedThreads = res.data.data
+          // Deduplicate threads list by unique ID to prevent React Strict Mode duplicate renders
+          const uniqueThreads = fetchedThreads.filter((t: Thread, idx: number, self: Thread[]) =>
+            self.findIndex((temp) => temp._id === t._id) === idx
+          )
+          setThreads(uniqueThreads)
+
+          if (chatWithParam) {
+            let existing = uniqueThreads.find((t: Thread) => {
+              const other = t.participants.find((p) => String(p._id) !== String(user?.id || user?._id))
+              if (userIdParam) {
+                return String(other?._id) === String(userIdParam)
+              }
+              return `${other?.firstName} ${other?.lastName}`.toLowerCase() === chatWithParam.toLowerCase()
+            })
+
+            if (existing) {
+              setActiveThreadId(existing._id)
+            } else {
+              const initRes = await api.post('/api/chat/threads', {
+                participantId: userIdParam,
+                participantName: chatWithParam
+              })
+              if (initRes.data && initRes.data.success) {
+                const newThread = initRes.data.data
+                setThreads((prev) => {
+                  if (prev.some((t) => t._id === newThread._id)) return prev
+                  return [newThread, ...prev]
+                })
+                setActiveThreadId(newThread._id)
+              }
+            }
+          } else if (uniqueThreads.length > 0 && !activeThreadId) {
+            setActiveThreadId(uniqueThreads[0]._id)
+          }
         }
-        currentChats = [newChat, ...currentChats]
-        localStorage.setItem('ms_seller_chats', JSON.stringify(currentChats))
-        setActiveChatId(newId)
+      } catch (err) {
+        console.error('Failed to load threads:', err)
       }
     }
 
-    setChats(currentChats)
-    if (currentChats.length > 0 && !activeChatId) {
-      setActiveChatId(currentChats[0].id)
+    if (user) {
+      loadOrStartChat()
     }
-  }, [chatWithParam])
+  }, [chatWithParam, userIdParam, user])
 
-  // Scroll to bottom
+  // Join WebSocket thread and load messages history
+  useEffect(() => {
+    if (!activeThreadId) return
+
+    const joinRoom = () => {
+      if (socketRef.current) {
+        socketRef.current.emit('join_thread', activeThreadId)
+      }
+    }
+
+    joinRoom()
+
+    if (socketRef.current) {
+      socketRef.current.on('connect', joinRoom)
+    }
+
+    api.get(`/api/chat/threads/${activeThreadId}/messages`)
+      .then((res) => {
+        if (res.data && res.data.success) {
+          setMessages(res.data.data)
+        }
+      })
+      .catch((err) => console.error('Failed to load messages:', err))
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.off('connect', joinRoom)
+      }
+    }
+  }, [activeThreadId])
+
+  // Scroll chat window to bottom
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [activeChatId, chats])
+  }, [messages])
 
-  const activeChat = chats.find((c) => c.id === activeChatId)
+  const activeThread = threads.find((t) => t._id === activeThreadId)
+  const otherParticipant = activeThread
+    ? activeThread.participants.find((p) => String(p._id) !== String(user?.id || user?._id))
+    : null
 
   // Send Message
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!chatInput.trim() || !activeChatId) return
+    if (!chatInput.trim() || !activeThreadId) return
 
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    const newMsg: Message = {
-      sender: 'user',
-      text: chatInput,
-      time: timeStr
+    try {
+      const text = chatInput.trim()
+      setChatInput('')
+
+      await api.post(`/api/chat/threads/${activeThreadId}/messages`, { text })
+    } catch (err) {
+      console.error('Failed to send message:', err)
     }
+  }
 
-    const updatedChats = chats.map((c) => {
-      if (c.id === activeChatId) {
-        return {
-          ...c,
-          messages: [...c.messages, newMsg]
-        }
-      }
-      return c
-    })
-
-    setChats(updatedChats)
-    localStorage.setItem('ms_seller_chats', JSON.stringify(updatedChats))
-    setChatInput('')
-
-    // Soft response
-    setTimeout(() => {
-      const replyMsg: Message = {
-        sender: 'buyer',
-        text: "Thank you for the update. I will review this design details and get back to you shortly.",
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-      const finalChats = updatedChats.map((c) => {
-        if (c.id === activeChatId) {
-          return {
-            ...c,
-            messages: [...c.messages, replyMsg]
-          }
-        }
-        return c
-      })
-      setChats(finalChats)
-      localStorage.setItem('ms_seller_chats', JSON.stringify(finalChats))
-    }, 1500)
+  const formatTime = (isoString?: string) => {
+    if (!isoString) return ''
+    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
   // Filter conversations
-  const filteredChats = chats.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredThreads = threads.filter((t) => {
+    const other = t.participants.find((p) => String(p._id) !== String(user?.id || user?._id))
+    const name = other ? `${other.firstName} ${other.lastName}` : ''
+    return name.toLowerCase().includes(searchQuery.toLowerCase())
+  })
 
   return (
     <div className="w-full h-[calc(100vh-3.5rem)] flex bg-white overflow-hidden">
@@ -158,33 +253,37 @@ export default function SellerMessagesPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 pb-4">
-          {filteredChats.map((c) => {
-            const lastMsg = c.messages[c.messages.length - 1]
-            const isActive = c.id === activeChatId
+          {filteredThreads.map((t) => {
+            const other = t.participants.find((p) => String(p._id) !== String(user?.id || user?._id))
+            if (!other) return null
+
+            const name = `${other.firstName} ${other.lastName}`
+            const avatar = other.avatar || '/suggested_botanical.png'
+            const specialty = other.role === 'seller' ? (other.bio || 'Master Artisan') : 'Buyer'
+            const isActive = t._id === activeThreadId
+
             return (
               <div
-                key={c.id}
-                onClick={() => setActiveChatId(c.id)}
+                key={t._id}
+                onClick={() => setActiveThreadId(t._id)}
                 className={`flex gap-3.5 items-center p-3.5 rounded-2xl cursor-pointer transition-all duration-200 mb-1 select-none hover:bg-[#FAF0F3]/40 ${
                   isActive ? 'bg-[#FAF0F3]' : 'bg-transparent'
                 }`}
               >
                 <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
-                  <Image src={c.avatar} alt={c.name} fill className="object-cover" />
-                  {c.online && (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
-                  )}
+                  <Image src={avatar} alt={name} fill className="object-cover" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-gray-800 tracking-wide truncate">{c.name}</h4>
+                    <h4 className="text-xs font-bold text-gray-800 tracking-wide truncate">{name}</h4>
                     <span className="text-[8px] font-semibold text-gray-400 uppercase tracking-wide shrink-0">
-                      {lastMsg ? lastMsg.time : ''}
+                      {formatTime(t.lastMessageAt)}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-550 truncate mt-0.5">{c.specialty}</p>
+                  <p className="text-[10px] text-gray-550 truncate mt-0.5">{specialty}</p>
                   <p className="text-[10px] text-gray-500 truncate mt-1">
-                    {lastMsg ? lastMsg.text : 'Start your client chat...'}
+                    {t.lastMessageText || 'Start co-creating details...'}
                   </p>
                 </div>
               </div>
@@ -194,17 +293,17 @@ export default function SellerMessagesPage() {
       </div>
 
       {/* Right message pane */}
-      {activeChat ? (
+      {activeThread && otherParticipant ? (
         <div className="flex-1 flex flex-col bg-white h-full overflow-hidden">
           
           {/* Header */}
           <div className="px-6 py-4 border-b border-[#5F3041]/10 flex justify-between items-center bg-[#FAF8F5]/40 select-none">
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
-                <Image src={activeChat.avatar} alt={activeChat.name} fill className="object-cover" />
+                <Image src={otherParticipant.avatar || '/suggested_botanical.png'} alt={`${otherParticipant.firstName} ${otherParticipant.lastName}`} fill className="object-cover" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-gray-800 tracking-wide leading-tight">{activeChat.name}</h3>
+                <h3 className="text-xs font-bold text-gray-800 tracking-wide leading-tight">{otherParticipant.firstName} {otherParticipant.lastName}</h3>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Active Now</span>
@@ -215,7 +314,7 @@ export default function SellerMessagesPage() {
 
           {/* Chat Stream */}
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 bg-gradient-to-b from-[#FAF8F5]/30 to-white">
-            {activeChat.messages.length === 0 ? (
+            {messages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 select-none my-auto">
                 <div className="w-12 h-12 rounded-full bg-[#FAF8F5] border border-[#5F3041]/10 flex items-center justify-center text-[#5F3041]/40 mb-3">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -224,17 +323,21 @@ export default function SellerMessagesPage() {
                 </div>
                 <h4 className="text-xs font-bold text-gray-700" style={{ fontFamily: 'var(--font-montserrat)' }}>No Messages Yet</h4>
                 <p className="text-[10px] text-gray-400 mt-1 max-w-[240px] leading-relaxed">
-                  Start your conversation by typing a message below to coordinate details with this buyer.
+                  Start your conversation by typing a message below to coordinate details.
                 </p>
               </div>
             ) : (
-              activeChat.messages.map((m, index) => {
-                const isUser = m.sender === 'user'
+              messages.map((m) => {
+                const isUser = String(typeof m.senderId === 'object' ? m.senderId?._id : m.senderId) === String(user?.id || user?._id)
+                const senderAvatar = isUser
+                  ? (user?.avatar || '/suggested_botanical.png')
+                  : (otherParticipant.avatar || '/suggested_botanical.png')
+
                 return (
-                  <div key={index} className={`flex gap-3 max-w-[75%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+                  <div key={m._id} className={`flex gap-3 max-w-[75%] ${isUser ? 'self-end flex-row-reverse' : 'self-start'}`}>
                     
                     <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white mt-1 select-none">
-                      <Image src={isUser ? (user?.avatar || '/suggested_botanical.png') : activeChat.avatar} alt="Avatar" fill className="object-cover" />
+                      <Image src={senderAvatar} alt="Avatar" fill className="object-cover" />
                     </div>
 
                     <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
@@ -249,7 +352,7 @@ export default function SellerMessagesPage() {
                         {m.text}
                       </div>
                       <span className="text-[8px] font-bold text-gray-400 mt-1.5 px-1 uppercase tracking-wide select-none">
-                        {m.time}
+                        {formatTime(m.createdAt)}
                       </span>
                     </div>
 

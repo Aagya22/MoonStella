@@ -120,8 +120,12 @@ export default function Sidebar({
                 onClick: () => { router.push('/buyer/profile'); closeSidebar(); }
               }
             ].map((item) => {
+              const isVisitingProfile = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')
               const isActive = (item.id === 'home' && pathname === '/buyer/dashboard') ||
-                (item.id === 'discovery' && pathname === '/buyer/feed')
+                (item.id === 'discovery' && pathname === '/buyer/feed') ||
+                (item.id === 'messages' && pathname === '/buyer/messages') ||
+                (item.id === 'wishlist' && pathname === '/buyer/wishlist') ||
+                (item.id === 'profile' && pathname === '/buyer/profile' && !isVisitingProfile)
               return (
                 <button
                   key={item.id}

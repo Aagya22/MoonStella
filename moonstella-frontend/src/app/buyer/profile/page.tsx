@@ -403,7 +403,7 @@ function BuyerProfileContent() {
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
                 <button
-                  onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`)}
+                  onClick={() => openChatWith(`${profileUser?.firstName} ${profileUser?.lastName}`, profileUser?.id || profileUser?._id)}
                   className="flex-1 bg-[#E9D7C3] hover:bg-white text-[#5F3041] text-[9px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all shadow-xs active:scale-98 border-none text-center transform hover:-translate-y-[1px]"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >

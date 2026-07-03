@@ -181,8 +181,11 @@ export default function BuyerLayout({
   }
 
   // Open chat panel with artisan
-  const openChatWith = (name: string) => {
-    router.push(`/buyer/messages?chatWith=${encodeURIComponent(name)}`)
+  const openChatWith = (name: string, userId?: string) => {
+    const query = userId
+      ? `?chatWith=${encodeURIComponent(name)}&userId=${userId}`
+      : `?chatWith=${encodeURIComponent(name)}`
+    router.push(`/buyer/messages${query}`)
     closeSidebar()
   }
 

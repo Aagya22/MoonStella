@@ -7,7 +7,7 @@ export interface BuyerContextType {
   setUser: React.Dispatch<React.SetStateAction<any>>
   wishlist: any[]
   setWishlist: React.Dispatch<React.SetStateAction<any[]>>
-  openChatWith: (name: string) => void
+  openChatWith: (name: string, userId?: string) => void
   setTimelineOpen: (open: boolean) => void
   timelineOpen: boolean
   triggerProfileEdit?: () => void
