@@ -83,7 +83,7 @@ export default function Sidebar({
                     <line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="14" y2="11" />
                   </svg>
                 ),
-                onClick: () => { openChatWith('Julian Thorne'); }
+                onClick: () => { router.push('/buyer/messages'); closeSidebar(); }
               },
               {
                 id: 'wishlist',

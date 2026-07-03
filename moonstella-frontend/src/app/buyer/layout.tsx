@@ -182,20 +182,7 @@ export default function BuyerLayout({
 
   // Open chat panel with artisan
   const openChatWith = (name: string) => {
-    const chat = sellersHistory.find(s => s.name === name)
-    if (chat) {
-      setActiveChat(chat)
-    } else {
-      const newChat = {
-        name,
-        specialty: 'Master Jeweler',
-        initials: name.split(' ').map(n => n[0]).join(''),
-        online: true,
-        messages: [{ sender: 'artisan', text: `Hello Anya! Thank you for reaching out to my studio. How can I help you?`, time: 'Just now' }]
-      }
-      setActiveChat(newChat)
-      setSellersHistory([...sellersHistory, newChat])
-    }
+    router.push(`/buyer/messages?chatWith=${encodeURIComponent(name)}`)
     closeSidebar()
   }
 
@@ -277,9 +264,9 @@ export default function BuyerLayout({
         />
 
         {/* 3. Main content area */}
-        <div className={`flex-1 flex flex-col min-w-0 w-full transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:pl-60' : 'md:pl-0'}`}>
-          <div className="w-full flex-1 flex justify-center">
-            <div className="w-full max-w-7xl">
+        <div className={`flex-1 flex flex-col min-w-0 w-full transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:pl-60' : 'md:pl-0'} ${pathname.includes('messages') ? 'h-[calc(100vh-3.5rem)] overflow-hidden' : ''}`}>
+          <div className={`w-full flex-1 flex justify-center ${pathname.includes('messages') ? 'h-full overflow-hidden' : ''}`}>
+            <div className={`w-full ${pathname.includes('messages') ? 'h-full' : 'max-w-7xl'}`}>
               {children}
             </div>
           </div>
