@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { useBuyerContext } from '../BuyerContext'
 import api from '@/lib/api/axios'
 import { io, Socket } from 'socket.io-client'
+import InspectPostModal from '@/app/components/buyer/feed/InspectPostModal'
 
 interface Message {
   _id: string
@@ -18,6 +19,14 @@ interface Message {
     role: string
   } | string
   text: string
+  postId?: {
+    _id: string
+    description: string
+    category: string
+    budget?: number | null
+    price?: string | null
+    images?: string[]
+  }
   createdAt: string
 }
 
@@ -41,6 +50,8 @@ export default function BuyerMessagesPage() {
   const searchParams = useSearchParams()
   const chatWithParam = searchParams.get('chatWith')
   const userIdParam = searchParams.get('userId')
+  const initialMsgParam = searchParams.get('initialMsg')
+  const postIdParam = searchParams.get('postId')
   const { user } = useBuyerContext()
 
   const [threads, setThreads] = useState<Thread[]>([])
@@ -48,6 +59,15 @@ export default function BuyerMessagesPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [chatInput, setChatInput] = useState('')
+  const [attachedPost, setAttachedPost] = useState<{
+    _id: string
+    description: string
+    category: string
+    budget?: number | null
+    images?: string[]
+  } | null>(null)
+  
+  const [selectedPost, setSelectedPost] = useState<any>(null)
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
@@ -186,6 +206,35 @@ export default function BuyerMessagesPage() {
     }
   }, [activeThreadId])
 
+  // Handle auto-populating initial inquiry message if present
+  useEffect(() => {
+    if (!activeThreadId) return
+
+    if (initialMsgParam) {
+      setChatInput(initialMsgParam)
+    }
+
+    if (postIdParam) {
+      setAttachedPost({
+        _id: postIdParam,
+        description: searchParams.get('postDesc') || '',
+        category: searchParams.get('postCategory') || 'Bespoke Request',
+        budget: searchParams.get('postBudget') ? Number(searchParams.get('postBudget')) : null,
+        images: searchParams.get('postImage') ? [searchParams.get('postImage')!] : []
+      })
+    }
+
+    // Instantly clean the query params from URL so they don't persist on refresh
+    const url = new URL(window.location.href)
+    url.searchParams.delete('initialMsg')
+    url.searchParams.delete('postId')
+    url.searchParams.delete('postDesc')
+    url.searchParams.delete('postCategory')
+    url.searchParams.delete('postBudget')
+    url.searchParams.delete('postImage')
+    window.history.replaceState({}, '', url.pathname + url.search)
+  }, [activeThreadId, initialMsgParam, postIdParam])
+
   // Scroll chat window to bottom
   useEffect(() => {
     if (chatEndRef.current) {
@@ -205,9 +254,12 @@ export default function BuyerMessagesPage() {
 
     try {
       const text = chatInput.trim()
-      setChatInput('')
+      const postId = attachedPost?._id || undefined
 
-      await api.post(`/api/chat/threads/${activeThreadId}/messages`, { text })
+      setChatInput('')
+      setAttachedPost(null)
+
+      await api.post(`/api/chat/threads/${activeThreadId}/messages`, { text, postId })
     } catch (err) {
       console.error('Failed to send message:', err)
     }
@@ -225,8 +277,37 @@ export default function BuyerMessagesPage() {
     return name.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
+  // Map backend Post format to local variables needed by InspectPostModal
+  const getMappedPostForModal = (post: any) => {
+    if (!post) return null
+
+    const postUser = post.userId && typeof post.userId === 'object' ? post.userId : null
+    const artisanFirstName = postUser?.firstName || ''
+    const artisanLastName = postUser?.lastName || ''
+    const artisanName = postUser ? `${artisanFirstName} ${artisanLastName}` : (post.artisanName || 'Bespoke Request Owner')
+    const avatar = postUser?.avatar || post.avatar || ''
+    const artisanTitle = postUser?.role === 'seller' ? 'MASTER ARTISAN' : 'Connoisseur Client'
+    
+    let priceStr = post.price
+    if (!priceStr && post.budget !== undefined && post.budget !== null) {
+      priceStr = `Rs. ${Number(post.budget).toLocaleString()}`
+    }
+    if (!priceStr) priceStr = 'Contact'
+
+    return {
+      ...post,
+      id: post.id || post._id,
+      artisanName,
+      avatar,
+      artisanTitle,
+      price: priceStr,
+      materials: post.materials || [],
+      images: post.images || (post.image ? [post.image] : [])
+    }
+  }
+
   return (
-    <div className="w-full h-[calc(100vh-3.5rem)] flex bg-white overflow-hidden">
+    <div className="w-full h-[calc(100vh-3.5rem)] flex bg-white overflow-hidden relative">
       
       {/* Left conversations list */}
       <div className="w-80 border-r border-[#5F3041]/10 flex flex-col bg-[#FAF8F5]/30 shrink-0">
@@ -341,6 +422,38 @@ export default function BuyerMessagesPage() {
                     </div>
 
                     <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                      {/* Embedded Shared Post Card */}
+                      {m.postId && (
+                        <div
+                          onClick={() => setSelectedPost(m.postId)}
+                          className="mb-2.5 p-3.5 bg-white/70 backdrop-blur-md border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm overflow-hidden select-none cursor-pointer hover:border-[#5F3041]/35 hover:shadow-[0_4px_16px_rgba(95,48,65,0.06)] transition-all duration-300 group"
+                        >
+                          {m.postId.images && m.postId.images.length > 0 && (
+                            <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-gray-150 bg-gray-50 shadow-xs">
+                              <Image src={m.postId.images[0]} alt="Post Preview" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[8px] font-extrabold uppercase bg-[#5F3041]/10 text-[#5F3041] px-2 py-0.5 rounded-md w-max tracking-wider">
+                                {m.postId.category}
+                              </span>
+                              <span className="text-[7px] text-[#5F3041]/60 font-bold uppercase tracking-wider flex items-center gap-1 group-hover:text-[#5F3041] transition-colors">
+                                View Info &rarr;
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-600 line-clamp-2 mt-1.5 font-medium leading-normal">
+                              {m.postId.description}
+                            </p>
+                            {m.postId.budget !== undefined && m.postId.budget !== null && (
+                              <span className="text-[9px] font-bold text-[#b49876] mt-1 font-montserrat">
+                                Budget: ${m.postId.budget}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       <div
                         className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
                           isUser
@@ -362,6 +475,33 @@ export default function BuyerMessagesPage() {
             )}
             <div ref={chatEndRef} />
           </div>
+
+          {/* Embedded Post Preview Attachment Composer */}
+          {attachedPost && (
+            <div className="mx-6 mb-2 p-3 bg-[#FAF8F5]/90 border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm items-center relative select-none animate-fade-in shadow-xs shrink-0">
+              {attachedPost.images && attachedPost.images.length > 0 && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-150 bg-gray-50 shadow-xs">
+                  <Image src={attachedPost.images[0]} alt="Post Preview" fill className="object-cover" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <span className="text-[7px] font-extrabold uppercase bg-[#5F3041]/10 text-[#5F3041] px-1.5 py-0.5 rounded-md w-max tracking-wider">
+                  {attachedPost.category}
+                </span>
+                <p className="text-[9px] text-gray-550 truncate mt-1">
+                  {attachedPost.description}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAttachedPost(null)}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] rounded-full flex items-center justify-center cursor-pointer border-none shadow-sm hover:scale-105 active:scale-95 transition-all text-xs font-bold font-sans"
+                title="Remove Post Attachment"
+              >
+                &times;
+              </button>
+            </div>
+          )}
 
           {/* Input Footer form */}
           <form onSubmit={handleSendMessage} className="p-4 border-t border-[#5F3041]/10 flex gap-3 items-center bg-white shrink-0">
@@ -420,11 +560,24 @@ export default function BuyerMessagesPage() {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
-          <h3 className="text-sm font-bold text-gray-805" style={{ fontFamily: 'var(--font-montserrat)' }}>No Active Workspace Chat</h3>
+          <h3 className="text-sm font-bold text-gray-855" style={{ fontFamily: 'var(--font-montserrat)' }}>No Active Workspace Chat</h3>
           <p className="text-xs text-gray-400 mt-1 max-w-xs leading-relaxed">
             Select a conversation from the sidebar list, or tap co-create to start a custom discussion thread.
           </p>
         </div>
+      )}
+
+      {/* Shared Post Detail Split Inspect Modal */}
+      {selectedPost && (
+        <InspectPostModal
+          selectedInspectPost={getMappedPostForModal(selectedPost)}
+          onClose={() => setSelectedPost(null)}
+          user={user}
+          wishlist={[]}
+          openChatWith={() => setSelectedPost(null)}
+          handleDeletePost={async () => {}}
+          handleUpdatePost={async () => {}}
+        />
       )}
 
     </div>

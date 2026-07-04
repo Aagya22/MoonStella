@@ -104,10 +104,25 @@ export default function SellerLayout({
   }
 
   // Open chat panel
-  const openChatWith = (name: string, userId?: string) => {
-    const query = userId
-      ? `?chatWith=${encodeURIComponent(name)}&userId=${userId}`
-      : `?chatWith=${encodeURIComponent(name)}`
+  const openChatWith = (
+    name: string,
+    userId?: string,
+    initialMsg?: string,
+    postId?: string,
+    postDesc?: string,
+    postCategory?: string,
+    postBudget?: string,
+    postImage?: string
+  ) => {
+    let query = `?chatWith=${encodeURIComponent(name)}`
+    if (userId) query += `&userId=${userId}`
+    if (initialMsg) query += `&initialMsg=${encodeURIComponent(initialMsg)}`
+    if (postId) query += `&postId=${postId}`
+    if (postDesc) query += `&postDesc=${encodeURIComponent(postDesc)}`
+    if (postCategory) query += `&postCategory=${encodeURIComponent(postCategory)}`
+    if (postBudget) query += `&postBudget=${postBudget}`
+    if (postImage) query += `&postImage=${encodeURIComponent(postImage)}`
+    
     router.push(`/seller/messages${query}`)
     closeSidebar()
   }

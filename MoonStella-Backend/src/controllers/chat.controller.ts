@@ -131,6 +131,8 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
     const messages = await Message.find(query)
       .sort({ createdAt: -1 })
       .limit(parsedLimit)
+      .populate('senderId', 'firstName lastName email avatar role')
+      .populate('postId')
 
     messages.reverse()
     ok(res, messages)
@@ -142,7 +144,7 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
     const { threadId } = req.params
-    const { text } = req.body
+    const { text, postId } = req.body
     const currentUserId = req.user?._id
 
     if (!currentUserId) {
@@ -185,7 +187,8 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
     const message = new Message({
       threadId,
       senderId: currentUserId,
-      text: trimmedText
+      text: trimmedText,
+      postId: postId || undefined
     })
     await message.save()
 
@@ -194,7 +197,9 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
     thread.lastMessageAt = new Date()
     await thread.save()
 
-    const populatedMessage = await Message.findById(message._id).populate('senderId', 'firstName lastName email avatar role')
+    const populatedMessage = await Message.findById(message._id)
+      .populate('senderId', 'firstName lastName email avatar role')
+      .populate('postId')
 
     io.to(`thread:${threadId}`).emit('new_message', populatedMessage)
 
