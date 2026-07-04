@@ -10,6 +10,7 @@ interface InspectPostModalProps {
   openChatWith: (name: string) => void
   handleDeletePost: (postId: string) => Promise<void>
   handleUpdatePost: (postId: string, newDesc: string, newBudget: string) => Promise<void>
+  hideMessageButton?: boolean
 }
 
 export default function InspectPostModal({
@@ -20,6 +21,7 @@ export default function InspectPostModal({
   openChatWith,
   handleDeletePost,
   handleUpdatePost,
+  hideMessageButton = false,
 }: InspectPostModalProps) {
   const router = useRouter()
   const [activeInspectIndex, setActiveInspectIndex] = useState(0)
@@ -243,9 +245,6 @@ export default function InspectPostModal({
               </div>
             ) : (
               <>
-                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'var(--font-playfair)' }}>
-                  Bespoke Request Blueprint
-                </h3>
                 <p className="text-xs text-gray-505 leading-relaxed font-normal mb-6" style={{ fontFamily: 'var(--font-montserrat)' }}>
                   {selectedInspectPost.description}
                 </p>
@@ -266,7 +265,7 @@ export default function InspectPostModal({
           </div>
 
           {(() => {
-            if (isMyPost) {
+            if (isMyPost || hideMessageButton) {
               return (
                 <div className="border-t border-gray-150 pt-5 mt-auto flex justify-between items-center text-xs font-semibold text-gray-500 pb-2">
                   <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
@@ -274,7 +273,7 @@ export default function InspectPostModal({
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                     <span>
-                      {selectedInspectPost.likes} {selectedInspectPost.likes === 1 ? 'Like' : 'Likes'}
+                      {Array.isArray(selectedInspectPost.likes) ? selectedInspectPost.likes.length : (selectedInspectPost.likes || 0)} { (Array.isArray(selectedInspectPost.likes) ? selectedInspectPost.likes.length : (selectedInspectPost.likes || 0)) === 1 ? 'Like' : 'Likes' }
                     </span>
                   </div>
                   <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>

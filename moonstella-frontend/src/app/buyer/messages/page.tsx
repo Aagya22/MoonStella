@@ -27,6 +27,7 @@ interface Message {
     price?: string | null
     images?: string[]
   }
+  image?: string | null
   createdAt: string
 }
 
@@ -59,6 +60,7 @@ export default function BuyerMessagesPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [chatInput, setChatInput] = useState('')
+  
   const [attachedPost, setAttachedPost] = useState<{
     _id: string
     description: string
@@ -67,7 +69,12 @@ export default function BuyerMessagesPage() {
     images?: string[]
   } | null>(null)
   
+  const [attachedImage, setAttachedImage] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
   const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
@@ -107,7 +114,7 @@ export default function BuyerMessagesPage() {
           if (t._id === msg.threadId) {
             return {
               ...t,
-              lastMessageText: msg.text,
+              lastMessageText: msg.text || '[Image]',
               lastMessageAt: msg.createdAt
             }
           }
@@ -247,19 +254,60 @@ export default function BuyerMessagesPage() {
     ? activeThread.participants.find((p) => String(p._id) !== String(user?.id || user?._id))
     : null
 
+  // Handle image attachment upload to Cloudinary via backend REST upload endpoint
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Enforce that only image files are uploaded
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are allowed.')
+      return
+    }
+
+    setUploadingImage(true)
+    setAttachedImage(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const res = await api.post('/api/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      if (res.data && res.data.success) {
+        setAttachedImage(res.data.data.url)
+      } else {
+        alert('Failed to upload image')
+      }
+    } catch (err) {
+      console.error('Image upload error:', err)
+      alert('Failed to upload image. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   // Send Message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!chatInput.trim() || !activeThreadId) return
+    if (uploadingImage) return
+    if (!chatInput.trim() && !attachedImage) return
+    if (!activeThreadId) return
 
     try {
       const text = chatInput.trim()
       const postId = attachedPost?._id || undefined
+      const image = attachedImage || undefined
 
       setChatInput('')
       setAttachedPost(null)
+      setAttachedImage(null)
 
-      await api.post(`/api/chat/threads/${activeThreadId}/messages`, { text, postId })
+      await api.post(`/api/chat/threads/${activeThreadId}/messages`, { text, postId, image })
     } catch (err) {
       console.error('Failed to send message:', err)
     }
@@ -309,6 +357,15 @@ export default function BuyerMessagesPage() {
   return (
     <div className="w-full h-[calc(100vh-3.5rem)] flex bg-white overflow-hidden relative">
       
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImageSelect}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* Left conversations list */}
       <div className="w-80 border-r border-[#5F3041]/10 flex flex-col bg-[#FAF8F5]/30 shrink-0">
         <div className="p-6 pb-4 flex flex-col gap-4">
@@ -363,7 +420,7 @@ export default function BuyerMessagesPage() {
                     </span>
                   </div>
                   <p className="text-[10px] text-gray-550 truncate mt-0.5">{specialty}</p>
-                  <p className="text-[10px] text-gray-500 truncate mt-1">
+                  <p className="text-[10px] text-gray-550 truncate mt-1">
                     {t.lastMessageText || 'Start co-creating details...'}
                   </p>
                 </div>
@@ -426,7 +483,7 @@ export default function BuyerMessagesPage() {
                       {m.postId && (
                         <div
                           onClick={() => setSelectedPost(m.postId)}
-                          className="mb-2.5 p-3.5 bg-white/70 backdrop-blur-md border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm overflow-hidden select-none cursor-pointer hover:border-[#5F3041]/35 hover:shadow-[0_4px_16px_rgba(95,48,65,0.06)] transition-all duration-300 group"
+                          className="mb-2.5 p-3.5 bg-white/70 backdrop-blur-md border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm overflow-hidden select-none cursor-pointer hover:border-[#5F3041]/35 hover:shadow-[0_4px_16px_rgba(95,48,65,0.06)] transition-all duration-300 group animate-fade-in"
                         >
                           {m.postId.images && m.postId.images.length > 0 && (
                             <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-gray-150 bg-gray-50 shadow-xs">
@@ -454,16 +511,29 @@ export default function BuyerMessagesPage() {
                         </div>
                       )}
 
-                      <div
-                        className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
-                          isUser
-                            ? 'bg-[#5F3041] text-[#FAF8F5] rounded-tr-none shadow-xs'
-                            : 'bg-[#FAF8F5] text-gray-700 border border-[#5F3041]/10 rounded-tl-none'
-                        }`}
-                        style={{ fontFamily: 'var(--font-montserrat)' }}
-                      >
-                        {m.text}
-                      </div>
+                      {/* Sent Image Preview Bubble Attachment */}
+                      {m.image && (
+                        <div
+                          onClick={() => setActiveLightboxImage(m.image || null)}
+                          className="mb-2 rounded-2xl overflow-hidden cursor-zoom-in relative w-48 h-48 border border-[#5F3041]/10 shadow-xs bg-[#FAF8F5]/80 flex-shrink-0 group hover:scale-[1.01] hover:shadow-sm transition-all duration-300 animate-fade-in"
+                        >
+                          <Image src={m.image} alt="Sent attachment" fill className="object-cover" />
+                        </div>
+                      )}
+
+                      {m.text && (
+                        <div
+                          className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
+                            isUser
+                              ? 'bg-[#5F3041] text-[#FAF8F5] rounded-tr-none shadow-xs'
+                              : 'bg-[#FAF8F5] text-gray-700 border border-[#5F3041]/10 rounded-tl-none'
+                          }`}
+                          style={{ fontFamily: 'var(--font-montserrat)' }}
+                        >
+                          {m.text}
+                        </div>
+                      )}
+                      
                       <span className="text-[8px] font-bold text-gray-400 mt-1.5 px-1 uppercase tracking-wide select-none">
                         {formatTime(m.createdAt)}
                       </span>
@@ -503,6 +573,40 @@ export default function BuyerMessagesPage() {
             </div>
           )}
 
+          {/* Image preview in composer */}
+          {(attachedImage || uploadingImage) && (
+            <div className="mx-6 mb-2 p-3 bg-[#FAF8F5]/90 border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm items-center relative select-none animate-fade-in shadow-xs shrink-0">
+              <div
+                onClick={() => attachedImage && setActiveLightboxImage(attachedImage)}
+                className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#5F3041]/10 bg-gray-50 flex items-center justify-center shadow-xs ${attachedImage ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+              >
+                {uploadingImage ? (
+                  <div className="w-5 h-5 border-2 border-[#5F3041] border-t-transparent rounded-full animate-spin" />
+                ) : attachedImage ? (
+                  <Image src={attachedImage} alt="Attachment Preview" fill className="object-cover" />
+                ) : null}
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <span className="text-[8px] font-extrabold uppercase text-[#5F3041] tracking-wider">
+                  {uploadingImage ? 'Wait a min...' : 'Image Attached'}
+                </span>
+                <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                  {uploadingImage ? 'Uploading image...' : 'Ready to send'}
+                </p>
+              </div>
+              {!uploadingImage && (
+                <button
+                  type="button"
+                  onClick={() => setAttachedImage(null)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] rounded-full flex items-center justify-center cursor-pointer border-none shadow-sm hover:scale-105 active:scale-95 transition-all text-xs font-bold font-sans"
+                  title="Remove Image Attachment"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Input Footer form */}
           <form onSubmit={handleSendMessage} className="p-4 border-t border-[#5F3041]/10 flex gap-3 items-center bg-white shrink-0">
             
@@ -520,8 +624,8 @@ export default function BuyerMessagesPage() {
               <button
                 type="button"
                 title="Attach Image"
-                onClick={() => alert("Image attachment will be supported in Sprint 4.")}
-                className="text-[#5F3041]/60 hover:text-[#5F3041] p-2 hover:bg-[#5F3041]/5 rounded-full transition-all cursor-pointer border-none bg-transparent"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-[#5F3041]/65 hover:text-[#5F3041] p-2 hover:bg-[#5F3041]/5 rounded-full transition-all cursor-pointer border-none bg-transparent"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -542,7 +646,8 @@ export default function BuyerMessagesPage() {
 
             <button
               type="submit"
-              className="bg-[#5F3041] text-white rounded-full hover:bg-[#4A2231] transition-all duration-300 cursor-pointer flex items-center justify-center w-9 h-9 shrink-0 shadow-sm active:scale-95 border-none"
+              disabled={uploadingImage}
+              className="bg-[#5F3041] disabled:opacity-50 text-white rounded-full hover:bg-[#4A2231] transition-all duration-300 cursor-pointer flex items-center justify-center w-9 h-9 shrink-0 shadow-sm active:scale-95 border-none"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transform rotate-45 -translate-x-[1px] translate-y-[0.5px]">
                 <line x1="22" y1="2" x2="11" y2="13" />
@@ -578,6 +683,28 @@ export default function BuyerMessagesPage() {
           handleDeletePost={async () => {}}
           handleUpdatePost={async () => {}}
         />
+      )}
+
+      {/* Image Fullscreen Lightbox Overlay */}
+      {activeLightboxImage && (
+        <div
+          onClick={() => setActiveLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out select-none animate-fade-in"
+        >
+          <div className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center">
+            <Image src={activeLightboxImage} alt="Fullscreen View" fill className="object-contain" />
+          </div>
+          <button
+            onClick={() => setActiveLightboxImage(null)}
+            className="absolute top-6 right-6 text-[#E9D7C3] hover:text-white cursor-pointer p-3.5 hover:bg-white/10 rounded-full transition-all border-none bg-transparent flex items-center justify-center"
+            title="Close Overlay"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
       )}
 
     </div>

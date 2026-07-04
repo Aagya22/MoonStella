@@ -132,7 +132,13 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
       .sort({ createdAt: -1 })
       .limit(parsedLimit)
       .populate('senderId', 'firstName lastName email avatar role')
-      .populate('postId')
+      .populate({
+        path: 'postId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email avatar role bio'
+        }
+      })
 
     messages.reverse()
     ok(res, messages)
@@ -144,7 +150,7 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
     const { threadId } = req.params
-    const { text, postId } = req.body
+    const { text, postId, image } = req.body
     const currentUserId = req.user?._id
 
     if (!currentUserId) {
@@ -152,12 +158,14 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       return
     }
 
-    if (!text || !text.trim()) {
-      badRequest(res, 'Message text cannot be empty')
+    const trimmedText = text ? text.trim() : ''
+
+    if (!trimmedText && !image) {
+      badRequest(res, 'Message text or image is required')
       return
     }
 
-    if (text.trim().length > 5000) {
+    if (trimmedText.length > 5000) {
       badRequest(res, 'Message text exceeds 5000 characters limit')
       return
     }
@@ -182,24 +190,29 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       return
     }
 
-    const trimmedText = text.trim()
-
     const message = new Message({
       threadId,
       senderId: currentUserId,
       text: trimmedText,
-      postId: postId || undefined
+      postId: postId || undefined,
+      image: image || undefined
     })
     await message.save()
 
-    thread.lastMessageText = trimmedText
+    thread.lastMessageText = trimmedText || '[Image]'
     thread.lastMessageSenderId = currentUserId
     thread.lastMessageAt = new Date()
     await thread.save()
 
     const populatedMessage = await Message.findById(message._id)
       .populate('senderId', 'firstName lastName email avatar role')
-      .populate('postId')
+      .populate({
+        path: 'postId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email avatar role bio'
+        }
+      })
 
     io.to(`thread:${threadId}`).emit('new_message', populatedMessage)
 

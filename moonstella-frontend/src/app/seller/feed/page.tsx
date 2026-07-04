@@ -501,6 +501,8 @@ export default function SellerFeedPage() {
           selectedInspectPost={selectedInspectPost}
           onClose={() => setSelectedInspectPost(null)}
           openChatWith={openChatWith}
+          user={user}
+          wishlist={wishlist}
         />
       )}
 

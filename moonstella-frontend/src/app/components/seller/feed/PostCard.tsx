@@ -196,9 +196,6 @@ export default function PostCard({
           <div className="flex flex-col md:flex-row gap-5 justify-between items-start w-full">
             
             <div className="flex-1 min-w-0 flex flex-col gap-3 w-full">
-              <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                {post.description}
-              </p>
 
               {/* Likes & Saves Interactive */}
               <div className="flex items-center gap-6 pt-1">
@@ -279,9 +276,6 @@ export default function PostCard({
         ) : (
           /* Single-Column details layout for user's own posts or non-artisan briefs */
           <div className="flex flex-col gap-3 w-full">
-            <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
-              {post.description}
-            </p>
 
             {/* Read-Only or standard likes and saves */}
             {isMyPost ? (

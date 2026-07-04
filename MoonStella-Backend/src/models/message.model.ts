@@ -5,6 +5,7 @@ export interface IMessage extends Document {
   senderId: mongoose.Types.ObjectId
   text: string
   postId?: mongoose.Types.ObjectId | null
+  image?: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -23,7 +24,8 @@ const MessageSchema = new Schema<IMessage>(
     },
     text: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
       trim: true,
     },
     postId: {
@@ -31,6 +33,11 @@ const MessageSchema = new Schema<IMessage>(
       ref: 'Post',
       required: false,
       default: null
+    },
+    image: {
+      type: String,
+      required: false,
+      default: null,
     },
   },
   { timestamps: true }

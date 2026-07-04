@@ -749,8 +749,7 @@ function BuyerProfileContent() {
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'var(--font-playfair)' }}>Bespoke Request Blueprint</h3>
-                    <p className="text-xs text-gray-550 leading-relaxed font-normal mb-6" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    <p className="text-xs text-gray-550 leading-relaxed font-normal mb-6 mt-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
                       {selectedInspectPost.description}
                     </p>
                   </>
@@ -781,7 +780,9 @@ function BuyerProfileContent() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-400">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                   </svg>
-                  <span className={isOwnProfile ? 'hover:underline' : ''}>{selectedInspectPost.likes} {selectedInspectPost.likes === 1 ? 'Like' : 'Likes'}</span>
+                  <span className={isOwnProfile ? 'hover:underline' : ''}>
+                    {Array.isArray(selectedInspectPost.likes) ? selectedInspectPost.likes.length : (selectedInspectPost.likes || 0)} { (Array.isArray(selectedInspectPost.likes) ? selectedInspectPost.likes.length : (selectedInspectPost.likes || 0)) === 1 ? 'Like' : 'Likes' }
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-400">
