@@ -10,7 +10,16 @@ interface PostCardProps {
   toggleFollow: (artisanName: string) => void
   toggleLike: (postId: string) => void
   toggleSave: (postId: string) => void
-  openChatWith: (name: string) => void
+  openChatWith: (
+    name: string,
+    userId?: string,
+    initialMsg?: string,
+    postId?: string,
+    postDesc?: string,
+    postCategory?: string,
+    postBudget?: string,
+    postImage?: string
+  ) => void
   setSelectedInspectPost: (post: any) => void
   setActiveInspectIndex: (index: number) => void
   onShowLikes?: (likesList: any[]) => void
@@ -249,7 +258,20 @@ export default function PostCard({
               <div className="flex items-center gap-3 pt-2 text-[11px] text-gray-500 font-medium select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 <span>Want to know more?</span>
                 <button
-                  onClick={() => openChatWith(post.artisanName)}
+                  onClick={() => {
+                    const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
+                    const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
+                    openChatWith(
+                      post.artisanName,
+                      post.userId,
+                      text,
+                      post.id || post._id,
+                      post.description,
+                      post.category,
+                      post.budget ? String(post.budget) : '',
+                      postImage
+                    )
+                  }}
                   className="bg-[#FAF0F3] hover:bg-[#5F3041] text-[#5F3041] hover:text-[#FAF8F5] border border-[#5F3041]/15 hover:border-[#5F3041] px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider text-[9px] transition-all duration-350 active:scale-95 cursor-pointer"
                 >
                   Inquire Now
@@ -259,7 +281,20 @@ export default function PostCard({
 
             <div className="w-full md:w-36 shrink-0 flex flex-col pt-2 select-none">
               <button
-                onClick={() => openChatWith(post.artisanName)}
+                onClick={() => {
+                  const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
+                  const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
+                  openChatWith(
+                    post.artisanName,
+                    post.userId,
+                    text,
+                    post.id || post._id,
+                    post.description,
+                    post.category,
+                    post.budget ? String(post.budget) : '',
+                    postImage
+                  )
+                }}
                 className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all duration-300 border-none text-center shadow-[0_4px_12px_rgba(95,48,65,0.15)] hover:shadow-[0_6px_16px_rgba(95,48,65,0.25)] active:scale-95 transform hover:-translate-y-[1px]"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >

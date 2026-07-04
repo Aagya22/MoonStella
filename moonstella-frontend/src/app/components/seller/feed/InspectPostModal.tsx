@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
@@ -6,17 +6,64 @@ interface InspectPostModalProps {
   selectedInspectPost: any
   onClose: () => void
   openChatWith: (name: string) => void
+  hideMessageButton?: boolean
+  user?: any
+  wishlist?: string[]
+  handleDeletePost?: (postId: string) => Promise<void>
+  handleUpdatePost?: (postId: string, newDesc: string, newBudget: string) => Promise<void>
 }
 
 export default function InspectPostModal({
   selectedInspectPost,
   onClose,
   openChatWith,
+  hideMessageButton = false,
+  user,
+  wishlist = [],
+  handleDeletePost,
+  handleUpdatePost,
 }: InspectPostModalProps) {
   const router = useRouter()
   const [activeInspectIndex, setActiveInspectIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editDesc, setEditDesc] = useState('')
+  const [editBudget, setEditBudget] = useState('')
+
+  // Sync state with incoming post info
+  useEffect(() => {
+    if (selectedInspectPost) {
+      setEditDesc(selectedInspectPost.description || '')
+      setEditBudget(selectedInspectPost.price?.replace('Rs. ', '')?.replace(/,/g, '') || '')
+    }
+  }, [selectedInspectPost])
+
+  const currentUserName = user ? `${user.firstName} ${user.lastName}` : ''
+  const isMyPost =
+    selectedInspectPost.artisanName === currentUserName ||
+    String(selectedInspectPost.userId?._id || selectedInspectPost.userId) === String(user?.id || user?._id)
+
+  const canEdit = isMyPost && handleDeletePost && handleUpdatePost
+
+  const onSaveChanges = async () => {
+    if (handleUpdatePost) {
+      await handleUpdatePost(selectedInspectPost.id || selectedInspectPost._id, editDesc, editBudget)
+    }
+    setIsEditing(false)
+  }
+
+  const onDelete = async () => {
+    if (handleDeletePost) {
+      await handleDeletePost(selectedInspectPost.id || selectedInspectPost._id)
+    }
+    onClose()
+  }
 
   const imagesList = selectedInspectPost.images || (selectedInspectPost.image ? [selectedInspectPost.image] : [])
+
+  const likesCount = Array.isArray(selectedInspectPost.likes)
+    ? selectedInspectPost.likes.length
+    : (selectedInspectPost.likes || 0)
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in animate-duration-200">
@@ -62,16 +109,16 @@ export default function InspectPostModal({
           </button>
         </div>
 
-        {/* Right Half: Details */}
+        {/* Right Half: Details & Comments */}
         <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-between bg-white h-full overflow-y-auto">
           <div>
             <div className="flex justify-between items-start border-b border-gray-100 pb-4 mb-4">
               <div
-                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                className="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity"
                 onClick={() => {
                   if (selectedInspectPost.userId) {
                     onClose()
-                    router.push(`/seller/profile?id=${selectedInspectPost.userId}`)
+                    router.push(`/seller/profile?id=${selectedInspectPost.userId?._id || selectedInspectPost.userId}`)
                   }
                 }}
               >
@@ -79,7 +126,7 @@ export default function InspectPostModal({
                   {selectedInspectPost.avatar ? (
                     <Image
                       src={selectedInspectPost.avatar}
-                      alt="Client"
+                      alt="Artisan"
                       fill
                       className="object-cover object-center"
                     />
@@ -91,24 +138,62 @@ export default function InspectPostModal({
                   <h4 className="text-xs font-bold text-gray-855" style={{ fontFamily: 'var(--font-montserrat)' }}>
                     {selectedInspectPost.artisanName}
                   </h4>
-                  <span className="text-[8px] font-extrabold text-[#5F3041] bg-[#5F3041]/5 px-2.5 py-0.5 rounded tracking-widest uppercase mt-1 inline-block select-none">
-                    Connoisseur Client
-                  </span>
                 </div>
               </div>
 
-              <button
-                onClick={onClose}
-                className="text-gray-405 hover:text-gray-655 cursor-pointer hidden md:block border-none bg-transparent"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Three Dots Menu for Own Post */}
+                {canEdit && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setMenuOpen(!menuOpen)}
+                      className="text-gray-400 hover:text-gray-700 cursor-pointer p-1 rounded-full hover:bg-gray-50 border-none bg-transparent flex items-center justify-center"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="19" cy="12" r="1" />
+                        <circle cx="5" cy="12" r="1" />
+                      </svg>
+                    </button>
+
+                    {menuOpen && (
+                      <div className="absolute right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 w-32 z-55 flex flex-col text-left">
+                        <button
+                          onClick={() => {
+                            setIsEditing(true)
+                            setMenuOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-2 text-xs font-semibold text-gray-77 hover:bg-gray-50 hover:text-black border-none bg-transparent cursor-pointer"
+                        >
+                          Edit Post
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false)
+                            onDelete()
+                          }}
+                          className="w-full text-left px-4 py-2 text-xs font-semibold text-red-650 hover:bg-red-55 border-none bg-transparent cursor-pointer"
+                        >
+                          Delete Post
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  onClick={onClose}
+                  className="text-gray-405 hover:text-gray-655 cursor-pointer hidden md:block border-none bg-transparent"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            <div className="flex justify-between items-center mb-4 select-none">
+            <div className="flex justify-between items-center mb-4">
               <span
                 className="text-[9px] font-bold text-amber-600 tracking-widest uppercase"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
@@ -120,15 +205,59 @@ export default function InspectPostModal({
               </span>
             </div>
 
-            <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'var(--font-playfair)' }}>
-              Bespoke Request Blueprint
-            </h3>
-            <p className="text-xs text-gray-505 leading-relaxed font-normal mb-6" style={{ fontFamily: 'var(--font-montserrat)' }}>
-              {selectedInspectPost.description}
-            </p>
+            {isEditing ? (
+              <div className="flex flex-col gap-3 mb-4">
+                <label
+                  className="text-[9px] font-bold text-gray-400 uppercase tracking-widest"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Edit Description
+                </label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full text-xs text-gray-707 border border-gray-200 rounded-xl p-3 bg-[#FAF8F5] focus:outline-none focus:border-[#5F3041] resize-none h-24"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                />
+                <label
+                  className="text-[9px] font-bold text-gray-400 uppercase tracking-widest"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Edit Budget (Rs.)
+                </label>
+                <input
+                  type="number"
+                  value={editBudget}
+                  onChange={(e) => setEditBudget(e.target.value)}
+                  className="w-full text-xs text-gray-707 border border-gray-200 rounded-xl px-3 py-2 bg-[#FAF8F5] focus:outline-none focus:border-[#5F3041]"
+                  placeholder="e.g. 50000"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                />
+                <div className="flex gap-2 justify-end mt-2">
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 rounded-full border border-gray-200 text-xs font-semibold text-gray-505 hover:bg-gray-50 cursor-pointer bg-white"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={onSaveChanges}
+                    className="px-4 py-2 rounded-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-xs font-semibold cursor-pointer border-none"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-555 leading-relaxed font-normal mb-6 mt-4" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                {selectedInspectPost.description}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2 mb-6">
-              {selectedInspectPost.materials.map((m: string) => (
+              {selectedInspectPost.materials && selectedInspectPost.materials.map((m: string) => (
                 <span
                   key={m}
                   className="text-[9px] font-bold tracking-widest text-[#5F3041] bg-[#FAF8F5] border border-gray-100 px-2.5 py-1 rounded uppercase select-none"
@@ -140,18 +269,42 @@ export default function InspectPostModal({
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-5 mt-auto">
-            <button
-              onClick={() => {
-                openChatWith(selectedInspectPost.artisanName)
-                onClose()
-              }}
-              className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-white text-[10px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all text-center shadow border-none active:scale-95"
-              style={{ fontFamily: 'var(--font-montserrat)' }}
-            >
-              Message Client
-            </button>
-          </div>
+          {(() => {
+            if (isMyPost || hideMessageButton) {
+              return (
+                <div className="border-t border-gray-150 pt-5 mt-auto flex justify-between items-center text-xs font-semibold text-gray-505 pb-2 select-none">
+                  <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-405">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span>
+                      {likesCount} {likesCount === 1 ? 'Like' : 'Likes'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-gray-405">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>{wishlist.includes(selectedInspectPost.id || selectedInspectPost._id) ? 1 : 0} Saves</span>
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <div className="border-t border-gray-100 pt-5 mt-auto">
+                <button
+                  onClick={() => {
+                    openChatWith(selectedInspectPost.artisanName)
+                    onClose()
+                  }}
+                  className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-white text-[10px] font-bold tracking-widest py-3.5 rounded-full uppercase cursor-pointer transition-all text-center shadow border-none active:scale-95"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Message Client
+                </button>
+              </div>
+            )
+          })()}
         </div>
       </div>
     </div>

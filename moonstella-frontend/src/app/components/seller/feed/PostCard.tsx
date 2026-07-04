@@ -10,7 +10,16 @@ interface PostCardProps {
   toggleLike: (postId: string) => void
   wishlist: string[]
   toggleSave: (postId: string) => void
-  openChatWith: (name: string) => void
+  openChatWith: (
+    name: string,
+    userId?: string,
+    initialMsg?: string,
+    postId?: string,
+    postDesc?: string,
+    postCategory?: string,
+    postBudget?: string,
+    postImage?: string
+  ) => void
   setSelectedInspectPost: (post: any) => void
   setActiveInspectIndex: (index: number) => void
   onShowLikes?: (likesList: any[]) => void
@@ -187,9 +196,6 @@ export default function PostCard({
           <div className="flex flex-col md:flex-row gap-5 justify-between items-start w-full">
             
             <div className="flex-1 min-w-0 flex flex-col gap-3 w-full">
-              <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                {post.description}
-              </p>
 
               {/* Likes & Saves Interactive */}
               <div className="flex items-center gap-6 pt-1">
@@ -246,7 +252,20 @@ export default function PostCard({
 
             <div className="w-full md:w-36 shrink-0 flex flex-col gap-2 pt-2 select-none">
               <button
-                onClick={() => openChatWith(post.artisanName)}
+                onClick={() => {
+                  const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
+                  const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
+                  openChatWith(
+                    post.artisanName || 'Bespoke Request Owner',
+                    post.userId?._id || post.userId,
+                    text,
+                    post.id || post._id,
+                    post.description,
+                    post.category,
+                    post.budget ? String(post.budget) : '',
+                    postImage
+                  )
+                }}
                 className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all duration-300 border-none text-center shadow-[0_4px_12px_rgba(95,48,65,0.15)] hover:shadow-[0_6px_16px_rgba(95,48,65,0.25)] active:scale-95 transform hover:-translate-y-[1px]"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
@@ -257,9 +276,6 @@ export default function PostCard({
         ) : (
           /* Single-Column details layout for user's own posts or non-artisan briefs */
           <div className="flex flex-col gap-3 w-full">
-            <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
-              {post.description}
-            </p>
 
             {/* Read-Only or standard likes and saves */}
             {isMyPost ? (

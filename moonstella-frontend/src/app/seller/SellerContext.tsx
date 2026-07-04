@@ -7,7 +7,16 @@ export interface SellerContextType {
   setUser: React.Dispatch<React.SetStateAction<any>>
   wishlist: string[]
   setWishlist: React.Dispatch<React.SetStateAction<string[]>>
-  openChatWith: (name: string) => void
+  openChatWith: (
+    name: string,
+    userId?: string,
+    initialMsg?: string,
+    postId?: string,
+    postDesc?: string,
+    postCategory?: string,
+    postBudget?: string,
+    postImage?: string
+  ) => void
   triggerProfileEdit?: () => void
 }
 

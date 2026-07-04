@@ -104,21 +104,26 @@ export default function SellerLayout({
   }
 
   // Open chat panel
-  const openChatWith = (name: string) => {
-    const chat = buyersHistory.find(s => s.name === name)
-    if (chat) {
-      setActiveChat(chat)
-    } else {
-      const newChat = {
-        name,
-        specialty: 'Connoisseur Buyer',
-        initials: name.split(' ').map(n => n[0]).join(''),
-        online: true,
-        messages: [{ sender: 'buyer', text: `Hello! I saw your studio profile and I am interested in co-creating a jewelry piece with you.`, time: 'Just now' }]
-      }
-      setActiveChat(newChat)
-      setBuyersHistory([...buyersHistory, newChat])
-    }
+  const openChatWith = (
+    name: string,
+    userId?: string,
+    initialMsg?: string,
+    postId?: string,
+    postDesc?: string,
+    postCategory?: string,
+    postBudget?: string,
+    postImage?: string
+  ) => {
+    let query = `?chatWith=${encodeURIComponent(name)}`
+    if (userId) query += `&userId=${userId}`
+    if (initialMsg) query += `&initialMsg=${encodeURIComponent(initialMsg)}`
+    if (postId) query += `&postId=${postId}`
+    if (postDesc) query += `&postDesc=${encodeURIComponent(postDesc)}`
+    if (postCategory) query += `&postCategory=${encodeURIComponent(postCategory)}`
+    if (postBudget) query += `&postBudget=${postBudget}`
+    if (postImage) query += `&postImage=${encodeURIComponent(postImage)}`
+    
+    router.push(`/seller/messages${query}`)
     closeSidebar()
   }
 
@@ -198,9 +203,9 @@ export default function SellerLayout({
         />
 
         {/* 3. Main content area */}
-        <div className={`flex-1 flex flex-col min-w-0 w-full transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:pl-60' : 'md:pl-0'}`}>
-          <div className="w-full flex-1 flex justify-center">
-            <div className="w-full max-w-7xl">
+        <div className={`flex-1 flex flex-col min-w-0 w-full transition-all duration-300 ease-in-out ${sidebarOpen ? 'md:pl-60' : 'md:pl-0'} ${pathname.includes('messages') ? 'h-[calc(100vh-3.5rem)] overflow-hidden' : ''}`}>
+          <div className={`w-full flex-1 flex justify-center ${pathname.includes('messages') ? 'h-full overflow-hidden' : ''}`}>
+            <div className={`w-full ${pathname.includes('messages') ? 'h-full' : 'max-w-7xl'}`}>
               {children}
             </div>
           </div>

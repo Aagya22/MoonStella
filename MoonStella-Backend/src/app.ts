@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/error.middleware'
 import authRoutes from './routes/auth.routes'
 import uploadRoutes from './routes/upload.routes'
 import postRoutes from './routes/post.routes'
+import chatRoutes from './routes/chat.routes'
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.get('/health', (_, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/posts', postRoutes)
+app.use('/api/chat', chatRoutes)
 
 app.use(errorHandler)
 

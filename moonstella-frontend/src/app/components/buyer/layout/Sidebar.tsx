@@ -83,7 +83,7 @@ export default function Sidebar({
                     <line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="14" y2="11" />
                   </svg>
                 ),
-                onClick: () => { openChatWith('Julian Thorne'); }
+                onClick: () => { router.push('/buyer/messages'); closeSidebar(); }
               },
               {
                 id: 'wishlist',
@@ -120,8 +120,12 @@ export default function Sidebar({
                 onClick: () => { router.push('/buyer/profile'); closeSidebar(); }
               }
             ].map((item) => {
+              const isVisitingProfile = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')
               const isActive = (item.id === 'home' && pathname === '/buyer/dashboard') ||
-                (item.id === 'discovery' && pathname === '/buyer/feed')
+                (item.id === 'discovery' && pathname === '/buyer/feed') ||
+                (item.id === 'messages' && pathname === '/buyer/messages') ||
+                (item.id === 'wishlist' && pathname === '/buyer/wishlist') ||
+                (item.id === 'profile' && pathname === '/buyer/profile' && !isVisitingProfile)
               return (
                 <button
                   key={item.id}

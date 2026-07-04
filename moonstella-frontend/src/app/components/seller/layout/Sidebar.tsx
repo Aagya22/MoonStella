@@ -43,7 +43,6 @@ export default function Sidebar({
               MOONSTELLA
             </span>
           </div>
-
           <nav className="flex flex-col gap-1 px-4">
             {[
               {
@@ -56,6 +55,17 @@ export default function Sidebar({
                   </svg>
                 ),
                 onClick: () => { router.push('/seller/feed'); closeSidebar(); }
+              },
+              {
+                id: 'messages',
+                label: 'MESSAGES',
+                icon: (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <line x1="8" y1="7" x2="16" y2="7" /><line x1="8" y1="11" x2="14" y2="11" />
+                  </svg>
+                ),
+                onClick: () => { router.push('/seller/messages'); closeSidebar(); }
               },
               {
                 id: 'saved',
@@ -80,9 +90,11 @@ export default function Sidebar({
                 onClick: () => { router.push('/seller/profile'); closeSidebar(); }
               }
             ].map((item) => {
+              const isVisitingProfile = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')
               const isActive = (item.id === 'home' && pathname === '/seller/feed') ||
+                (item.id === 'messages' && pathname === '/seller/messages') ||
                 (item.id === 'saved' && pathname === '/seller/saved') ||
-                (item.id === 'profile' && pathname === '/seller/profile')
+                (item.id === 'profile' && pathname === '/seller/profile' && !isVisitingProfile)
               return (
                 <button
                   key={item.id}
