@@ -86,6 +86,9 @@ export default function BuyerMessagesPage() {
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
   
+  // Conversation Menu state
+  const [conversationMenuOpen, setConversationMenuOpen] = useState(false)
+  
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
 
@@ -113,6 +116,11 @@ export default function BuyerMessagesPage() {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [])
+
+  // Close dropdown on thread change
+  useEffect(() => {
+    setConversationMenuOpen(false)
+  }, [activeThreadId])
 
   // Listen for socket events
   useEffect(() => {
@@ -393,6 +401,30 @@ export default function BuyerMessagesPage() {
     mediaRecorderRef.current.stop()
   }
 
+  // Delete Conversation (Clear thread for current side)
+  const handleDeleteConversation = async () => {
+    if (!activeThreadId) return
+    const confirmed = window.confirm("Are you sure you want to delete this conversation? This will clear all messages on your side.")
+    if (!confirmed) {
+      setConversationMenuOpen(false)
+      return
+    }
+
+    try {
+      const res = await api.delete(`/api/chat/threads/${activeThreadId}`)
+      if (res.data && res.data.success) {
+        setMessages([])
+        setThreads((prev) => prev.filter((t) => t._id !== activeThreadId))
+        setActiveThreadId('')
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err)
+      alert('Failed to delete conversation. Please try again.')
+    } finally {
+      setConversationMenuOpen(false)
+    }
+  }
+
   // Send Message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -486,7 +518,7 @@ export default function BuyerMessagesPage() {
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-[#5F3041]/10 rounded-xl py-2 pl-9 pr-4 text-xs text-gray-700 placeholder-[#5F3041]/40 focus:outline-none focus:border-[#5F3041]/25 transition-all duration-300"
+              className="w-full bg-white border border-[#5F3041]/10 rounded-xl py-2 pl-9 pr-4 text-xs text-gray-707 placeholder-[#5F3041]/40 focus:outline-none focus:border-[#5F3041]/25 transition-all duration-300"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             />
           </div>
@@ -550,6 +582,35 @@ export default function BuyerMessagesPage() {
                 </div>
               </div>
             </div>
+
+            {/* 3-Dot Conversation Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setConversationMenuOpen(!conversationMenuOpen)}
+                className="text-gray-400 hover:text-[#5F3041] hover:bg-[#5F3041]/5 p-2 rounded-full cursor-pointer transition-all border-none bg-transparent flex items-center justify-center"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="1.5" />
+                  <circle cx="12" cy="5" r="1.5" />
+                  <circle cx="12" cy="19" r="1.5" />
+                </svg>
+              </button>
+
+              {conversationMenuOpen && (
+                <div className="absolute right-0 mt-1.5 bg-white border border-[#5F3041]/10 rounded-xl shadow-lg py-1.5 w-40 z-50 flex flex-col text-left">
+                  <button
+                    type="button"
+                    onClick={handleDeleteConversation}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-650 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Delete Conversation
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* Chat Stream */}
@@ -789,7 +850,7 @@ export default function BuyerMessagesPage() {
                 placeholder="Type your message..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-700 placeholder-[#5F3041]/40 focus:outline-none focus:bg-white focus:border-[#5F3041]/25 transition-all"
+                className="flex-1 bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-707 placeholder-[#5F3041]/40 focus:outline-none focus:bg-white focus:border-[#5F3041]/25 transition-all"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               />
             )}

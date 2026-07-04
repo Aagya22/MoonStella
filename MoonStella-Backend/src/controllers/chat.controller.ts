@@ -84,7 +84,18 @@ export const getThreads = async (req: Request, res: Response): Promise<void> => 
       .populate('participants', 'firstName lastName email role avatar location bio averageResponseTime')
       .sort({ lastMessageAt: -1 })
 
-    ok(res, threads)
+    // Filter out threads that have been deleted/cleared and have no new messages since clearing
+    const activeThreads = threads.filter((t) => {
+      const clearRecord = t.clearedChats?.find(
+        (c: any) => String(c.userId) === String(currentUserId)
+      )
+      if (!clearRecord) return true
+
+      if (!t.lastMessageAt) return false
+      return new Date(t.lastMessageAt).getTime() > new Date(clearRecord.clearedAt).getTime()
+    })
+
+    ok(res, activeThreads)
   } catch (err) {
     serverError(res, err)
   }
@@ -124,8 +135,26 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
     const parsedLimit = Math.min(Number(limit), 100)
 
     const query: any = { threadId }
+
+    // Find if the current user cleared this chat
+    const clearRecord = thread.clearedChats?.find(
+      (c: any) => String(c.userId) === String(currentUserId)
+    )
+    if (clearRecord) {
+      query.createdAt = { $gt: new Date(clearRecord.clearedAt) }
+    }
+
     if (before) {
-      query.createdAt = { $lt: new Date(before as string) }
+      const beforeDate = new Date(before as string)
+      if (clearRecord) {
+        const clearDate = new Date(clearRecord.clearedAt)
+        query.createdAt = {
+          $lt: beforeDate,
+          $gt: clearDate
+        }
+      } else {
+        query.createdAt = { $lt: beforeDate }
+      }
     }
 
     const messages = await Message.find(query)
@@ -227,6 +256,60 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
     io.to(`thread:${threadId}`).emit('new_message', populatedMessage)
 
     created(res, populatedMessage)
+  } catch (err) {
+    serverError(res, err)
+  }
+}
+
+export const clearThread = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { threadId } = req.params
+    const currentUserId = req.user?._id
+
+    if (!currentUserId) {
+      badRequest(res, 'Unauthorized')
+      return
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(threadId)) {
+      badRequest(res, 'Invalid Thread ID')
+      return
+    }
+
+    const thread = await Thread.findById(threadId)
+    if (!thread) {
+      notFound(res, 'Not found')
+      return
+    }
+
+    const isParticipant = thread.participants.some(
+      (id: any) => String(id) === String(currentUserId)
+    )
+
+    if (!isParticipant) {
+      badRequest(res, 'Access Denied')
+      return
+    }
+
+    if (!thread.clearedChats) {
+      thread.clearedChats = []
+    }
+
+    const existingIndex = thread.clearedChats.findIndex(
+      (c: any) => String(c.userId) === String(currentUserId)
+    )
+
+    if (existingIndex > -1) {
+      thread.clearedChats[existingIndex].clearedAt = new Date()
+    } else {
+      thread.clearedChats.push({
+        userId: currentUserId,
+        clearedAt: new Date()
+      })
+    }
+
+    await thread.save()
+    ok(res, null, 'Conversation deleted successfully for your side')
   } catch (err) {
     serverError(res, err)
   }

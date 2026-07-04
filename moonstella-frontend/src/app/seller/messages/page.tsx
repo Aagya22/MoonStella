@@ -86,6 +86,9 @@ export default function SellerMessagesPage() {
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
   
+  // Conversation Menu state
+  const [conversationMenuOpen, setConversationMenuOpen] = useState(false)
+  
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
 
@@ -113,6 +116,11 @@ export default function SellerMessagesPage() {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [])
+
+  // Close dropdown on thread change
+  useEffect(() => {
+    setConversationMenuOpen(false)
+  }, [activeThreadId])
 
   // Listen for socket events
   useEffect(() => {
@@ -393,6 +401,30 @@ export default function SellerMessagesPage() {
     mediaRecorderRef.current.stop()
   }
 
+  // Delete Conversation (Clear thread for current side)
+  const handleDeleteConversation = async () => {
+    if (!activeThreadId) return
+    const confirmed = window.confirm("Are you sure you want to delete this conversation? This will clear all messages on your side.")
+    if (!confirmed) {
+      setConversationMenuOpen(false)
+      return
+    }
+
+    try {
+      const res = await api.delete(`/api/chat/threads/${activeThreadId}`)
+      if (res.data && res.data.success) {
+        setMessages([])
+        setThreads((prev) => prev.filter((t) => t._id !== activeThreadId))
+        setActiveThreadId('')
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err)
+      alert('Failed to delete conversation. Please try again.')
+    } finally {
+      setConversationMenuOpen(false)
+    }
+  }
+
   // Send Message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -506,7 +538,7 @@ export default function SellerMessagesPage() {
               <div
                 key={t._id}
                 onClick={() => setActiveThreadId(t._id)}
-                className={`flex gap-3.5 items-center p-3.5 rounded-2xl cursor-pointer transition-all duration-205 mb-1 select-none hover:bg-[#FAF0F3]/40 ${
+                className={`flex gap-3.5 items-center p-3.5 rounded-2xl cursor-pointer transition-all duration-200 mb-1 select-none hover:bg-[#FAF0F3]/40 ${
                   isActive ? 'bg-[#FAF0F3]' : 'bg-transparent'
                 }`}
               >
@@ -521,8 +553,8 @@ export default function SellerMessagesPage() {
                       {formatTime(t.lastMessageAt)}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-550 truncate mt-0.5">{specialty}</p>
-                  <p className="text-[10px] text-gray-550 truncate mt-1">
+                  <p className="text-[10px] text-gray-555 truncate mt-0.5">{specialty}</p>
+                  <p className="text-[10px] text-gray-555 truncate mt-1">
                     {t.lastMessageText || 'Start co-creating details...'}
                   </p>
                 </div>
@@ -550,6 +582,35 @@ export default function SellerMessagesPage() {
                 </div>
               </div>
             </div>
+
+            {/* 3-Dot Conversation Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setConversationMenuOpen(!conversationMenuOpen)}
+                className="text-gray-400 hover:text-[#5F3041] hover:bg-[#5F3041]/5 p-2 rounded-full cursor-pointer transition-all border-none bg-transparent flex items-center justify-center"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="1.5" />
+                  <circle cx="12" cy="5" r="1.5" />
+                  <circle cx="12" cy="19" r="1.5" />
+                </svg>
+              </button>
+
+              {conversationMenuOpen && (
+                <div className="absolute right-0 mt-1.5 bg-white border border-[#5F3041]/10 rounded-xl shadow-lg py-1.5 w-40 z-50 flex flex-col text-left">
+                  <button
+                    type="button"
+                    onClick={handleDeleteConversation}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-650 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Delete Conversation
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* Chat Stream */}
@@ -635,7 +696,7 @@ export default function SellerMessagesPage() {
                           className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
                             isUser
                               ? 'bg-[#5F3041] text-[#FAF8F5] rounded-tr-none shadow-xs'
-                              : 'bg-[#FAF8F5] text-gray-700 border border-[#5F3041]/10 rounded-tl-none'
+                              : 'bg-[#FAF8F5] text-gray-707 border border-[#5F3041]/10 rounded-tl-none'
                           }`}
                           style={{ fontFamily: 'var(--font-montserrat)' }}
                         >
@@ -687,7 +748,7 @@ export default function SellerMessagesPage() {
             <div className="mx-6 mb-2 p-3 bg-[#FAF8F5]/90 border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm items-center relative select-none animate-fade-in shadow-xs shrink-0">
               <div
                 onClick={() => attachedImage && setActiveLightboxImage(attachedImage)}
-                className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#5F3041]/10 bg-gray-55 flex items-center justify-center shadow-xs ${attachedImage ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+                className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#5F3041]/10 bg-gray-50 flex items-center justify-center shadow-xs ${attachedImage ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
               >
                 {uploadingImage ? (
                   <div className="w-5 h-5 border-2 border-[#5F3041] border-t-transparent rounded-full animate-spin" />
