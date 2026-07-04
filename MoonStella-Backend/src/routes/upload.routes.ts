@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { protect } from '../middleware/auth.middleware'
-import { uploadImage } from '../controllers/upload.controller'
+import { uploadImage, uploadAudio } from '../controllers/upload.controller'
 import multer from 'multer'
 import cloudinary from 'cloudinary'
 import { CloudinaryStorage } from 'multer-storage-cloudinary'
@@ -21,12 +21,27 @@ const storage = new CloudinaryStorage({
   } as object,
 })
 
+const audioStorage = new CloudinaryStorage({
+  cloudinary: cloudinary.v2,
+  params: {
+    folder: 'moonstella/voice',
+    resource_type: 'video', // Audio files are uploaded as 'video' resource type in Cloudinary
+    allowed_formats: ['webm', 'mp3', 'wav', 'ogg', 'm4a'],
+  } as object,
+})
+
 export const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
 })
 
+export const uploadAudioMiddleware = multer({
+  storage: audioStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+})
+
 const router = Router()
 router.post('/image', protect, upload.single('image'), uploadImage)
+router.post('/audio', protect, uploadAudioMiddleware.single('audio'), uploadAudio)
 
 export default router

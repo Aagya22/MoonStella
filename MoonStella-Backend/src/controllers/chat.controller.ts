@@ -150,7 +150,7 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
     const { threadId } = req.params
-    const { text, postId, image } = req.body
+    const { text, postId, image, voice } = req.body
     const currentUserId = req.user?._id
 
     if (!currentUserId) {
@@ -160,8 +160,8 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
 
     const trimmedText = text ? text.trim() : ''
 
-    if (!trimmedText && !image) {
-      badRequest(res, 'Message text or image is required')
+    if (!trimmedText && !image && !voice) {
+      badRequest(res, 'Message text, image, or voice is required')
       return
     }
 
@@ -195,11 +195,21 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       senderId: currentUserId,
       text: trimmedText,
       postId: postId || undefined,
-      image: image || undefined
+      image: image || undefined,
+      voice: voice || undefined
     })
     await message.save()
 
-    thread.lastMessageText = trimmedText || '[Image]'
+    let lastText = trimmedText
+    if (!lastText) {
+      if (voice) {
+        lastText = '[Voice Message]'
+      } else {
+        lastText = '[Image]'
+      }
+    }
+
+    thread.lastMessageText = lastText
     thread.lastMessageSenderId = currentUserId
     thread.lastMessageAt = new Date()
     await thread.save()

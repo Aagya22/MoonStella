@@ -7,6 +7,7 @@ import { useSellerContext } from '../SellerContext'
 import api from '@/lib/api/axios'
 import { io, Socket } from 'socket.io-client'
 import InspectPostModal from '@/app/components/seller/feed/InspectPostModal'
+import AudioPlayer from '@/app/components/chat/AudioPlayer'
 
 interface Message {
   _id: string
@@ -28,6 +29,7 @@ interface Message {
     images?: string[]
   }
   image?: string | null
+  voice?: string | null
   createdAt: string
 }
 
@@ -60,6 +62,7 @@ export default function SellerMessagesPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [chatInput, setChatInput] = useState('')
+  
   const [attachedPost, setAttachedPost] = useState<{
     _id: string
     description: string
@@ -67,14 +70,22 @@ export default function SellerMessagesPage() {
     budget?: number | null
     images?: string[]
   } | null>(null)
-
+  
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [uploadingVoice, setUploadingVoice] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
-
+  
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
 
@@ -96,6 +107,13 @@ export default function SellerMessagesPage() {
     }
   }, [])
 
+  // Clean timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [])
+
   // Listen for socket events
   useEffect(() => {
     if (!socketRef.current) return
@@ -113,7 +131,7 @@ export default function SellerMessagesPage() {
           if (t._id === msg.threadId) {
             return {
               ...t,
-              lastMessageText: msg.text || '[Image]',
+              lastMessageText: msg.text || (msg.voice ? '[Voice Message]' : '[Image]'),
               lastMessageAt: msg.createdAt
             }
           }
@@ -290,6 +308,91 @@ export default function SellerMessagesPage() {
     }
   }
 
+  // Audio Recording Methods
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop())
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+
+      timerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1)
+      }, 1000)
+    } catch (err) {
+      console.error('Failed to start recording:', err)
+      alert('Microphone permission denied or device is not available.')
+    }
+  }
+
+  const cancelRecording = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    setIsRecording(false)
+    setRecordingTime(0)
+    audioChunksRef.current = []
+  }
+
+  const stopAndSendRecording = async () => {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') return
+
+    if (timerRef.current) clearInterval(timerRef.current)
+
+    setUploadingVoice(true)
+
+    mediaRecorderRef.current.onstop = async () => {
+      try {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const file = new File([audioBlob], 'voice.webm', { type: 'audio/webm' })
+
+        const formData = new FormData()
+        formData.append('audio', file)
+
+        const res = await api.post('/api/upload/audio', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+
+        if (res.data && res.data.success) {
+          const voiceUrl = res.data.data.url
+          await api.post(`/api/chat/threads/${activeThreadId}/messages`, {
+            text: '',
+            voice: voiceUrl
+          })
+        } else {
+          alert('Failed to upload voice message')
+        }
+      } catch (err) {
+        console.error('Audio upload error:', err)
+        alert('Failed to upload voice message.')
+      } finally {
+        setUploadingVoice(false)
+        setIsRecording(false)
+        setRecordingTime(0)
+        audioChunksRef.current = []
+      }
+    }
+
+    mediaRecorderRef.current.stop()
+  }
+
   // Send Message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -383,7 +486,7 @@ export default function SellerMessagesPage() {
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-[#5F3041]/10 rounded-xl py-2 pl-9 pr-4 text-xs text-gray-700 placeholder-[#5F3041]/40 focus:outline-none focus:border-[#5F3041]/25 transition-all duration-300"
+              className="w-full bg-white border border-[#5F3041]/10 rounded-xl py-2 pl-9 pr-4 text-xs text-gray-707 placeholder-[#5F3041]/40 focus:outline-none focus:border-[#5F3041]/25 transition-all duration-300"
               style={{ fontFamily: 'var(--font-montserrat)' }}
             />
           </div>
@@ -395,7 +498,7 @@ export default function SellerMessagesPage() {
             if (!other) return null
 
             const name = `${other.firstName} ${other.lastName}`
-            const avatar = other.avatar || '/suggested_botanical.png'
+            const avatar = other.avatar || '/buyersignup.png'
             const specialty = other.role === 'seller' ? (other.bio || 'Master Artisan') : 'Buyer'
             const isActive = t._id === activeThreadId
 
@@ -403,7 +506,7 @@ export default function SellerMessagesPage() {
               <div
                 key={t._id}
                 onClick={() => setActiveThreadId(t._id)}
-                className={`flex gap-3.5 items-center p-3.5 rounded-2xl cursor-pointer transition-all duration-200 mb-1 select-none hover:bg-[#FAF0F3]/40 ${
+                className={`flex gap-3.5 items-center p-3.5 rounded-2xl cursor-pointer transition-all duration-205 mb-1 select-none hover:bg-[#FAF0F3]/40 ${
                   isActive ? 'bg-[#FAF0F3]' : 'bg-transparent'
                 }`}
               >
@@ -437,7 +540,7 @@ export default function SellerMessagesPage() {
           <div className="px-6 py-4 border-b border-[#5F3041]/10 flex justify-between items-center bg-[#FAF8F5]/40 select-none">
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
-                <Image src={otherParticipant.avatar || '/suggested_botanical.png'} alt={`${otherParticipant.firstName} ${otherParticipant.lastName}`} fill className="object-cover" />
+                <Image src={otherParticipant.avatar || '/buyersignup.png'} alt={`${otherParticipant.firstName} ${otherParticipant.lastName}`} fill className="object-cover" />
               </div>
               <div>
                 <h3 className="text-xs font-bold text-gray-800 tracking-wide leading-tight">{otherParticipant.firstName} {otherParticipant.lastName}</h3>
@@ -468,7 +571,7 @@ export default function SellerMessagesPage() {
                 const isUser = String(typeof m.senderId === 'object' ? m.senderId?._id : m.senderId) === String(user?.id || user?._id)
                 const senderAvatar = isUser
                   ? (user?.avatar || '/suggested_botanical.png')
-                  : (otherParticipant.avatar || '/suggested_botanical.png')
+                  : (otherParticipant.avatar || '/buyersignup.png')
 
                 return (
                   <div key={m._id} className={`flex gap-3 max-w-[75%] ${isUser ? 'self-end flex-row-reverse' : 'self-start'}`}>
@@ -517,6 +620,13 @@ export default function SellerMessagesPage() {
                           className="mb-2 rounded-2xl overflow-hidden cursor-zoom-in relative w-48 h-48 border border-[#5F3041]/10 shadow-xs bg-[#FAF8F5]/80 flex-shrink-0 group hover:scale-[1.01] hover:shadow-sm transition-all duration-300 animate-fade-in"
                         >
                           <Image src={m.image} alt="Sent attachment" fill className="object-cover" />
+                        </div>
+                      )}
+
+                      {/* Sent Voice Attachment Custom Player */}
+                      {m.voice && (
+                        <div className="mb-2 shrink-0 animate-fade-in">
+                          <AudioPlayer src={m.voice} />
                         </div>
                       )}
 
@@ -577,7 +687,7 @@ export default function SellerMessagesPage() {
             <div className="mx-6 mb-2 p-3 bg-[#FAF8F5]/90 border border-[#5F3041]/10 rounded-2xl flex gap-3.5 max-w-sm items-center relative select-none animate-fade-in shadow-xs shrink-0">
               <div
                 onClick={() => attachedImage && setActiveLightboxImage(attachedImage)}
-                className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#5F3041]/10 bg-gray-50 flex items-center justify-center shadow-xs ${attachedImage ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+                className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-[#5F3041]/10 bg-gray-55 flex items-center justify-center shadow-xs ${attachedImage ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
               >
                 {uploadingImage ? (
                   <div className="w-5 h-5 border-2 border-[#5F3041] border-t-transparent rounded-full animate-spin" />
@@ -612,19 +722,24 @@ export default function SellerMessagesPage() {
             <div className="flex items-center gap-1.5 shrink-0 px-1 select-none">
               <button
                 type="button"
-                title="Attach File"
-                onClick={() => alert("File attachment will be supported in Sprint 4.")}
-                className="text-[#5F3041]/60 hover:text-[#5F3041] p-2 hover:bg-[#5F3041]/5 rounded-full transition-all cursor-pointer border-none bg-transparent"
+                title="Voice Message"
+                disabled={uploadingVoice}
+                onClick={startRecording}
+                className="text-[#5F3041]/60 hover:text-[#5F3041] p-2 hover:bg-[#5F3041]/5 rounded-full transition-all cursor-pointer border-none bg-transparent disabled:opacity-50"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
                 </svg>
               </button>
               <button
                 type="button"
                 title="Attach Image"
+                disabled={isRecording}
                 onClick={() => fileInputRef.current?.click()}
-                className="text-[#5F3041]/65 hover:text-[#5F3041] p-2 hover:bg-[#5F3041]/5 rounded-full transition-all cursor-pointer border-none bg-transparent"
+                className="text-[#5F3041]/65 hover:text-[#5F3041] p-2 hover:bg-[#5F3041]/5 rounded-full transition-all cursor-pointer border-none bg-transparent disabled:opacity-50"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -634,19 +749,55 @@ export default function SellerMessagesPage() {
               </button>
             </div>
 
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              className="flex-1 bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-700 placeholder-[#5F3041]/40 focus:outline-none focus:bg-white focus:border-[#5F3041]/25 transition-all"
-              style={{ fontFamily: 'var(--font-montserrat)' }}
-            />
+            {isRecording ? (
+              <div className="flex-1 flex items-center justify-between bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-707 select-none animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 bg-rose-600 rounded-full animate-pulse" />
+                  <span className="font-bold text-[#5F3041]" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    {uploadingVoice ? 'Wait a min... Sending voice' : `Recording... ${Math.floor(recordingTime / 60)}:${recordingTime % 60 < 10 ? '0' : ''}${recordingTime % 60}`}
+                  </span>
+                </div>
+                {!uploadingVoice && (
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={cancelRecording}
+                      title="Discard Recording"
+                      className="text-gray-400 hover:text-rose-600 transition-colors p-1 rounded-full border-none bg-transparent cursor-pointer flex items-center justify-center"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopAndSendRecording}
+                      title="Send Voice Message"
+                      className="text-emerald-500 hover:text-emerald-700 transition-colors p-1 rounded-full border-none bg-transparent cursor-pointer flex items-center justify-center font-bold"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1 bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-707 placeholder-[#5F3041]/40 focus:outline-none focus:bg-white focus:border-[#5F3041]/25 transition-all"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              />
+            )}
 
             <button
               type="submit"
-              disabled={uploadingImage}
-              className="bg-[#5F3041] disabled:opacity-50 text-white rounded-full hover:bg-[#4A2231] transition-all duration-300 cursor-pointer flex items-center justify-center w-9 h-9 shrink-0 shadow-sm active:scale-95 border-none"
+              disabled={uploadingImage || isRecording}
+              className="bg-[#5F3041] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full hover:bg-[#4A2231] transition-all duration-300 cursor-pointer flex items-center justify-center w-9 h-9 shrink-0 shadow-sm active:scale-95 border-none"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="transform rotate-45 -translate-x-[1px] translate-y-[0.5px]">
                 <line x1="22" y1="2" x2="11" y2="13" />
@@ -676,9 +827,11 @@ export default function SellerMessagesPage() {
         <InspectPostModal
           selectedInspectPost={getMappedPostForModal(selectedPost)}
           onClose={() => setSelectedPost(null)}
-          openChatWith={() => setSelectedPost(null)}
           user={user}
           wishlist={wishlist}
+          openChatWith={() => setSelectedPost(null)}
+          handleDeletePost={async () => {}}
+          handleUpdatePost={async () => {}}
         />
       )}
 
