@@ -67,8 +67,18 @@ export default function Header({
           </div>
           <input
             type="text"
-            placeholder="Search for bespoke design briefs"
-            className="w-full bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full py-1.5 pl-10 pr-4 text-xs text-gray-707 placeholder-[#5F3041]/40 shadow-[inset_0_1.5px_3px_rgba(0,0,0,0.03)] focus:outline-none focus:bg-white focus:border-[#5F3041]/25 focus:shadow-[inset_0_1px_2px_rgba(0,0,0,0.01),_0_0_0_2px_rgba(61,12,31,0.03)] transition-all duration-300"
+            placeholder="Search jewelry, category, materials..."
+            onFocus={() => {
+              if (typeof window !== 'undefined' && !window.location.pathname.endsWith('/search')) {
+                router.push('/seller/search')
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                router.push(`/seller/search?q=${encodeURIComponent(e.currentTarget.value)}`)
+              }
+            }}
+            className="w-full bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full py-1.5 pl-10 pr-4 text-xs text-gray-700 placeholder-[#5F3041]/40 shadow-[inset_0_1.5px_3px_rgba(0,0,0,0.03)] focus:outline-none focus:bg-white focus:border-[#5F3041]/25 focus:shadow-[inset_0_1px_2px_rgba(0,0,0,0.01),_0_0_0_2px_rgba(61,12,31,0.03)] transition-all duration-300"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           />
         </div>

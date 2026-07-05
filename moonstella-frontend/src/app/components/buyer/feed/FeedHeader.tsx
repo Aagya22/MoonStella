@@ -31,8 +31,8 @@ export default function FeedHeader({ selectedCuration, setSelectedCuration, setS
                   key={item.id}
                   onClick={() => setSelectedCuration(item.id)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${isActive
-                      ? 'bg-[#5F3041] text-[#FAF8F5] shadow-md shadow-[#5F3041]/15 font-bold border border-[#5F3041]'
-                      : 'text-gray-600 hover:bg-[#FAF6F0] hover:text-[#5F3041] border border-transparent font-medium'
+                    ? 'bg-[#5F3041] text-[#FAF8F5] shadow-md shadow-[#5F3041]/15 font-bold border border-[#5F3041]'
+                    : 'text-gray-600 hover:bg-[#FAF6F0] hover:text-[#5F3041] border border-transparent font-medium'
                     }`}
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >

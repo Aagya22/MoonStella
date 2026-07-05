@@ -194,7 +194,7 @@ export default function PostCard({
 
         {!isMyPost && post.artisanTitle !== 'MASTER ARTISAN' ? (
           <div className="flex flex-col md:flex-row gap-5 justify-between items-start w-full">
-            
+
             <div className="flex-1 min-w-0 flex flex-col gap-3 w-full">
 
               {/* Likes & Saves Interactive */}
