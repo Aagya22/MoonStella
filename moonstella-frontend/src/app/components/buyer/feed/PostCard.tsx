@@ -197,7 +197,7 @@ export default function PostCard({
 
         {!isMyPost && post.artisanTitle === 'MASTER ARTISAN' ? (
           <div className="flex flex-col md:flex-row gap-5 justify-between items-start w-full">
-            
+
             <div className="flex-1 min-w-0 flex flex-col gap-3 w-full">
               <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
                 {post.description}

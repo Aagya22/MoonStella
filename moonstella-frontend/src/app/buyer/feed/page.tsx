@@ -487,7 +487,7 @@ export default function BuyerFeedPage() {
           handleUpdatePost={handleUpdatePost}
         />
       )}
-      
+
       <FollowModal
         isOpen={likesModalOpen}
         title="Liked By"
