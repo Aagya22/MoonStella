@@ -47,6 +47,8 @@ export default function SearchPageContent({
   const [minPrice, setMinPrice] = useState<number | ''>('')
   const [maxPrice, setMaxPrice] = useState<number | ''>('')
   const [sortBy, setSortBy] = useState('newest')
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 6
 
   // Dynamic filter catalogs derived from database posts
   const [dynamicCategories, setDynamicCategories] = useState<string[]>([])
@@ -61,6 +63,11 @@ export default function SearchPageContent({
     const q = searchParams.get('q') || ''
     setSearchQuery(q)
   }, [searchParams])
+
+  // Reset pagination on filter or sort changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, selectedCategories, selectedGemstones, selectedMaterial, minPrice, maxPrice, sortBy])
 
   // Load all posts & compile categories, gemstones, and materials dynamically
   useEffect(() => {
@@ -270,8 +277,15 @@ export default function SearchPageContent({
     filteredPosts.sort((a, b) => b.likes - a.likes)
   }
 
+  // Paginate filtered results
+  const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE)
+  const paginatedPosts = filteredPosts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
   return (
-    <div className="flex-1 w-full mx-auto px-8 py-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 select-none">
+    <div className="flex-1 w-full ml-0 mr-auto xl:pl-4 pl-8 pr-12 py-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 select-none max-w-[1440px]">
       
       {/* Refine By Sidebar Panel */}
       <aside className="w-full flex flex-col">
@@ -460,61 +474,108 @@ export default function SearchPageContent({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {filteredPosts.map((post) => {
-              const derivedTitle = getDerivedTitle(post)
-              const derivedPlaque = post.materials ? post.materials.map((m: string) => m.toUpperCase()).join(' & ') : 'BESPOKE PIECE'
-              return (
-                <div
-                  key={post.id}
-                  onClick={() => setSelectedInspectPost(post)}
-                  className="bg-white border border-[#5F3041]/10 rounded-none overflow-hidden flex flex-col shadow-none cursor-pointer group hover:border-[#5F3041]/30 transition-all duration-300 animate-scale-up"
-                >
-                  {/* Photo area */}
-                  {post.image ? (
-                    <div className="relative w-full aspect-[4/5] bg-[#FAF8F5] overflow-hidden border-b border-[#5F3041]/10">
-                      <Image
-                        src={post.image}
-                        alt={derivedTitle}
-                        fill
-                        className="object-contain group-hover:scale-103 transition-transform duration-500"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full aspect-[4/5] bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/30 border-b border-[#5F3041]/10">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <polyline points="21 15 16 10 5 21" />
-                      </svg>
-                    </div>
-                  )}
+          <div className="flex flex-col gap-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {paginatedPosts.map((post) => {
+                const derivedTitle = getDerivedTitle(post)
+                const derivedPlaque = post.materials ? post.materials.map((m: string) => m.toUpperCase()).join(' & ') : 'BESPOKE PIECE'
+                return (
+                  <div
+                    key={post.id}
+                    onClick={() => setSelectedInspectPost(post)}
+                    className="bg-white border border-[#5F3041]/10 rounded-none overflow-hidden flex flex-col shadow-none cursor-pointer group hover:border-[#5F3041]/30 transition-all duration-300 animate-scale-up"
+                  >
+                    {/* Photo area */}
+                    {post.image ? (
+                      <div className="relative w-full aspect-[4/5] bg-[#FAF8F5] overflow-hidden border-b border-[#5F3041]/10">
+                        <Image
+                          src={post.image}
+                          alt={derivedTitle}
+                          fill
+                          className="object-contain group-hover:scale-103 transition-transform duration-500"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-[4/5] bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/30 border-b border-[#5F3041]/10">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                      </div>
+                    )}
 
-                  {/* Captions beneath the image (museum-label style) */}
-                  <div className="p-5 flex flex-col items-center text-center gap-2 bg-white">
-                    <h4
-                      className="text-sm font-bold text-gray-800 tracking-wide font-serif leading-snug group-hover:text-[#5F3041] transition-colors"
-                      style={{ fontFamily: 'var(--font-playfair)' }}
-                    >
-                      {derivedTitle}
-                    </h4>
-                    <div
-                      className="text-[7.5px] font-extrabold text-gray-400 tracking-widest uppercase truncate max-w-full px-2"
-                      style={{ fontFamily: 'var(--font-montserrat)' }}
-                    >
-                      {derivedPlaque}
+                    {/* Captions beneath the image (museum-label style) */}
+                    <div className="p-5 flex flex-col items-center text-center gap-2 bg-white">
+                      <h4
+                        className="text-sm font-bold text-gray-800 tracking-wide font-serif leading-snug group-hover:text-[#5F3041] transition-colors"
+                        style={{ fontFamily: 'var(--font-playfair)' }}
+                      >
+                        {derivedTitle}
+                      </h4>
+                      <div
+                        className="text-[7.5px] font-extrabold text-gray-400 tracking-widest uppercase truncate max-w-full px-2"
+                        style={{ fontFamily: 'var(--font-montserrat)' }}
+                      >
+                        {derivedPlaque}
+                      </div>
+                      <div
+                        className="text-xs font-bold text-[#5F3041] font-serif pt-1"
+                        style={{ fontFamily: 'var(--font-playfair)' }}
+                      >
+                        {post.price}
+                      </div>
                     </div>
-                    <div
-                      className="text-xs font-bold text-[#5F3041] font-serif pt-1"
-                      style={{ fontFamily: 'var(--font-playfair)' }}
-                    >
-                      {post.price}
-                    </div>
+
                   </div>
+                )
+              })}
+            </div>
 
+            {/* Premium Christie's Style Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-4 pt-6 border-t border-gray-100 select-none">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-9 h-9 rounded-full border border-[#5F3041]/10 flex items-center justify-center text-gray-500 hover:text-[#5F3041] hover:border-[#5F3041]/30 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer bg-white"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+
+                <div className="flex items-center gap-1.5 font-sans">
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1
+                    const isActive = pageNum === currentPage
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-9 h-9 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+                          isActive
+                            ? 'bg-[#5F3041] text-white border-[#5F3041] shadow-sm'
+                            : 'bg-white text-gray-600 border-gray-150 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  })}
                 </div>
-              )
-            })}
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="w-9 h-9 rounded-full border border-[#5F3041]/10 flex items-center justify-center text-gray-500 hover:text-[#5F3041] hover:border-[#5F3041]/30 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer bg-white"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
