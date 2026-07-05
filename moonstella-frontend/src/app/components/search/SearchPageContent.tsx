@@ -107,9 +107,17 @@ export default function SearchPageContent({
         }))
         setPosts(formatted)
 
+
+        const relevantRawPosts = response.data.filter((p: any) => {
+          const isSellerPost = p.userId?.role === 'seller'
+          if (role === 'buyer') return isSellerPost
+          if (role === 'seller') return !isSellerPost
+          return true
+        })
+
         // 1. Compile Unique Categories used in posts
         const uniqueCategories = Array.from(
-          new Set(response.data.map((p: any) => p.category).filter(Boolean))
+          new Set(relevantRawPosts.map((p: any) => p.category).filter(Boolean))
         ) as string[]
         setDynamicCategories(uniqueCategories)
 
@@ -117,7 +125,7 @@ export default function SearchPageContent({
         const gemstoneKeywords = ['Diamond', 'Sapphire', 'Emerald', 'Ruby', 'Pearl', 'Opal', 'Ruby', 'Topaz', 'Jade']
         const uniqueGemstones = Array.from(
           new Set(
-            response.data
+            relevantRawPosts
               .flatMap((p: any) => p.materials || [])
               .map((m: string) => gemstoneKeywords.find(k => m.toLowerCase().includes(k.toLowerCase())))
               .filter(Boolean)
@@ -129,7 +137,7 @@ export default function SearchPageContent({
         const materialKeywords = ['Rose Gold', 'Yellow Gold', 'Platinum', 'White Gold', 'Silver']
         const uniqueMaterials = Array.from(
           new Set(
-            response.data
+            relevantRawPosts
               .flatMap((p: any) => p.materials || [])
               .map((m: string) => materialKeywords.find(k => m.toLowerCase().includes(k.toLowerCase())))
               .filter(Boolean)
@@ -220,6 +228,11 @@ export default function SearchPageContent({
 
   // Filter application
   const filteredPosts = posts.filter((post) => {
+    // Cross-role filtering: Buyers only search Sellers, Sellers only search Buyers
+    const isSellerPost = post.artisanTitle === 'MASTER ARTISAN'
+    if (role === 'buyer' && !isSellerPost) return false
+    if (role === 'seller' && isSellerPost) return false
+
     // Text search query
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -286,11 +299,11 @@ export default function SearchPageContent({
 
   return (
     <div className="flex-1 w-full ml-0 mr-auto xl:pl-4 pl-8 pr-12 py-8 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-10 select-none max-w-[1440px]">
-      
+
       {/* Refine By Sidebar Panel */}
       <aside className="w-full flex flex-col">
         <div className="bg-white border border-[#5F3041]/10 p-6 rounded-3xl sticky top-20 flex flex-col gap-7 shadow-[0_4px_20px_rgba(61,12,31,0.01)]">
-          
+
           <div className="flex justify-between items-center border-b border-gray-100 pb-3">
             <h3
               className="text-lg font-bold text-gray-805 font-serif leading-none"
@@ -381,15 +394,15 @@ export default function SearchPageContent({
             <div className="flex gap-2 items-center">
               <input
                 type="number"
-                placeholder="Min ($)"
+                placeholder="Min (Rs.)"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 placeholder-gray-450 focus:outline-none focus:bg-white focus:border-[#5F3041]/35 font-sans"
               />
-              <span className="text-gray-450 text-xs flex-shrink-0">—</span>
+              <span className="text-gray-455 text-xs flex-shrink-0">—</span>
               <input
                 type="number"
-                placeholder="Max ($)"
+                placeholder="Max (Rs.)"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 placeholder-gray-455 focus:outline-none focus:bg-white focus:border-[#5F3041]/35 font-sans"
@@ -412,11 +425,10 @@ export default function SearchPageContent({
                     <button
                       key={mat}
                       onClick={() => setSelectedMaterial(isActive ? null : mat)}
-                      className={`text-[8px] font-bold tracking-widest px-3 py-1.5 rounded-full uppercase border transition-all duration-300 cursor-pointer flex-shrink-0 ${
-                        isActive
+                      className={`text-[8px] font-bold tracking-widest px-3 py-1.5 rounded-full uppercase border transition-all duration-300 cursor-pointer flex-shrink-0 ${isActive
                           ? 'bg-[#5F3041] text-white border-[#5F3041]'
                           : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      }`}
+                        }`}
                       style={{ fontFamily: 'var(--font-montserrat)' }}
                     >
                       {mat}
@@ -432,10 +444,10 @@ export default function SearchPageContent({
 
       {/* Main Results Grid Container */}
       <main className="w-full flex flex-col gap-6">
-        
+
         {/* Top toolbar */}
         <div className="flex justify-between items-center border-b border-gray-100 pb-3 flex-wrap gap-4">
-          <span 
+          <span
             className="text-xs text-gray-400 font-medium tracking-wide font-sans"
           >
             Showing {filteredPosts.length} curated result{filteredPosts.length !== 1 ? 's' : ''}
@@ -492,7 +504,7 @@ export default function SearchPageContent({
                           src={post.image}
                           alt={derivedTitle}
                           fill
-                          className="object-contain group-hover:scale-103 transition-transform duration-500"
+                          className="object-cover group-hover:scale-103 transition-transform duration-500"
                         />
                       </div>
                     ) : (
@@ -553,11 +565,10 @@ export default function SearchPageContent({
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-9 h-9 rounded-full text-xs font-bold transition-all border cursor-pointer ${
-                          isActive
+                        className={`w-9 h-9 rounded-full text-xs font-bold transition-all border cursor-pointer ${isActive
                             ? 'bg-[#5F3041] text-white border-[#5F3041] shadow-sm'
                             : 'bg-white text-gray-600 border-gray-150 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>
