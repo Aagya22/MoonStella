@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api/axios'
 import { nepalLocations, districts } from '@/lib/nepal-locations/location'
+import { MapPin, CreditCard, Banknote, Smartphone, Check, ArrowRight, ArrowLeft } from 'lucide-react'
 
 interface BespokeOrderModalProps {
   isOpen: boolean
@@ -156,26 +157,30 @@ export default function BespokeOrderModal({
     }
   }
 
-  const paymentMethods: { type: PaymentMethodType; name: string; desc: string }[] = [
+  const paymentMethods = [
     {
-      type: 'Cash on Delivery',
+      type: 'Cash on Delivery' as PaymentMethodType,
       name: 'Cash on Delivery',
       desc: 'Pay with cash upon delivery',
+      icon: Banknote,
     },
     {
-      type: 'eSewa',
+      type: 'eSewa' as PaymentMethodType,
       name: 'eSewa Wallet',
       desc: 'Instant digital wallet payout',
+      icon: Smartphone,
     },
     {
-      type: 'Khalti',
+      type: 'Khalti' as PaymentMethodType,
       name: 'Khalti Wallet',
       desc: 'Pay with Khalti secure gateway',
+      icon: Smartphone,
     },
     {
-      type: 'Card Payment',
+      type: 'Card Payment' as PaymentMethodType,
       name: 'Card Payment',
       desc: 'Visa, MasterCard or UnionPay',
+      icon: CreditCard,
     },
   ]
 
@@ -236,7 +241,8 @@ export default function BespokeOrderModal({
 
             {/* Delivery address details */}
             <div className="flex flex-col gap-4">
-              <h3 className="text-[10px] font-extrabold text-[#5F3041] uppercase tracking-wider font-sans border-b border-gray-50 pb-1">
+              <h3 className="text-[10px] font-extrabold text-[#5F3041] uppercase tracking-wider font-sans border-b border-gray-50 pb-1.5 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#5F3041]" />
                 Shipping Address Details
               </h3>
 
@@ -334,22 +340,25 @@ export default function BespokeOrderModal({
 
             {/* Payment Method Cards */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-[10px] font-extrabold text-[#5F3041] uppercase tracking-wider font-sans border-b border-gray-50 pb-1">
+              <h3 className="text-[10px] font-extrabold text-[#5F3041] uppercase tracking-wider font-sans border-b border-gray-50 pb-1.5 flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-[#5F3041]" />
                 Select Payment Option
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
                 {paymentMethods.map((pm) => {
                   const isSelected = paymentOption === pm.type
+                  const IconComp = pm.icon
                   return (
                     <div
                       key={pm.type}
                       onClick={() => setPaymentOption(pm.type)}
-                      className={`p-4 rounded-2xl border cursor-pointer flex gap-2 items-center transition-all duration-200 ${
+                      className={`p-3.5 rounded-2xl border cursor-pointer flex gap-3.5 items-center transition-all duration-200 ${
                         isSelected
                           ? 'border-[#5F3041] bg-[#FAF0F3]/30 shadow-xs'
                           : 'border-gray-200 hover:border-[#5F3041]/30 bg-white'
                       }`}
                     >
+                      <IconComp className={`w-5 h-5 shrink-0 ${isSelected ? 'text-[#5F3041]' : 'text-gray-400'}`} />
                       <div className="flex flex-col text-left">
                         <span className="text-xs font-bold text-gray-800 font-sans tracking-wide">
                           {pm.name}
@@ -375,9 +384,10 @@ export default function BespokeOrderModal({
               </button>
               <button
                 type="submit"
-                className="px-8 py-3 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer border-none font-sans transition-all active:scale-97 shadow-md"
+                className="px-8 py-3 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer border-none font-sans transition-all active:scale-97 shadow-md flex items-center gap-1.5"
               >
                 Next
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -445,16 +455,18 @@ export default function BespokeOrderModal({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-6 py-3 border border-gray-200 text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer hover:bg-gray-50 text-gray-500 font-sans bg-transparent"
+                className="px-6 py-3 border border-gray-200 text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer hover:bg-gray-50 text-gray-500 font-sans bg-transparent flex items-center gap-1.5"
               >
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Go Back
               </button>
               <button
                 type="button"
                 onClick={handleSubmitOrder}
                 disabled={submitting}
-                className="px-8 py-3 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none font-sans transition-all active:scale-97 shadow-md"
+                className="px-8 py-3 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-none font-sans transition-all active:scale-97 shadow-md flex items-center gap-1.5"
               >
+                <Check className="w-3.5 h-3.5" />
                 {submitting ? 'Placing Order...' : 'Confirm Order'}
               </button>
             </div>
