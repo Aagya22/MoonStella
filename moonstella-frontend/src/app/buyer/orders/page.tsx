@@ -2,9 +2,21 @@
 
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import api from '@/lib/api/axios'
 import { useBuyerContext } from '../BuyerContext'
+import { 
+  Package, 
+  MapPin, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle, 
+  ArrowLeft,
+  FileText,
+  Activity,
+  History,
+  Wallet
+} from 'lucide-react'
 
 interface TimelineEvent {
   stage: string
@@ -35,21 +47,48 @@ interface Order {
   updatedAt: string
 }
 
+// All ordered crafting stages used to compute progress
+const ORDERED_STAGES = [
+  'Order Brief Submitted',
+  'Design & Blueprint Approved',
+  'Concept & Blueprinting',
+  'Material Selection & Sourcing',
+  'Handcrafting & Assembly',
+  'Polishing & Quality Inspection',
+  'Ready for Dispatch',
+  'Dispatched & On the Way',
+  'Delivered',
+]
+
+function getProgressPercent(order: Order): number {
+  if (order.status === 'completed') return 100
+  if (order.status === 'cancelled') return 0
+
+  const latestStage = order.currentStage || order.timeline?.[order.timeline.length - 1]?.stage || ''
+  const idx = ORDERED_STAGES.findIndex(s => s.toLowerCase() === latestStage.toLowerCase())
+  if (idx < 0) return 5
+  return Math.round(((idx + 1) / ORDERED_STAGES.length) * 100)
+}
+
+function getProgressLabel(order: Order): string {
+  if (order.status === 'completed') return 'Delivered'
+  if (order.status === 'cancelled') return 'Cancelled'
+  return order.currentStage || 'Initialising'
+}
+
 export default function BuyerOrdersPage() {
   const { user } = useBuyerContext()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
+  const [listTab, setListTab] = useState<'active' | 'history'>('active')
 
   const loadOrders = async () => {
     try {
       const res = await api.get('/api/orders/buyer')
       if (res.data && res.data.success) {
         setOrders(res.data.data)
-        if (res.data.data.length > 0 && !selectedOrderId) {
-          setSelectedOrderId(res.data.data[0]._id)
-        }
       }
     } catch (err) {
       console.error('Failed to load buyer orders:', err)
@@ -59,324 +98,429 @@ export default function BuyerOrdersPage() {
   }
 
   useEffect(() => {
-    if (user) {
-      loadOrders()
-    }
+    if (user) loadOrders()
   }, [user])
 
   const selectedOrder = orders.find((o) => o._id === selectedOrderId)
 
   const handleCancelOrder = async (orderId: string) => {
-    const confirmed = window.confirm('Are you sure you want to cancel this bespoke commission order?')
-    if (!confirmed) return
-
+    if (!window.confirm('Are you sure you want to cancel this order?')) return
     try {
       const res = await api.patch(`/api/orders/${orderId}/cancel`)
-      if (res.data && res.data.success) {
-        alert('Order cancelled successfully.')
-        loadOrders()
-      }
+      if (res.data?.success) { alert('Order cancelled.'); loadOrders() }
     } catch (err: any) {
-      console.error('Failed to cancel order:', err)
       alert(err.response?.data?.message || 'Failed to cancel order')
     }
   }
 
   const handleConfirmReceipt = async (orderId: string, received: boolean) => {
+    const msg = received
+      ? 'Confirming receipt will mark this order as complete. Continue?'
+      : 'Confirming you did not receive it will notify the artisan. Continue?'
+    if (!window.confirm(msg)) return
     try {
-      const msg = received
-        ? 'Confirming receipt will mark this order as complete. Continue?'
-        : 'Confirming you did not receive it will notify the artisan. Continue?'
-      if (!window.confirm(msg)) return
-
       const res = await api.patch(`/api/orders/${orderId}/confirm-receipt`, { received })
-      if (res.data && res.data.success) {
-        if (received) {
-          alert('Receipt confirmed! Order marked as complete.')
-        } else {
-          alert('Delivery issue reported to the artisan.')
-        }
+      if (res.data?.success) {
+        alert(received ? 'Receipt confirmed! Order complete.' : 'Delivery issue reported.')
         loadOrders()
       }
     } catch (err: any) {
-      console.error('Failed to confirm receipt:', err)
-      alert(err.response?.data?.message || 'Failed to update order status')
+      alert(err.response?.data?.message || 'Failed to update status')
     }
   }
 
   const getStatusPill = (status: string) => {
-    let styles = 'bg-amber-50 text-amber-700 border-amber-200/60'
-    if (status === 'crafting') styles = 'bg-indigo-50 text-indigo-700 border-indigo-200/60'
-    if (status === 'completed') styles = 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-    if (status === 'accepted') styles = 'bg-blue-50 text-blue-700 border-blue-200/60'
-    if (status === 'cancelled') styles = 'bg-rose-50 text-rose-700 border-rose-200/60'
+    const map: Record<string, { cls: string; Icon: React.ElementType }> = {
+      pending:   { cls: 'bg-amber-50 text-amber-800 border-amber-200/50',    Icon: Clock },
+      accepted:  { cls: 'bg-sky-50 text-sky-800 border-sky-200/50',          Icon: Package },
+      crafting:  { cls: 'bg-[#FAF0F3] text-[#5F3041] border-[#5F3041]/15',   Icon: Clock },
+      shipped:   { cls: 'bg-violet-50 text-violet-800 border-violet-200/50', Icon: Package },
+      completed: { cls: 'bg-emerald-50 text-emerald-800 border-emerald-200/50', Icon: CheckCircle2 },
+      cancelled: { cls: 'bg-rose-50 text-rose-800 border-rose-200/50',       Icon: XCircle },
+    }
+    const { cls, Icon } = map[status] ?? map.pending
     return (
-      <span className={`text-[9px] font-extrabold tracking-widest uppercase border px-3 py-1 rounded-full ${styles}`}>
+      <span className={`text-[9px] font-bold tracking-wider uppercase border px-2.5 py-1 rounded-full flex items-center gap-1 font-sans select-none shrink-0 ${cls}`}>
+        <Icon className="w-2.5 h-2.5" />
         {status}
       </span>
     )
   }
 
+  const activeOrders  = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled')
+  const historyOrders = orders.filter(o => o.status === 'completed' || o.status === 'cancelled')
+  const totalInvestment = orders
+    .filter(o => o.status !== 'cancelled')
+    .reduce((sum, o) => sum + o.budget, 0)
+
   if (loading) {
     return (
-      <div className="flex-1 min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs text-gray-500 font-sans uppercase tracking-widest">
-        Loading Bespoke Tracker...
+      <div className="flex-1 min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs text-[#5F3041]/70 font-sans uppercase tracking-widest">
+        Loading Orders...
       </div>
     )
   }
 
-  return (
-    <div className="flex-1 w-full ml-0 mr-auto xl:pl-4 pl-8 pr-12 py-8 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-10 select-none max-w-[1440px]">
-      
-      {/* Sidebar List of Orders */}
-      <aside className="w-full flex flex-col gap-5">
-        <div className="bg-white border border-[#5F3041]/10 p-6 rounded-3xl flex flex-col gap-6 shadow-[0_4px_20px_rgba(61,12,31,0.01)] min-h-[500px]">
-          <h3 className="text-lg font-bold text-gray-805 font-serif border-b border-gray-100 pb-3" style={{ fontFamily: 'var(--font-playfair)' }}>
-            My Orders
-          </h3>
+  /* ─────────────── ORDER DETAIL VIEW ─────────────── */
+  if (selectedOrder) {
+    const pct = getProgressPercent(selectedOrder)
+    return (
+      <div className="flex-1 w-full mx-auto px-6 sm:px-14 py-10 max-w-5xl select-none">
+        <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-12 rounded-[2.5rem] flex flex-col gap-8 shadow-[0_20px_60px_rgba(61,12,31,0.04)] text-left">
 
-          <div className="flex flex-col gap-3 overflow-y-auto max-h-[600px] pr-1">
-            {orders.length === 0 ? (
-              <div className="text-center py-12 flex flex-col items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/40 border border-[#5F3041]/5">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  </svg>
-                </div>
-                <p className="text-[10px] text-gray-400 font-sans leading-relaxed max-w-[200px]">
-                  No active orders. Navigate to Messages to initiate a bespoke commission with an artisan.
-                </p>
+          {/* Back */}
+          <button onClick={() => setSelectedOrderId(null)}
+            className="self-start text-[9px] font-bold uppercase tracking-widest text-gray-400 hover:text-[#5F3041] transition-colors flex items-center gap-1 border-none bg-transparent cursor-pointer">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Orders
+          </button>
+
+          {/* Header row */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start border-b border-gray-100 pb-8 gap-6">
+            <div className="flex flex-col gap-3 flex-1">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl font-bold text-gray-900 tracking-wide font-serif" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  {selectedOrder.title}
+                </h2>
+                {getStatusPill(selectedOrder.status)}
               </div>
-            ) : (
-              orders.map((o) => {
-                const isActive = o._id === selectedOrderId
-                return (
-                  <div
-                    key={o._id}
-                    onClick={() => setSelectedOrderId(o._id)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 text-left flex flex-col gap-2 ${
-                      isActive
-                        ? 'border-[#5F3041] bg-[#FAF0F3]/30 shadow-xs'
-                        : 'border-[#5F3041]/10 bg-white hover:border-[#5F3041]/30'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start gap-2">
-                      <h4 className="text-xs font-bold text-gray-800 tracking-wide line-clamp-1 font-sans">
-                        {o.title}
-                      </h4>
-                      <span className="text-[10px] font-bold text-[#5F3041] font-serif shrink-0">
-                        Rs. {o.budget.toLocaleString()}
-                      </span>
-                    </div>
 
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-[9px] text-gray-450 font-bold uppercase tracking-wider font-sans">
-                        {o.sellerId.firstName} {o.sellerId.lastName}
-                      </span>
-                      {getStatusPill(o.status)}
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </div>
-      </aside>
-
-      {/* Detailed Order view */}
-      <main className="w-full">
-        {selectedOrder ? (
-          <div className="bg-white border border-[#5F3041]/10 p-8 rounded-3xl flex flex-col gap-8 shadow-[0_4px_20px_rgba(61,12,31,0.01)] text-left min-h-[500px]">
-            
-            {/* Header info */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-start border-b border-gray-100 pb-6 gap-6">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-gray-850 font-serif" style={{ fontFamily: 'var(--font-playfair)' }}>
-                    {selectedOrder.title}
-                  </h2>
-                  {getStatusPill(selectedOrder.status)}
-                </div>
-                <p className="text-xs text-gray-500 max-w-2xl leading-relaxed">
+              <div className="flex gap-2 bg-[#FAF8F5] border border-gray-100 p-4 rounded-2xl max-w-2xl">
+                <FileText className="w-4 h-4 text-[#5F3041]/40 shrink-0 mt-0.5" />
+                <p className="text-xs text-gray-600 leading-relaxed font-sans font-medium whitespace-pre-line">
                   {selectedOrder.description}
                 </p>
               </div>
 
-              <div className="flex flex-col md:items-end gap-1.5 shrink-0 bg-[#FAF8F5]/50 border border-gray-100 p-4 rounded-2xl min-w-[200px]">
-                <span className="text-[9px] font-extrabold text-gray-450 tracking-wider font-sans uppercase">
-                  Agreed Commission Price
-                </span>
-                <span className="text-lg font-bold text-[#5F3041] font-serif">
-                  Rs. {selectedOrder.budget.toLocaleString()}
-                </span>
-                {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
-                  <button
-                    onClick={() => handleCancelOrder(selectedOrder._id)}
-                    className="text-[9px] font-bold text-rose-600 hover:text-rose-800 hover:underline border-none bg-transparent cursor-pointer font-sans tracking-wider uppercase mt-2"
-                  >
-                    Cancel Order
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Seller profile plaque */}
-            <div className="flex items-center gap-4 bg-[#FAF0F3]/10 border border-[#5F3041]/5 p-5 rounded-2xl">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
-                <Image
-                  src={selectedOrder.sellerId.avatar || '/buyersignup.png'}
-                  alt={selectedOrder.sellerId.firstName}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-xs font-bold text-gray-800 tracking-wide uppercase font-sans">
-                  Artisan: {selectedOrder.sellerId.firstName} {selectedOrder.sellerId.lastName}
-                </h4>
-                <p className="text-[10px] text-gray-450 italic mt-0.5 line-clamp-1 font-sans">
-                  {selectedOrder.sellerId.bio || 'Master Jeweler & Craftsperson'}
-                </p>
-                <p className="text-[9px] text-[#5F3041] font-extrabold uppercase tracking-widest mt-1 font-sans">
-                  Location: {selectedOrder.sellerId.location || 'Kathmandu, Nepal'}
-                </p>
-              </div>
-            </div>
-
-            {/* Delivery Receipt Confirmation Banner */}
-            {(selectedOrder.currentStage === 'Dispatched & On the Way' || selectedOrder.currentStage === 'Delivery Issue Reported') && 
-             selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
-              <div className="bg-[#FAF8F5] border border-[#5F3041]/10 p-6 rounded-2xl flex flex-col gap-4 text-left shadow-xs">
-                <div className="flex flex-col gap-1">
-                  <h4 className="text-xs font-bold text-gray-800 font-sans tracking-wide uppercase">
-                    Have you received your bespoke product?
-                  </h4>
-                  <p className="text-[10px] text-gray-450 leading-relaxed font-sans">
-                    The artisan has dispatched your custom commission jewelry item. Please confirm whether it has successfully arrived at your delivery address.
-                  </p>
+              {/* Full progress bar in detail view */}
+              <div className="flex flex-col gap-1.5 mt-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">
+                    Crafting Progress
+                  </span>
+                  <span className="text-[9px] font-bold text-[#5F3041] font-sans uppercase tracking-wider">
+                    {pct}% — {getProgressLabel(selectedOrder)}
+                  </span>
                 </div>
-                
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleConfirmReceipt(selectedOrder._id, true)}
-                    className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white px-4 py-2.5 rounded-xl text-[10px] font-bold tracking-widest uppercase cursor-pointer transition-all border-none"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    Yes, I got the product
-                  </button>
-                  <button
-                    onClick={() => handleConfirmReceipt(selectedOrder._id, false)}
-                    className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-500 px-4 py-2.5 rounded-xl text-[10px] font-bold tracking-widest uppercase cursor-pointer transition-all"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    No, I did not
-                  </button>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      selectedOrder.status === 'completed'
+                        ? 'bg-emerald-500'
+                        : selectedOrder.status === 'cancelled'
+                        ? 'bg-rose-400'
+                        : 'bg-gradient-to-r from-[#5F3041] to-[#C5A880]'
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </div>
-            )}
-
-            {/* Interactive Timeline Progress */}
-            <div className="flex flex-col gap-6 pt-2">
-              <h3 className="text-sm font-extrabold text-gray-450 tracking-widest uppercase font-sans border-b border-gray-50 pb-2">
-                Live Workbench Progress Tracker
-              </h3>
-
-              <div className="relative pl-6 border-l-2 border-[#5F3041]/10 flex flex-col gap-8 ml-3 py-2 text-left">
-                {selectedOrder.timeline.map((event, idx) => {
-                  const isLatest = idx === selectedOrder.timeline.length - 1
-                  return (
-                    <div key={idx} className="relative">
-                      {/* Timeline Dot Indicator */}
-                      <span
-                        className={`absolute -left-[31px] top-1.5 w-4.5 h-4.5 rounded-full border-3 flex items-center justify-center shadow-xs transition-all ${
-                          isLatest
-                            ? 'bg-[#5F3041] border-white ring-4 ring-[#5F3041]/15 scale-110'
-                            : 'bg-white border-[#5F3041]/30'
-                        }`}
-                      >
-                        {isLatest && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
-                      </span>
-
-                      {/* Content Card */}
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-3">
-                          <h4 className={`text-xs font-bold font-sans tracking-wide uppercase ${isLatest ? 'text-[#5F3041]' : 'text-gray-700'}`}>
-                            {event.stage}
-                          </h4>
-                          <span className="text-[9px] font-semibold text-gray-400 font-sans">
-                            {new Date(event.createdAt).toLocaleDateString()} {new Date(event.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-gray-500 leading-relaxed max-w-xl font-sans mt-0.5">
-                          {event.note}
-                        </p>
-
-                        {/* Progress picture */}
-                        {event.image && (
-                          <div
-                            onClick={() => setActiveLightboxImage(event.image || null)}
-                            className="relative w-36 aspect-square rounded-2xl overflow-hidden border border-[#5F3041]/10 bg-[#FAF8F5] mt-2 cursor-zoom-in hover:border-[#5F3041]/30 hover:shadow-sm transition-all duration-300 group"
-                          >
-                            <Image
-                              src={event.image}
-                              alt={event.stage}
-                              fill
-                              className="object-cover group-hover:scale-103 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="M21 21l-4.35-4.35" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
             </div>
 
+            {/* Price plaque */}
+            <div className="flex flex-col md:items-end gap-1 shrink-0 bg-gradient-to-br from-[#FAF8F5] to-white border border-[#E9D7C3]/60 p-6 rounded-2xl min-w-[210px] shadow-sm">
+              <span className="text-[9px] font-extrabold text-gray-400 tracking-widest font-sans uppercase">
+                Order Value
+              </span>
+              <span className="text-2xl font-bold text-[#5F3041] font-serif">
+                Rs. {selectedOrder.budget.toLocaleString()}
+              </span>
+              {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
+                <button onClick={() => handleCancelOrder(selectedOrder._id)}
+                  className="text-[9px] font-bold text-rose-600 hover:text-rose-800 tracking-widest uppercase border-none bg-transparent cursor-pointer font-sans mt-4 hover:underline">
+                  Cancel Order
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="bg-white border border-[#5F3041]/10 p-8 rounded-3xl flex flex-col items-center justify-center text-center shadow-[0_4px_20px_rgba(61,12,31,0.01)] min-h-[500px]">
-            <div className="w-16 h-16 rounded-full bg-[#FAF8F5] border border-[#5F3041]/10 flex items-center justify-center text-[#5F3041]/30 mb-3 shadow-sm">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              </svg>
+
+          {/* Seller plaque */}
+          <div className="flex items-center gap-4 bg-gradient-to-r from-[#FAF8F5] via-white to-transparent border border-[#5F3041]/5 p-5 rounded-2xl">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
+              <Image src={selectedOrder.sellerId.avatar || '/buyersignup.png'} alt={selectedOrder.sellerId.firstName} fill className="object-cover" />
             </div>
-            <h3 className="text-sm font-bold text-gray-800" style={{ fontFamily: 'var(--font-montserrat)' }}>No Active Workspace Selection</h3>
-            <p className="text-xs text-gray-400 mt-1 max-w-xs leading-relaxed font-sans">
-              Choose an order from the list panel to monitor live bench crafting progress updates and artisan status.
-            </p>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-[11px] font-extrabold text-gray-800 tracking-wider uppercase font-sans">
+                Artisan: {selectedOrder.sellerId.firstName} {selectedOrder.sellerId.lastName}
+              </h4>
+              <p className="text-[10px] text-gray-400 italic mt-0.5 font-sans line-clamp-1">
+                {selectedOrder.sellerId.bio || 'Master Jeweler & Craftsperson'}
+              </p>
+              <div className="flex items-center gap-1 mt-1 text-[9px] text-[#5F3041] font-extrabold uppercase tracking-widest font-sans">
+                <MapPin className="w-3 h-3" />
+                {selectedOrder.sellerId.location || 'Kathmandu, Nepal'}
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery receipt confirmation */}
+          {(selectedOrder.currentStage === 'Dispatched & On the Way' || selectedOrder.currentStage === 'Delivery Issue Reported') &&
+            selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
+            <div className="bg-[#FAF0F3]/40 border border-[#5F3041]/15 p-6 rounded-2xl flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wide flex items-center gap-1.5 font-sans">
+                  <AlertCircle className="w-4 h-4 text-[#5F3041]" />
+                  Have you received your order?
+                </h4>
+                <p className="text-[10px] text-gray-400 leading-relaxed font-sans">
+                  The artisan has dispatched your order. Please confirm delivery below.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => handleConfirmReceipt(selectedOrder._id, true)}
+                  className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white px-5 py-2.5 rounded-xl text-[10px] font-bold tracking-widest uppercase cursor-pointer transition-all border-none shadow-xs"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  Yes, I received it
+                </button>
+                <button onClick={() => handleConfirmReceipt(selectedOrder._id, false)}
+                  className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-500 px-5 py-2.5 rounded-xl text-[10px] font-bold tracking-widest uppercase cursor-pointer transition-all"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  No, I did not
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div className="flex flex-col gap-5">
+            <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase font-sans border-b border-gray-100 pb-2.5">
+              Workbench Progress Timeline
+            </h3>
+            <div className="relative pl-7 border-l-2 border-dashed border-[#5F3041]/15 flex flex-col gap-6 ml-3 py-1">
+              {selectedOrder.timeline.map((event, idx) => {
+                const isLatest = idx === selectedOrder.timeline.length - 1
+                return (
+                  <div key={idx} className="relative">
+                    <span className={`absolute -left-[37px] top-2 rounded-full border-2 flex items-center justify-center transition-all ${
+                      isLatest
+                        ? 'w-4 h-4 bg-[#5F3041] border-white ring-4 ring-[#5F3041]/15'
+                        : 'w-3 h-3 -left-[35px] bg-white border-[#C5A880]'
+                    }`}>
+                      {isLatest && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
+                    </span>
+                    <div className="bg-[#FAF8F5]/30 hover:bg-[#FAF8F5]/65 border border-[#5F3041]/5 rounded-2xl p-5 transition-all duration-300 hover:shadow-xs flex flex-col gap-2">
+                      <div className="flex justify-between items-start gap-4 flex-wrap">
+                        <h4 className={`text-xs font-bold font-sans tracking-wider uppercase ${isLatest ? 'text-[#5F3041]' : 'text-gray-700'}`}>
+                          {event.stage}
+                        </h4>
+                        <span className="text-[9px] font-semibold text-gray-400 font-sans uppercase tracking-wider">
+                          {new Date(event.createdAt).toLocaleDateString()} {new Date(event.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 leading-relaxed font-sans font-medium">{event.note}</p>
+                      {event.image && (
+                        <div onClick={() => setActiveLightboxImage(event.image || null)}
+                          className="relative w-32 aspect-square rounded-2xl overflow-hidden border border-[#5F3041]/10 mt-2 cursor-zoom-in group">
+                          <Image src={event.image} alt={event.stage} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Lightbox */}
+        {activeLightboxImage && (
+          <div onClick={() => setActiveLightboxImage(null)}
+            className="fixed inset-0 z-[250] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out select-none">
+            <div className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center">
+              <Image src={activeLightboxImage} alt="Fullscreen View" fill className="object-contain" />
+            </div>
+            <button onClick={() => setActiveLightboxImage(null)}
+              className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full border-none bg-transparent cursor-pointer">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
         )}
-      </main>
+      </div>
+    )
+  }
 
-      {/* Lightbox Progress Photo Overlay */}
-      {activeLightboxImage && (
-        <div
-          onClick={() => setActiveLightboxImage(null)}
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out select-none animate-fade-in"
-        >
-          <div className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center">
-            <Image src={activeLightboxImage} alt="Fullscreen View" fill className="object-contain" />
+  /* ─────────────── DASHBOARD / LIST VIEW ─────────────── */
+  const displayedOrders = listTab === 'active' ? activeOrders : historyOrders
+
+  return (
+    <div className="flex-1 w-full mx-auto px-6 sm:px-14 py-10 max-w-5xl select-none">
+      <div className="flex flex-col gap-8">
+
+        {/* Page header */}
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-gray-900 font-serif tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
+            My Orders
+          </h1>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-sans font-bold">
+            Bespoke jewelry order tracker
+          </p>
+        </div>
+
+        {/* 3-column stat cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {/* Active */}
+          <div className="bg-white border border-[#5F3041]/10 p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(61,12,31,0.02)] flex items-center justify-between">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Active Orders</span>
+              <span className="text-3xl font-bold text-[#5F3041] font-serif">{activeOrders.length}</span>
+              <span className="text-[9px] text-gray-400 font-sans">In progress or dispatched</span>
+            </div>
+            <Activity className="w-9 h-9 text-[#5F3041]/10" />
           </div>
-          <button
-            onClick={() => setActiveLightboxImage(null)}
-            className="absolute top-6 right-6 text-[#E9D7C3] hover:text-white cursor-pointer p-3.5 hover:bg-white/10 rounded-full transition-all border-none bg-transparent flex items-center justify-center"
-            title="Close Overlay"
-          >
+
+          {/* Completed */}
+          <div className="bg-white border border-[#5F3041]/10 p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(61,12,31,0.02)] flex items-center justify-between">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Completed</span>
+              <span className="text-3xl font-bold text-emerald-700 font-serif">{orders.filter(o => o.status === 'completed').length}</span>
+              <span className="text-[9px] text-gray-400 font-sans">Delivered & verified</span>
+            </div>
+            <CheckCircle2 className="w-9 h-9 text-emerald-500/10" />
+          </div>
+
+          {/* Total Investment */}
+          <div className="bg-white border border-[#5F3041]/10 p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(61,12,31,0.02)] flex items-center justify-between">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Total Investment</span>
+              <span className="text-2xl font-bold text-gray-800 font-serif">Rs. {totalInvestment.toLocaleString()}</span>
+              <span className="text-[9px] text-gray-400 font-sans">Across all orders</span>
+            </div>
+            <Wallet className="w-9 h-9 text-gray-400/10" />
+          </div>
+        </div>
+
+        {/* Toggle tab */}
+        <div className="flex justify-center">
+          <div className="inline-flex gap-1.5 bg-[#FAF8F5] border border-gray-100 p-1.5 rounded-full shadow-inner">
+            <button
+              onClick={() => setListTab('active')}
+              className={`px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                listTab === 'active'
+                  ? 'bg-[#5F3041] text-[#E9D7C3] shadow-sm'
+                  : 'bg-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Ongoing ({activeOrders.length})
+            </button>
+            <button
+              onClick={() => setListTab('history')}
+              className={`px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                listTab === 'history'
+                  ? 'bg-[#5F3041] text-[#E9D7C3] shadow-sm'
+                  : 'bg-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              History ({historyOrders.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Orders list */}
+        <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-10 rounded-[2.5rem] flex flex-col gap-6 shadow-[0_15px_45px_rgba(61,12,31,0.02)]">
+          <h3 className="text-sm font-bold text-gray-800 tracking-wider uppercase font-sans border-b border-gray-100 pb-4">
+            {listTab === 'active' ? 'Ongoing Orders' : 'Order History'}
+          </h3>
+
+          {displayedOrders.length === 0 ? (
+            <div className="text-center py-16 flex flex-col items-center gap-3">
+              {listTab === 'active'
+                ? <Package className="w-9 h-9 text-[#5F3041]/20" />
+                : <History className="w-9 h-9 text-[#5F3041]/20" />
+              }
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest font-sans">
+                {listTab === 'active' ? 'No ongoing orders at the moment.' : 'No order history found.'}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {displayedOrders.map((o) => {
+                const pct = getProgressPercent(o)
+                const label = getProgressLabel(o)
+                return (
+                  <div
+                    key={o._id}
+                    onClick={() => setSelectedOrderId(o._id)}
+                    className="border border-[#5F3041]/8 hover:border-[#5F3041]/25 p-6 rounded-2xl cursor-pointer hover:shadow-md transition-all duration-300 bg-[#FAF8F5]/20 hover:bg-[#FAF8F5]/50 flex flex-col gap-4"
+                  >
+                    {/* Top row */}
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-gray-800 font-sans tracking-wide truncate">
+                          {o.title}
+                        </h4>
+                        <p className="text-[10px] text-gray-400 line-clamp-1 font-sans leading-relaxed">
+                          {o.description}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        {getStatusPill(o.status)}
+                        <span className="text-sm font-bold text-gray-800 font-serif">
+                          Rs. {o.budget.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Horizontal progress bar */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[8px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">
+                          {label}
+                        </span>
+                        <span className="text-[8px] font-bold text-gray-400 font-sans">
+                          {pct}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            o.status === 'completed'
+                              ? 'bg-emerald-500'
+                              : o.status === 'cancelled'
+                              ? 'bg-rose-400'
+                              : 'bg-gradient-to-r from-[#5F3041] to-[#C5A880]'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bottom artisan row */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                      <div className="relative w-6 h-6 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-[#FAF8F5]">
+                        <Image src={o.sellerId.avatar || '/buyersignup.png'} alt={o.sellerId.firstName} fill className="object-cover" />
+                      </div>
+                      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider font-sans">
+                        {o.sellerId.firstName} {o.sellerId.lastName}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Lightbox */}
+      {activeLightboxImage && (
+        <div onClick={() => setActiveLightboxImage(null)}
+          className="fixed inset-0 z-[250] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out select-none">
+          <div className="relative max-w-4xl max-h-[85vh] w-full h-full flex items-center justify-center">
+            <Image src={activeLightboxImage} alt="Fullscreen" fill className="object-contain" />
+          </div>
+          <button onClick={() => setActiveLightboxImage(null)}
+            className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full border-none bg-transparent cursor-pointer">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
       )}
-
     </div>
   )
 }
