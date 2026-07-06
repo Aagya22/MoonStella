@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.routes'
 import uploadRoutes from './routes/upload.routes'
 import postRoutes from './routes/post.routes'
 import chatRoutes from './routes/chat.routes'
+import orderRoutes from './routes/order.routes'
 
 const app = express()
 
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/chat', chatRoutes)
+app.use('/api/orders', orderRoutes)
 
 app.use(errorHandler)
 

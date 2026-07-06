@@ -106,7 +106,7 @@ export default function Sidebar({
                     <line x1="3" y1="10" x2="21" y2="10" /><line x1="8" y1="14" x2="16" y2="14" />
                   </svg>
                 ),
-                onClick: () => { setTimelineOpen(true); closeSidebar(); }
+                onClick: () => { router.push('/buyer/orders'); closeSidebar(); }
               },
               {
                 id: 'profile',
@@ -125,6 +125,7 @@ export default function Sidebar({
                 (item.id === 'discovery' && pathname === '/buyer/feed') ||
                 (item.id === 'messages' && pathname === '/buyer/messages') ||
                 (item.id === 'wishlist' && pathname === '/buyer/wishlist') ||
+                (item.id === 'myorder' && pathname === '/buyer/orders') ||
                 (item.id === 'profile' && pathname === '/buyer/profile' && !isVisitingProfile)
               return (
                 <button

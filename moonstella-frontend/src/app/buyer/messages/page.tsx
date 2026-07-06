@@ -89,6 +89,14 @@ export default function BuyerMessagesPage() {
   // Conversation Menu state
   const [conversationMenuOpen, setConversationMenuOpen] = useState(false)
   
+  // Order modal states
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [orderTitle, setOrderTitle] = useState('')
+  const [orderBudget, setOrderBudget] = useState('')
+  const [orderMaterials, setOrderMaterials] = useState('')
+  const [orderDescription, setOrderDescription] = useState('')
+  const [submittingOrder, setSubmittingOrder] = useState(false)
+  
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
 
@@ -425,6 +433,63 @@ export default function BuyerMessagesPage() {
     }
   }
 
+  // Prefill order modal when attachedPost changes or modal opens
+  useEffect(() => {
+    if (attachedPost) {
+      setOrderTitle(`Bespoke ${attachedPost.category || 'Commission'}`)
+      setOrderBudget(attachedPost.budget ? String(attachedPost.budget) : '')
+      setOrderDescription(attachedPost.description || '')
+    } else {
+      setOrderTitle('')
+      setOrderBudget('')
+      setOrderDescription('')
+    }
+  }, [attachedPost, showOrderModal])
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otherParticipant || !orderTitle.trim() || !orderBudget.trim() || !orderDescription.trim()) {
+      alert('Please fill out all required fields.')
+      return
+    }
+
+    setSubmittingOrder(true)
+    try {
+      const budgetNum = Number(orderBudget.replace(/,/g, ''))
+      const materialsString = orderMaterials.trim() ? `\n\nMaterials: ${orderMaterials.trim()}` : ''
+      const finalDesc = `${orderDescription.trim()}${materialsString}`
+
+      const res = await api.post('/api/orders', {
+        sellerId: otherParticipant._id,
+        postId: attachedPost?._id || undefined,
+        title: orderTitle.trim(),
+        description: finalDesc,
+        budget: budgetNum
+      })
+
+      if (res.data && res.data.success) {
+        setShowOrderModal(false)
+        setOrderTitle('')
+        setOrderBudget('')
+        setOrderMaterials('')
+        setOrderDescription('')
+        setAttachedPost(null)
+        alert('Bespoke commission order requested successfully!')
+        
+        // Reload thread messages
+        const messagesRes = await api.get(`/api/chat/threads/${activeThreadId}/messages`)
+        if (messagesRes.data && messagesRes.data.success) {
+          setMessages(messagesRes.data.data)
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to place bespoke order:', err)
+      alert(err.response?.data?.message || 'Failed to place bespoke order')
+    } finally {
+      setSubmittingOrder(false)
+    }
+  }
+
   // Send Message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -602,7 +667,7 @@ export default function BuyerMessagesPage() {
                   <button
                     type="button"
                     onClick={handleDeleteConversation}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-650 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-650 hover:bg-red-55 border-none bg-transparent cursor-pointer transition-colors"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     Delete Conversation
@@ -917,7 +982,6 @@ export default function BuyerMessagesPage() {
           </button>
         </div>
       )}
-
     </div>
   )
 }

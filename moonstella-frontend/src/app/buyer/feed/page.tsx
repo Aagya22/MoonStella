@@ -60,6 +60,7 @@ export default function BuyerFeedPage() {
             : 'Connoisseur Member',
           artisanTitle: p.userId?.role === 'seller' ? 'MASTER ARTISAN' : 'CONNOISSEUR MEMBER',
           avatar: p.userId?.avatar || null,
+          sellerLocation: p.userId?.location || null,
           image: p.images?.[0] || null,
           images: p.images || [],
           category: p.category,

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import BespokeOrderModal from '../orders/BespokeOrderModal'
 
 interface PostCardProps {
   post: any
@@ -40,6 +41,7 @@ export default function PostCard({
 }: PostCardProps) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [showOrderModal, setShowOrderModal] = useState(false)
 
   const imagesList = post.images || (post.image ? [post.image] : [])
   const isFollowing = user?.following?.some((id: any) => String(id) === String(post.userId)) || false
@@ -282,18 +284,7 @@ export default function PostCard({
             <div className="w-full md:w-36 shrink-0 flex flex-col pt-2 select-none">
               <button
                 onClick={() => {
-                  const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
-                  const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
-                  openChatWith(
-                    post.artisanName,
-                    post.userId,
-                    text,
-                    post.id || post._id,
-                    post.description,
-                    post.category,
-                    post.budget ? String(post.budget) : '',
-                    postImage
-                  )
+                  setShowOrderModal(true)
                 }}
                 className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all duration-300 border-none text-center shadow-[0_4px_12px_rgba(95,48,65,0.15)] hover:shadow-[0_6px_16px_rgba(95,48,65,0.25)] active:scale-95 transform hover:-translate-y-[1px]"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
@@ -387,6 +378,22 @@ export default function PostCard({
           </div>
         )}
       </div>
+
+      {/* Bespoke Order Modal Overlay */}
+      <BespokeOrderModal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        sellerId={post.userId}
+        sellerName={post.artisanName}
+        postId={post.id || post._id}
+        postCategory={post.category}
+        postBudget={post.budget}
+        postDescription={post.description}
+        postImage={post.images && post.images.length > 0 ? post.images[0] : (post.image || '')}
+        buyerLocation={user?.location || ''}
+        sellerLocation={post.sellerLocation || ''}
+        postPrice={post.price || post.budget}
+      />
     </article>
   )
 }

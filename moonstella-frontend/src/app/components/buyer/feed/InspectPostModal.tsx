@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import BespokeOrderModal from '../orders/BespokeOrderModal'
 
 interface InspectPostModalProps {
   selectedInspectPost: any
@@ -29,6 +30,7 @@ export default function InspectPostModal({
   const [isEditing, setIsEditing] = useState(false)
   const [editDesc, setEditDesc] = useState('')
   const [editBudget, setEditBudget] = useState('')
+  const [showOrderModal, setShowOrderModal] = useState(false)
 
   // Sync state with incoming post info
   useEffect(() => {
@@ -286,22 +288,45 @@ export default function InspectPostModal({
               )
             }
             return (
-              <div className="border-t border-gray-100 pt-5 mt-auto">
+              <div className="border-t border-gray-100 pt-5 mt-auto flex gap-3 w-full">
                 <button
                   onClick={() => {
                     openChatWith(selectedInspectPost.artisanName)
                     onClose()
                   }}
-                  className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-white text-[10px] font-bold tracking-widest py-3.5 rounded uppercase cursor-pointer transition-all text-center shadow border-none"
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                  className="flex-1 bg-[#FAF0F3] hover:bg-[#5F3041]/10 text-[#5F3041] text-[9.5px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all text-center border border-[#5F3041]/25 hover:border-[#5F3041]/35 font-sans"
                 >
-                  Inquire Custom Commission
+                  Inquire
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOrderModal(true)
+                  }}
+                  className="flex-1 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[9.5px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all text-center border-none shadow-sm active:scale-95 font-sans"
+                >
+                  Order Now
                 </button>
               </div>
             )
           })()}
         </div>
       </div>
+
+      {/* Bespoke Order Modal Overlay */}
+      <BespokeOrderModal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        sellerId={selectedInspectPost.userId}
+        sellerName={selectedInspectPost.artisanName}
+        postId={selectedInspectPost.id || selectedInspectPost._id}
+        postCategory={selectedInspectPost.category}
+        postBudget={selectedInspectPost.rawPrice || selectedInspectPost.budget}
+        postDescription={selectedInspectPost.description}
+        postImage={selectedInspectPost.images && selectedInspectPost.images.length > 0 ? selectedInspectPost.images[0] : (selectedInspectPost.image || '')}
+        buyerLocation={user?.location || ''}
+        sellerLocation={selectedInspectPost.sellerLocation || ''}
+        postPrice={selectedInspectPost.price || selectedInspectPost.budget || selectedInspectPost.rawPrice}
+      />
     </div>
   )
 }
