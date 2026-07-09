@@ -80,6 +80,7 @@ export default function BuyerFeedPage() {
             location: u.location || 'Nepal'
           })) || [],
           comments: p.comments || [],
+          reviewStats: p.reviewStats || { count: 0, average: 0 },
           time: new Date(p.createdAt).toLocaleDateString(),
           rawDate: p.createdAt,
         }))

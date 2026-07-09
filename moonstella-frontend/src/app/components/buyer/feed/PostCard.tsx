@@ -50,6 +50,20 @@ export default function PostCard({
   const isSaved = wishlist.includes(post.id)
   const savesCount = isSaved ? 1 : 0
 
+  const reviewStats = post.reviewStats || { count: 0, average: 0 }
+  const reviewSummary = reviewStats.count > 0 ? (
+    <button
+      onClick={() => { setSelectedInspectPost(post); setActiveInspectIndex(0) }}
+      className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[#C5A880] transition-colors cursor-pointer border-none bg-transparent"
+      style={{ fontFamily: 'var(--font-montserrat)' }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#C5A880" stroke="#C5A880" strokeWidth="1">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+      <span>{reviewStats.average} · {reviewStats.count} {reviewStats.count === 1 ? 'Review' : 'Reviews'}</span>
+    </button>
+  ) : null
+
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation()
     setCurrentIndex(prev => (prev === 0 ? imagesList.length - 1 : prev - 1))
@@ -243,6 +257,7 @@ export default function PostCard({
                   </svg>
                   <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
                 </button>
+                {reviewSummary}
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1">
@@ -361,6 +376,7 @@ export default function PostCard({
                   </svg>
                   <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
                 </button>
+                {reviewSummary}
               </div>
             )}
 

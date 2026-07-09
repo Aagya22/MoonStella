@@ -576,3 +576,26 @@ export const getOrderReview = async (req: Request, res: Response): Promise<void>
     serverError(res, err)
   }
 }
+
+// Get all public reviews for a post (via orders placed on that post)
+export const getPostReviews = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params
+
+    const orders = await Order.find({ postId: id }).select('_id')
+    const orderIds = orders.map((o) => o._id)
+
+    const reviews = await Review.find({ orderId: { $in: orderIds } })
+      .populate('buyerId', 'firstName lastName avatar')
+      .sort({ createdAt: -1 })
+
+    const count = reviews.length
+    const averageRating = count
+      ? Math.round((reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / count) * 10) / 10
+      : 0
+
+    ok(res, { reviews, averageRating, count })
+  } catch (err) {
+    serverError(res, err)
+  }
+}
