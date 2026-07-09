@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Activity,
   Wallet,
-  Gem
+  Gem,
+  Star
 } from 'lucide-react'
 
 interface TimelineEvent {
@@ -70,6 +71,7 @@ export default function SellerOrdersPage() {
   const [newNote, setNewNote] = useState('')
   const [submittingProgress, setSubmittingProgress] = useState(false)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
+  const [orderReview, setOrderReview] = useState<any | null>(null)
 
   const loadOrders = async () => {
     try {
@@ -85,6 +87,17 @@ export default function SellerOrdersPage() {
   useEffect(() => {
     if (user) loadOrders()
   }, [user])
+
+  // Fetch the client's review for a completed order when its detail view opens
+  useEffect(() => {
+    setOrderReview(null)
+    if (!selectedOrderId) return
+    const order = orders.find(o => o._id === selectedOrderId)
+    if (!order || order.status !== 'completed') return
+    api.get(`/api/orders/${selectedOrderId}/review`)
+      .then(res => { if (res.data?.success) setOrderReview(res.data.data) })
+      .catch(() => {})
+  }, [selectedOrderId, orders])
 
   const selectedOrder = orders.find((o) => o._id === selectedOrderId)
 
@@ -279,6 +292,41 @@ export default function SellerOrdersPage() {
                 </span>
                 <OrderMilestoneSteps status={selectedOrder.status} variant="detailed" />
               </div>
+
+              {/* Client review */}
+              {orderReview && (
+                <div className="bg-[#FAF8F5]/60 border border-[#C5A880]/25 p-5 rounded-2xl flex flex-col gap-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <h4 className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-[#C5A880]" /> Client Review
+                    </h4>
+                    <span className="text-[9px] text-gray-400 font-sans uppercase tracking-wider">
+                      {new Date(orderReview.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} className={`w-4 h-4 ${s <= orderReview.rating ? 'text-[#C5A880] fill-[#C5A880]' : 'text-gray-200'}`} />
+                    ))}
+                    <span className="text-[10px] font-bold text-gray-500 font-sans ml-1.5">
+                      {orderReview.buyerId?.firstName} {orderReview.buyerId?.lastName}
+                    </span>
+                  </div>
+                  {orderReview.comment && (
+                    <p className="text-xs text-gray-600 leading-relaxed font-sans">{orderReview.comment}</p>
+                  )}
+                  {orderReview.images?.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {orderReview.images.map((img: string, i: number) => (
+                        <div key={i} onClick={() => setActiveLightboxImage(img)}
+                          className="relative w-16 h-16 rounded-xl overflow-hidden border border-[#C5A880]/30 cursor-zoom-in">
+                          <Image src={img} alt={`Review photo ${i + 1}`} fill className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
           {/* Timeline */}
           <div className="flex flex-col gap-4 w-full">

@@ -4,6 +4,7 @@ import { Order } from '../models/order.model'
 import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
+import { Review } from '../models/review.model'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
 
 // Create Order (Buyer initiates bespoke brief order)
@@ -475,6 +476,102 @@ export const confirmReceipt = async (req: Request, res: Response): Promise<void>
     }
 
     ok(res, order)
+  } catch (err) {
+    serverError(res, err)
+  }
+}
+
+// Create Review (Buyer reviews a completed order)
+export const createReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params
+    const { rating, comment, images } = req.body
+    const buyerId = req.user?._id
+
+    if (!buyerId) {
+      badRequest(res, 'Unauthorized')
+      return
+    }
+
+    const numericRating = Number(rating)
+    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      badRequest(res, 'Rating must be a whole number between 1 and 5')
+      return
+    }
+
+    if (
+      images !== undefined &&
+      (!Array.isArray(images) || images.length > 4 || images.some((img: any) => typeof img !== 'string'))
+    ) {
+      badRequest(res, 'Images must be an array of up to 4 image URLs')
+      return
+    }
+
+    const order = await Order.findById(id)
+    if (!order) {
+      notFound(res, 'Not found')
+      return
+    }
+
+    if (String(order.buyerId) !== String(buyerId)) {
+      badRequest(res, 'Unauthorized to review this order')
+      return
+    }
+
+    if (order.status !== 'completed') {
+      badRequest(res, 'You can only review completed orders')
+      return
+    }
+
+    const existing = await Review.findOne({ orderId: order._id })
+    if (existing) {
+      badRequest(res, 'This order has already been reviewed')
+      return
+    }
+
+    const review = new Review({
+      orderId: order._id,
+      buyerId: order.buyerId,
+      sellerId: order.sellerId,
+      rating: numericRating,
+      comment: typeof comment === 'string' ? comment.trim() : '',
+      images: images || [],
+    })
+    await review.save()
+
+    created(res, review, 'Review submitted')
+  } catch (err) {
+    serverError(res, err)
+  }
+}
+
+// Get Review for an order (Buyer or Seller of that order)
+export const getOrderReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params
+    const userId = req.user?._id
+
+    if (!userId) {
+      badRequest(res, 'Unauthorized')
+      return
+    }
+
+    const order = await Order.findById(id)
+    if (!order) {
+      notFound(res, 'Not found')
+      return
+    }
+
+    if (String(order.buyerId) !== String(userId) && String(order.sellerId) !== String(userId)) {
+      badRequest(res, 'Unauthorized to view this review')
+      return
+    }
+
+    const review = await Review.findOne({ orderId: order._id }).populate(
+      'buyerId',
+      'firstName lastName avatar'
+    )
+    ok(res, review)
   } catch (err) {
     serverError(res, err)
   }

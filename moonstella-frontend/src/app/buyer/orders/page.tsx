@@ -16,7 +16,9 @@ import {
   ArrowRight,
   Activity,
   Wallet,
-  Gem
+  Gem,
+  Star,
+  Plus
 } from 'lucide-react'
 
 interface TimelineEvent {
@@ -56,6 +58,15 @@ export default function BuyerOrdersPage() {
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
   const [filter, setFilter] = useState<'ongoing' | 'completed' | 'cancelled'>('ongoing')
 
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewHover, setReviewHover] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewImages, setReviewImages] = useState<string[]>([])
+  const [uploadingReviewImage, setUploadingReviewImage] = useState(false)
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [orderReview, setOrderReview] = useState<any | null>(null)
+
   const loadOrders = async () => {
     try {
       const res = await api.get('/api/orders/buyer')
@@ -72,6 +83,17 @@ export default function BuyerOrdersPage() {
   useEffect(() => {
     if (user) loadOrders()
   }, [user])
+
+  // Fetch the review for a completed order when its detail view opens
+  useEffect(() => {
+    setOrderReview(null)
+    if (!selectedOrderId) return
+    const order = orders.find(o => o._id === selectedOrderId)
+    if (!order || order.status !== 'completed') return
+    api.get(`/api/orders/${selectedOrderId}/review`)
+      .then(res => { if (res.data?.success) setOrderReview(res.data.data) })
+      .catch(() => {})
+  }, [selectedOrderId, orders])
 
   const selectedOrder = orders.find((o) => o._id === selectedOrderId)
 
@@ -93,11 +115,63 @@ export default function BuyerOrdersPage() {
     try {
       const res = await api.patch(`/api/orders/${orderId}/confirm-receipt`, { received })
       if (res.data?.success) {
-        alert(received ? 'Receipt confirmed! Order complete.' : 'Delivery issue reported.')
+        if (received) {
+          setShowReviewModal(true)
+        } else {
+          alert('Delivery issue reported.')
+        }
         loadOrders()
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update status')
+    }
+  }
+
+  const handleReviewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    const input = e.target
+    const selected = files.slice(0, 4 - reviewImages.length)
+    setUploadingReviewImage(true)
+    try {
+      for (const file of selected) {
+        const formData = new FormData()
+        formData.append('image', file)
+        const res = await api.post('/api/upload/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        if (res.data?.success && res.data.data?.url) {
+          setReviewImages(prev => [...prev, res.data.data.url])
+        }
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to upload image')
+    } finally {
+      setUploadingReviewImage(false)
+      input.value = ''
+    }
+  }
+
+  const handleSubmitReview = async () => {
+    if (!selectedOrderId || reviewRating === 0) return
+    setSubmittingReview(true)
+    try {
+      const res = await api.post(`/api/orders/${selectedOrderId}/review`, {
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        images: reviewImages,
+      })
+      if (res.data?.success) {
+        setOrderReview(res.data.data)
+        setShowReviewModal(false)
+        setReviewRating(0)
+        setReviewComment('')
+        setReviewImages([])
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to submit review')
+    } finally {
+      setSubmittingReview(false)
     }
   }
 
@@ -230,6 +304,55 @@ export default function BuyerOrdersPage() {
                 <OrderMilestoneSteps status={selectedOrder.status} variant="detailed" />
               </div>
 
+              {/* Review CTA — completed order, not yet reviewed */}
+              {selectedOrder.status === 'completed' && !orderReview && (
+                <div className="bg-[#FAF0F3]/40 border border-[#5F3041]/15 p-5 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wide font-sans flex items-center gap-1.5">
+                      <Star className="w-4 h-4 text-[#C5A880]" /> How was your experience?
+                    </h4>
+                    <p className="text-[10px] text-gray-400 font-sans">
+                      Share your thoughts and photos of the finished piece.
+                    </p>
+                  </div>
+                  <button onClick={() => setShowReviewModal(true)}
+                    className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-[9px] font-bold tracking-widest px-4 py-2.5 rounded-xl uppercase transition-all border-none cursor-pointer"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}>
+                    Leave a Review
+                  </button>
+                </div>
+              )}
+
+              {/* Submitted review */}
+              {orderReview && (
+                <div className="bg-[#FAF8F5]/60 border border-[#C5A880]/25 p-5 rounded-2xl flex flex-col gap-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <h4 className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Your Review</h4>
+                    <span className="text-[9px] text-gray-400 font-sans uppercase tracking-wider">
+                      {new Date(orderReview.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} className={`w-4 h-4 ${s <= orderReview.rating ? 'text-[#C5A880] fill-[#C5A880]' : 'text-gray-200'}`} />
+                    ))}
+                  </div>
+                  {orderReview.comment && (
+                    <p className="text-xs text-gray-600 leading-relaxed font-sans">{orderReview.comment}</p>
+                  )}
+                  {orderReview.images?.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {orderReview.images.map((img: string, i: number) => (
+                        <div key={i} onClick={() => setActiveLightboxImage(img)}
+                          className="relative w-16 h-16 rounded-xl overflow-hidden border border-[#C5A880]/30 cursor-zoom-in">
+                          <Image src={img} alt={`Review photo ${i + 1}`} fill className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
           {/* Delivery receipt confirmation */}
           {(selectedOrder.currentStage === 'Dispatched & On the Way' || selectedOrder.currentStage === 'Delivery Issue Reported') &&
             selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
@@ -301,6 +424,98 @@ export default function BuyerOrdersPage() {
             </div>
           </div>
         </div>
+
+        {/* Review modal */}
+        {showReviewModal && (
+          <div className="fixed inset-0 bg-[#3D0C1F]/45 backdrop-blur-md z-[200] flex items-center justify-center p-4 select-none">
+            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-[0_25px_60px_rgba(61,12,31,0.18)] border border-[#5F3041]/10 flex flex-col overflow-hidden">
+              <div className="border-b border-gray-100 p-6 flex justify-between items-center bg-[#FAF8F5]/80">
+                <div className="flex flex-col text-left">
+                  <h2 className="text-base font-bold text-gray-900 font-serif" style={{ fontFamily: 'var(--font-playfair)' }}>
+                    Share Your Experience
+                  </h2>
+                  <p className="text-[9px] text-gray-400 font-semibold uppercase tracking-widest mt-0.5">
+                    Review this bespoke piece
+                  </p>
+                </div>
+                <button type="button" onClick={() => setShowReviewModal(false)}
+                  className="text-gray-400 hover:text-[#5F3041] cursor-pointer p-2 hover:bg-[#5F3041]/5 rounded-full border-none bg-transparent">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-7 flex flex-col gap-5 text-left">
+                {/* Star rating */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest font-sans">Rating *</label>
+                  <div className="flex items-center gap-1" onMouseLeave={() => setReviewHover(0)}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <button key={s} type="button" onClick={() => setReviewRating(s)} onMouseEnter={() => setReviewHover(s)}
+                        className="border-none bg-transparent cursor-pointer p-0.5">
+                        <Star className={`w-7 h-7 transition-colors duration-150 ${
+                          s <= (reviewHover || reviewRating) ? 'text-[#C5A880] fill-[#C5A880]' : 'text-gray-200'
+                        }`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest font-sans">Your Review</label>
+                  <textarea rows={4}
+                    placeholder="Tell others about the craftsmanship, quality, and experience..."
+                    value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
+                    className="w-full bg-[#FAF8F5] border border-[#5F3041]/10 rounded-xl p-4 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#5F3041]/35 resize-none font-sans" />
+                </div>
+
+                {/* Photos */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest font-sans">
+                    Photos ({reviewImages.length}/4)
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {reviewImages.map((img, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-[#C5A880]/30">
+                        <Image src={img} alt={`Upload ${i + 1}`} fill className="object-cover" />
+                        <button type="button"
+                          onClick={() => setReviewImages(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-0.5 right-0.5 bg-black/60 hover:bg-black/85 text-white rounded-full w-5 h-5 flex items-center justify-center border-none cursor-pointer text-[10px] leading-none">
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {reviewImages.length < 4 && (
+                      <label className="w-16 h-16 rounded-xl border-2 border-dashed border-[#C5A880]/40 hover:border-[#5F3041]/50 flex items-center justify-center cursor-pointer text-gray-400 hover:text-[#5F3041] transition-colors bg-[#FAF8F5]/50">
+                        {uploadingReviewImage
+                          ? <span className="text-[8px] font-bold uppercase tracking-wider animate-pulse">...</span>
+                          : <Plus className="w-5 h-5" />
+                        }
+                        <input type="file" accept="image/*" multiple className="hidden"
+                          onChange={handleReviewImageUpload} disabled={uploadingReviewImage} />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 justify-end pt-3 border-t border-gray-100">
+                  <button type="button" onClick={() => setShowReviewModal(false)}
+                    className="px-4 py-2.5 border border-gray-200 text-[10px] font-bold tracking-widest rounded-xl uppercase cursor-pointer hover:bg-gray-50 text-gray-500 font-sans bg-transparent">
+                    Maybe Later
+                  </button>
+                  <button type="button" onClick={handleSubmitReview}
+                    disabled={submittingReview || uploadingReviewImage || reviewRating === 0}
+                    className="bg-[#5F3041] text-[#E9D7C3] hover:text-white hover:bg-[#4A2231] text-[10px] font-bold tracking-widest px-5 py-2.5 rounded-xl uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-sans border-none">
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Lightbox */}
         {activeLightboxImage && (

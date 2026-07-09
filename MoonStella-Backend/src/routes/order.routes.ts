@@ -7,7 +7,9 @@ import {
   updateOrderProgress,
   completeOrder,
   cancelOrder,
-  confirmReceipt
+  confirmReceipt,
+  createReview,
+  getOrderReview
 } from '../controllers/order.controller'
 import { protect } from '../middleware/auth.middleware'
 
@@ -39,5 +41,11 @@ router.patch('/:id/cancel', cancelOrder)
 
 // PATCH /api/orders/:id/confirm-receipt - Confirm delivery receipt (Buyer only)
 router.patch('/:id/confirm-receipt', confirmReceipt)
+
+// POST /api/orders/:id/review - Leave a review on a completed order (Buyer only)
+router.post('/:id/review', createReview)
+
+// GET /api/orders/:id/review - Fetch the review for an order (Buyer/Seller)
+router.get('/:id/review', getOrderReview)
 
 export default router
