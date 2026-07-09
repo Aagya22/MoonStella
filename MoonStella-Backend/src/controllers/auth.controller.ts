@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as AuthService from '../services/auth.service'
+import { createNotification } from '../services/notification.service'
 import { created, ok } from '../utils/response'
 
 export const register = async (
@@ -118,6 +119,19 @@ export const toggleFollowUser = async (
     const currentUserId = String((req.user as any)._id)
     const targetUserId = req.params.id
     const result = await AuthService.followUser(currentUserId, targetUserId)
+
+    const nowFollowing = (result as any).following?.some((id: any) => String(id) === String(targetUserId))
+    if (nowFollowing) {
+      const actor = req.user as any
+      await createNotification({
+        userId: targetUserId,
+        actorId: currentUserId,
+        type: 'follow',
+        text: `${actor.firstName} ${actor.lastName} started following you`,
+        link: `profile?id=${currentUserId}`,
+      })
+    }
+
     ok(res, result, 'Follow status updated successfully')
   } catch (err) {
     next(err)

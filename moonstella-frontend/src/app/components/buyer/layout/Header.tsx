@@ -7,7 +7,7 @@ interface HeaderProps {
   notificationsOpen: boolean
   setNotificationsOpen: (open: boolean) => void
   notifications: any[]
-  toggleNotification: (id: number) => void
+  toggleNotification: (id: string) => void
   markAllNotificationsRead: () => void
   unreadNotificationsCount: number
   sidebarOpen: boolean

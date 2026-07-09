@@ -5,6 +5,7 @@ import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
 import { io } from '../server'
+import { createNotification } from '../services/notification.service'
 
 export const createOrGetThread = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -254,6 +255,18 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       })
 
     io.to(`thread:${threadId}`).emit('new_message', populatedMessage)
+
+    const recipientId = thread.participants.find((id: any) => String(id) !== String(currentUserId))
+    if (recipientId) {
+      const actor = req.user as any
+      await createNotification({
+        userId: recipientId,
+        actorId: currentUserId,
+        type: 'message',
+        text: `New message from ${actor.firstName} ${actor.lastName}`,
+        link: 'messages',
+      })
+    }
 
     created(res, populatedMessage)
   } catch (err) {

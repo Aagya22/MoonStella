@@ -32,6 +32,11 @@ io.use((socket, next) => {
 io.on('connection',(socket) => {
   console.log(`Socket connected: ${socket.id}`)
 
+  // Personal room for user-targeted notifications
+  if (socket.data.userId) {
+    socket.join(`user:${socket.data.userId}`)
+  }
+
   socket.on('join_thread', async (threadId: string) => {
     try {
       const thread = await Thread.findById(threadId)

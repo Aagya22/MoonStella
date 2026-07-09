@@ -5,6 +5,7 @@ import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { Review } from '../models/review.model'
+import { createNotification } from '../services/notification.service'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
 
 // Create Order (Buyer initiates bespoke brief order)
@@ -91,6 +92,14 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
       })
     }
 
+    await createNotification({
+      userId: sellerId,
+      actorId: buyerId,
+      type: 'order',
+      text: `New commission request: "${title}"`,
+      link: 'orders',
+    })
+
     created(res, order)
   } catch (err) {
     serverError(res, err)
@@ -170,6 +179,14 @@ export const acceptOrder = async (req: Request, res: Response): Promise<void> =>
 
     await order.save()
 
+    await createNotification({
+      userId: order.buyerId,
+      actorId: sellerId,
+      type: 'order',
+      text: `Your order "${order.title}" was accepted`,
+      link: 'orders',
+    })
+
     // Send chat system message notification
     let thread = await Thread.findOne({
       participants: { $all: [order.buyerId, order.sellerId], $size: 2 },
@@ -243,6 +260,14 @@ export const updateOrderProgress = async (req: Request, res: Response): Promise<
 
     await order.save()
 
+    await createNotification({
+      userId: order.buyerId,
+      actorId: sellerId,
+      type: 'order',
+      text: `Update on "${order.title}": ${stage}`,
+      link: 'orders',
+    })
+
     // Send dynamic progress update notification inside chat thread
     let thread = await Thread.findOne({
       participants: { $all: [order.buyerId, order.sellerId], $size: 2 },
@@ -308,6 +333,14 @@ export const completeOrder = async (req: Request, res: Response): Promise<void> 
 
     await order.save()
 
+    await createNotification({
+      userId: order.sellerId,
+      actorId: buyerId,
+      type: 'order',
+      text: `Order "${order.title}" was marked as delivered`,
+      link: 'orders',
+    })
+
     // Send chat system message notification
     let thread = await Thread.findOne({
       participants: { $all: [order.buyerId, order.sellerId], $size: 2 },
@@ -370,6 +403,15 @@ export const cancelOrder = async (req: Request, res: Response): Promise<void> =>
     })
 
     await order.save()
+
+    const cancelRecipient = String(order.buyerId) === String(currentUserId) ? order.sellerId : order.buyerId
+    await createNotification({
+      userId: cancelRecipient,
+      actorId: currentUserId,
+      type: 'order',
+      text: `Order "${order.title}" was cancelled`,
+      link: 'orders',
+    })
 
     // Send chat notification
     let thread = await Thread.findOne({
@@ -444,6 +486,16 @@ export const confirmReceipt = async (req: Request, res: Response): Promise<void>
     }
 
     await order.save()
+
+    await createNotification({
+      userId: order.sellerId,
+      actorId: buyerId,
+      type: 'order',
+      text: received
+        ? `Buyer confirmed delivery of "${order.title}"`
+        : `Buyer reported a delivery issue for "${order.title}"`,
+      link: 'orders',
+    })
 
     // Send chat notification
     let thread = await Thread.findOne({
@@ -538,6 +590,14 @@ export const createReview = async (req: Request, res: Response): Promise<void> =
       images: images || [],
     })
     await review.save()
+
+    await createNotification({
+      userId: order.sellerId,
+      actorId: order.buyerId,
+      type: 'review',
+      text: `You received a ${numericRating}-star review`,
+      link: 'orders',
+    })
 
     created(res, review, 'Review submitted')
   } catch (err) {
