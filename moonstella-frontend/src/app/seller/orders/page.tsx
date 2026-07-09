@@ -4,19 +4,20 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import api from '@/lib/api/axios'
 import { useSellerContext } from '../SellerContext'
-import { 
+import OrderMilestoneSteps from '@/app/components/shared/OrderMilestoneSteps'
+import {
   Package, 
   MapPin, 
   Clock, 
   CheckCircle2, 
   XCircle, 
-  AlertCircle, 
-  FileText,
+  AlertCircle,
   Edit3,
   ArrowLeft,
-  History,
+  ArrowRight,
   Activity,
-  Wallet
+  Wallet,
+  Gem
 } from 'lucide-react'
 
 interface TimelineEvent {
@@ -48,33 +49,6 @@ interface Order {
   updatedAt: string
 }
 
-const ORDERED_STAGES = [
-  'Order Brief Submitted',
-  'Design & Blueprint Approved',
-  'Concept & Blueprinting',
-  'Material Selection & Sourcing',
-  'Handcrafting & Assembly',
-  'Polishing & Quality Inspection',
-  'Ready for Dispatch',
-  'Dispatched & On the Way',
-  'Delivered',
-]
-
-function getProgressPercent(order: Order): number {
-  if (order.status === 'completed') return 100
-  if (order.status === 'cancelled') return 0
-  const latestStage = order.currentStage || order.timeline?.[order.timeline.length - 1]?.stage || ''
-  const idx = ORDERED_STAGES.findIndex(s => s.toLowerCase() === latestStage.toLowerCase())
-  if (idx < 0) return 5
-  return Math.round(((idx + 1) / ORDERED_STAGES.length) * 100)
-}
-
-function getProgressLabel(order: Order): string {
-  if (order.status === 'completed') return 'Delivered'
-  if (order.status === 'cancelled') return 'Cancelled'
-  return order.currentStage || 'Initialising'
-}
-
 const STAGES = [
   'Concept & Blueprinting',
   'Material Selection & Sourcing',
@@ -89,7 +63,7 @@ export default function SellerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [listTab, setListTab] = useState<'active' | 'history'>('active')
+  const [filter, setFilter] = useState<'ongoing' | 'completed' | 'cancelled'>('ongoing')
 
   const [showProgressModal, setShowProgressModal] = useState(false)
   const [newStage, setNewStage] = useState('Concept & Blueprinting')
@@ -174,8 +148,9 @@ export default function SellerOrdersPage() {
     )
   }
 
-  const activeOrders  = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled')
-  const historyOrders = orders.filter(o => o.status === 'completed'  || o.status === 'cancelled')
+  const activeOrders    = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled')
+  const completedOrders = orders.filter(o => o.status === 'completed')
+  const cancelledOrders = orders.filter(o => o.status === 'cancelled')
   const totalEarned   = orders
     .filter(o => o.status === 'completed')
     .reduce((sum, o) => sum + o.budget, 0)
@@ -190,10 +165,13 @@ export default function SellerOrdersPage() {
 
   /* ─────────────── ORDER DETAIL VIEW ─────────────── */
   if (selectedOrder) {
-    const pct = getProgressPercent(selectedOrder)
+    const orderImage =
+      selectedOrder.postId?.images?.[0] ||
+      [...selectedOrder.timeline].reverse().find(e => e.image)?.image ||
+      null
     return (
-      <div className="flex-1 w-full mx-auto px-6 sm:px-14 py-10 max-w-5xl select-none">
-        <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-12 rounded-[2.5rem] flex flex-col gap-8 shadow-[0_20px_60px_rgba(61,12,31,0.04)] text-left">
+      <div className="flex-1 w-full mx-auto px-6 sm:px-10 py-6 max-w-6xl select-none">
+        <div className="flex flex-col gap-4">
 
           {/* Back */}
           <button onClick={() => setSelectedOrderId(null)}
@@ -201,102 +179,109 @@ export default function SellerOrdersPage() {
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Orders
           </button>
 
-          {/* Header row */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-start border-b border-gray-100 pb-8 gap-6">
-            <div className="flex flex-col gap-3 flex-1">
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-2xl font-bold text-gray-900 tracking-wide font-serif" style={{ fontFamily: 'var(--font-playfair)' }}>
-                  {selectedOrder.title}
-                </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+
+            {/* Left: image + client */}
+            <div className="lg:col-span-2 flex flex-col gap-5 lg:sticky lg:top-20">
+              {orderImage ? (
+                <div onClick={() => setActiveLightboxImage(orderImage)}
+                  className="relative w-full aspect-square rounded-[2rem] overflow-hidden border border-[#C5A880]/30 shadow-[0_18px_45px_rgba(61,12,31,0.12)] cursor-zoom-in group bg-white">
+                  <Image src={orderImage} alt={selectedOrder.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+              ) : (
+                <div className="w-full aspect-square rounded-[2rem] bg-gradient-to-br from-[#FAF8F5] to-[#FAF0F3] border border-[#C5A880]/20 flex flex-col items-center justify-center gap-2">
+                  <Gem className="w-10 h-10 text-[#5F3041]/20" />
+                  <span className="text-[9px] text-gray-400 uppercase tracking-widest font-sans">No image yet</span>
+                </div>
+              )}
+
+              {/* Client card */}
+              <div className="bg-white border border-[#5F3041]/10 rounded-[1.75rem] p-5 flex items-center gap-4 shadow-[0_10px_30px_rgba(61,12,31,0.05)] text-left">
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#C5A880]/40 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
+                  <Image src={selectedOrder.buyerId.avatar || '/buyersignup.png'} alt={selectedOrder.buyerId.firstName} fill className="object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[8px] text-gray-400 uppercase tracking-widest font-sans block">Client</span>
+                  <h4 className="text-xs font-extrabold text-gray-800 tracking-wider uppercase font-sans truncate">
+                    {selectedOrder.buyerId.firstName} {selectedOrder.buyerId.lastName}
+                  </h4>
+                  <p className="text-[10px] text-gray-400 mt-0.5 font-sans truncate">{selectedOrder.buyerId.email}</p>
+                  <div className="flex items-center gap-1 mt-1 text-[9px] text-[#5F3041] font-extrabold uppercase tracking-widest font-sans">
+                    <MapPin className="w-3 h-3" />
+                    Delivery: {selectedOrder.buyerId.location || 'Kathmandu, Nepal'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: order details */}
+            <div className="lg:col-span-3 bg-white border border-[#5F3041]/10 rounded-[2rem] p-6 sm:p-8 flex flex-col gap-5 shadow-[0_15px_45px_rgba(61,12,31,0.06)] text-left">
+
+              {/* Status + date */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 {getStatusPill(selectedOrder.status)}
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider font-sans">
+                  Placed {new Date(selectedOrder.createdAt).toLocaleDateString()}
+                </span>
               </div>
 
-              <div className="flex gap-2 bg-[#FAF8F5] border border-gray-100 p-4 rounded-2xl max-w-2xl">
-                <FileText className="w-4 h-4 text-[#5F3041]/40 shrink-0 mt-0.5" />
-                <p className="text-xs text-gray-600 leading-relaxed font-sans font-medium whitespace-pre-line">
+              {/* Title + description */}
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-wide font-serif" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  {selectedOrder.title}
+                </h2>
+                <p className="text-xs text-gray-500 leading-relaxed font-sans font-medium whitespace-pre-line mt-2">
                   {selectedOrder.description}
                 </p>
               </div>
 
-              {/* Full progress bar in detail view */}
-              <div className="flex flex-col gap-1.5 mt-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Crafting Progress</span>
-                  <span className="text-[9px] font-bold text-[#5F3041] font-sans uppercase tracking-wider">
-                    {pct}% — {getProgressLabel(selectedOrder)}
-                  </span>
+              {/* Value + actions */}
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-[#FAF8F5]/70 border border-[#C5A880]/20 rounded-2xl p-5">
+                <div>
+                  <span className="text-[8px] font-extrabold text-[#C5A880] tracking-[0.25em] font-sans uppercase block">Commission Value</span>
+                  <span className="text-2xl font-bold text-[#5F3041] font-serif">Rs. {selectedOrder.budget.toLocaleString()}</span>
                 </div>
-                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${
-                      selectedOrder.status === 'completed' ? 'bg-emerald-500' :
-                      selectedOrder.status === 'cancelled' ? 'bg-rose-400' :
-                      'bg-gradient-to-r from-[#5F3041] to-[#C5A880]'
-                    }`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Price plaque + actions */}
-            <div className="flex flex-col md:items-end gap-2 shrink-0 bg-gradient-to-br from-[#FAF8F5] to-white border border-[#E9D7C3]/60 p-6 rounded-2xl min-w-[210px] shadow-sm">
-              <span className="text-[9px] font-extrabold text-gray-400 tracking-widest font-sans uppercase">Commission Value</span>
-              <span className="text-2xl font-bold text-[#5F3041] font-serif">Rs. {selectedOrder.budget.toLocaleString()}</span>
-
-              <div className="flex flex-col gap-2 w-full mt-2">
-                {selectedOrder.status === 'pending' && (
-                  <button onClick={() => handleAcceptOrder(selectedOrder._id)}
-                    className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-[9.5px] font-bold tracking-widest py-2.5 rounded-xl uppercase transition-all border-none cursor-pointer"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}>
-                    Accept Commission
-                  </button>
-                )}
-
-                {(selectedOrder.status === 'accepted' || selectedOrder.status === 'crafting' || selectedOrder.status === 'shipped') && (
-                  <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selectedOrder.status === 'pending' && (
+                    <button onClick={() => handleAcceptOrder(selectedOrder._id)}
+                      className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-[9px] font-bold tracking-widest px-4 py-2.5 rounded-xl uppercase transition-all border-none cursor-pointer"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}>
+                      Accept Commission
+                    </button>
+                  )}
+                  {(selectedOrder.status === 'accepted' || selectedOrder.status === 'crafting' || selectedOrder.status === 'shipped') && (
                     <button onClick={() => setShowProgressModal(true)}
-                      className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-[9.5px] font-bold tracking-widest py-2.5 rounded-xl uppercase transition-all border-none cursor-pointer flex items-center justify-center gap-1.5"
+                      className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] text-[9px] font-bold tracking-widest px-4 py-2.5 rounded-xl uppercase transition-all border-none cursor-pointer flex items-center gap-1.5"
                       style={{ fontFamily: 'var(--font-montserrat)' }}>
                       <Edit3 className="w-3.5 h-3.5" /> Post Update
                     </button>
-                    {selectedOrder.currentStage === 'Dispatched & On the Way' && (
-                      <p className="text-[9px] text-amber-700 font-semibold italic text-center mt-1 flex items-center gap-1 justify-center">
-                        <AlertCircle className="w-3 h-3" /> Awaiting client confirmation...
-                      </p>
-                    )}
-                  </>
-                )}
-
-                {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
-                  <button onClick={() => handleCancelOrder(selectedOrder._id)}
-                    className="text-[9px] font-bold text-rose-600 hover:text-rose-800 tracking-widest uppercase border-none bg-transparent cursor-pointer font-sans mt-1 hover:underline text-center">
-                    Cancel Order
-                  </button>
-                )}
+                  )}
+                  {selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
+                    <button onClick={() => handleCancelOrder(selectedOrder._id)}
+                      className="border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 px-4 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest font-sans bg-transparent cursor-pointer transition-all">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Buyer plaque */}
-          <div className="flex items-center gap-4 bg-gradient-to-r from-[#FAF8F5] via-white to-transparent border border-[#5F3041]/5 p-5 rounded-2xl">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-gradient-to-tr from-[#E9D7C3] to-white">
-              <Image src={selectedOrder.buyerId.avatar || '/buyersignup.png'} alt={selectedOrder.buyerId.firstName} fill className="object-cover" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-[11px] font-extrabold text-gray-800 tracking-wider uppercase font-sans">
-                Client: {selectedOrder.buyerId.firstName} {selectedOrder.buyerId.lastName}
-              </h4>
-              <p className="text-[10px] text-gray-400 mt-0.5 font-sans">{selectedOrder.buyerId.email}</p>
-              <div className="flex items-center gap-1 mt-1 text-[9px] text-[#5F3041] font-extrabold uppercase tracking-widest font-sans">
-                <MapPin className="w-3 h-3" />
-                Delivery: {selectedOrder.buyerId.location || 'Kathmandu, Nepal'}
+              {selectedOrder.currentStage === 'Dispatched & On the Way' &&
+                selectedOrder.status !== 'completed' && selectedOrder.status !== 'cancelled' && (
+                <p className="text-[9px] text-amber-700 font-semibold italic flex items-center gap-1 -mt-2">
+                  <AlertCircle className="w-3 h-3" /> Awaiting client confirmation...
+                </p>
+              )}
+
+              {/* Order milestone tracker */}
+              <div className="bg-[#FAF8F5]/50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-3">
+                <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">
+                  Order Progress
+                </span>
+                <OrderMilestoneSteps status={selectedOrder.status} variant="detailed" />
               </div>
-            </div>
-          </div>
 
           {/* Timeline */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 w-full">
             <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase font-sans border-b border-gray-100 pb-2.5">
               Workbench Progress Timeline
             </h3>
@@ -335,6 +320,8 @@ export default function SellerOrdersPage() {
             </div>
           </div>
 
+            </div>
+          </div>
         </div>
 
         {/* Progress modal */}
@@ -404,165 +391,167 @@ export default function SellerOrdersPage() {
     )
   }
 
-  /* ─────────────── DASHBOARD / LIST VIEW ─────────────── */
-  const displayedOrders = listTab === 'active' ? activeOrders : historyOrders
+  /* Shared bespoke order card — content left, vertical timeline right */
+  const renderOrderCard = (o: Order) => (
+    <div
+      key={o._id}
+      onClick={() => setSelectedOrderId(o._id)}
+      className="group relative overflow-hidden bg-white border border-[#5F3041]/10 hover:border-[#C5A880]/60 rounded-[1.75rem] shadow-[0_10px_35px_rgba(61,12,31,0.06)] hover:shadow-[0_26px_55px_rgba(61,12,31,0.14)] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex h-full min-h-[240px]"
+    >
+      {/* Left: content */}
+      <div className="flex-1 min-w-0 p-6 flex flex-col text-left gap-3">
+        <div className="flex items-center justify-between gap-2">
+          {getStatusPill(o.status)}
+          <ArrowRight className="w-4 h-4 text-[#5F3041] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 shrink-0" />
+        </div>
 
-  return (
-    <div className="flex-1 w-full mx-auto px-6 sm:px-14 py-10 max-w-5xl select-none">
-      <div className="flex flex-col gap-8">
-
-        {/* Page header */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-gray-900 font-serif tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
-            My Orders
-          </h1>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-sans font-bold">
-            Bespoke jewelry order workspace
+        <div>
+          <h4 className="text-xl font-bold text-gray-900 font-serif tracking-wide line-clamp-1" style={{ fontFamily: 'var(--font-playfair)' }}>
+            {o.title}
+          </h4>
+          <p className="text-[10px] text-gray-400 line-clamp-2 font-sans leading-relaxed mt-1">
+            {o.description}
           </p>
         </div>
 
-        {/* 3-column stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="bg-white border border-[#5F3041]/10 p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(61,12,31,0.02)] flex items-center justify-between">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Active Orders</span>
-              <span className="text-3xl font-bold text-[#5F3041] font-serif">{activeOrders.length}</span>
-              <span className="text-[9px] text-gray-400 font-sans">In progress or pending</span>
-            </div>
-            <Activity className="w-9 h-9 text-[#5F3041]/10" />
+        <div className="mt-auto flex flex-col gap-3">
+          <div>
+            <span className="text-[8px] font-extrabold text-[#C5A880] uppercase tracking-[0.25em] font-sans block">Commission Value</span>
+            <span className="text-2xl font-bold text-[#5F3041] font-serif">Rs. {o.budget.toLocaleString()}</span>
           </div>
 
-          <div className="bg-white border border-[#5F3041]/10 p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(61,12,31,0.02)] flex items-center justify-between">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Completed</span>
-              <span className="text-3xl font-bold text-emerald-700 font-serif">{orders.filter(o => o.status === 'completed').length}</span>
-              <span className="text-[9px] text-gray-400 font-sans">Delivered & confirmed</span>
+          <div className="flex items-center gap-2 pt-3 border-t border-dashed border-[#C5A880]/25">
+            <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#C5A880]/40 shrink-0 bg-[#FAF8F5]">
+              <Image src={o.buyerId.avatar || '/buyersignup.png'} alt={o.buyerId.firstName} fill className="object-cover" />
             </div>
-            <CheckCircle2 className="w-9 h-9 text-emerald-500/10" />
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-[8px] text-gray-400 uppercase tracking-wider font-sans">Client</span>
+              <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider font-sans truncate">
+                {o.buyerId.firstName} {o.buyerId.lastName}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: vertical timeline rail */}
+      <div className="w-[150px] shrink-0 bg-gradient-to-b from-[#FAF8F5] to-[#FAF0F3]/70 border-l border-dashed border-[#C5A880]/25 p-5 flex flex-col group-hover:from-[#FAF0F3]/60 group-hover:to-[#FAF0F3] transition-colors duration-300">
+        <span className="text-[8px] font-extrabold text-gray-400 uppercase tracking-[0.2em] font-sans mb-3">Progress</span>
+        <div className="flex-1 min-h-0">
+          <OrderMilestoneSteps status={o.status} orientation="vertical" />
+        </div>
+      </div>
+    </div>
+  )
+
+  /* ─────────────── ORDER LISTING VIEW ─────────────── */
+  const filteredOrders =
+    filter === 'ongoing' ? activeOrders : filter === 'completed' ? completedOrders : cancelledOrders
+
+  return (
+    <div className="flex-1 w-full mx-auto px-6 sm:px-10 py-6 max-w-[1500px] select-none">
+      <div className="flex flex-col gap-6">
+
+        {/* Header row: title left, stats right */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 shrink-0">
+          <div className="flex flex-col gap-1 text-left">
+            <span className="flex items-center gap-2 text-[9px] font-extrabold text-[#C5A880] uppercase tracking-[0.35em] font-sans">
+              <Gem className="w-3 h-3" /> Artisan Workbench
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 font-serif tracking-wide" style={{ fontFamily: 'var(--font-playfair)' }}>
+              My Orders
+            </h1>
+            <p className="text-[10px] text-gray-400 font-sans tracking-wide">
+              Manage every commission from request to delivery.
+            </p>
           </div>
 
-          <div className="bg-white border border-[#5F3041]/10 p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(61,12,31,0.02)] flex items-center justify-between">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">Total Earned</span>
-              <span className="text-2xl font-bold text-gray-800 font-serif">Rs. {totalEarned.toLocaleString()}</span>
-              <span className="text-[9px] text-gray-400 font-sans">From completed commissions</span>
+          {/* Stats strip */}
+          <div className="flex flex-wrap items-stretch gap-3">
+            <div className="group bg-white border border-[#5F3041]/10 hover:border-[#C5A880]/60 rounded-2xl px-5 py-3.5 flex items-center gap-3.5 shadow-[0_8px_25px_rgba(61,12,31,0.05)] hover:shadow-[0_14px_35px_rgba(61,12,31,0.12)] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="w-10 h-10 rounded-full bg-[#FAF0F3] border border-[#5F3041]/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0">
+                <Activity className="w-5 h-5 text-[#5F3041]" />
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-2xl font-bold text-[#5F3041] font-serif">{activeOrders.length}</span>
+                <span className="text-[8px] font-extrabold text-gray-400 uppercase tracking-widest font-sans mt-1">Active</span>
+              </div>
             </div>
-            <Wallet className="w-9 h-9 text-gray-400/10" />
+
+            <div className="group bg-white border border-[#5F3041]/10 hover:border-emerald-300/60 rounded-2xl px-5 py-3.5 flex items-center gap-3.5 shadow-[0_8px_25px_rgba(61,12,31,0.05)] hover:shadow-[0_14px_35px_rgba(61,12,31,0.12)] hover:-translate-y-0.5 transition-all duration-300">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-2xl font-bold text-emerald-700 font-serif">{orders.filter(o => o.status === 'completed').length}</span>
+                <span className="text-[8px] font-extrabold text-gray-400 uppercase tracking-widest font-sans mt-1">Completed</span>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden bg-gradient-to-br from-[#5F3041] to-[#3D0C1F] rounded-2xl px-5 py-3.5 flex items-center gap-3.5 shadow-[0_14px_35px_rgba(61,12,31,0.25)] hover:shadow-[0_20px_45px_rgba(61,12,31,0.35)] hover:-translate-y-0.5 transition-all duration-300">
+              <Gem className="absolute -right-2 -bottom-2 w-14 h-14 text-white/5 rotate-12" />
+              <div className="w-10 h-10 rounded-full bg-white/10 border border-[#E9D7C3]/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0">
+                <Wallet className="w-5 h-5 text-[#E9D7C3]" />
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-xl font-bold text-[#E9D7C3] font-serif">Rs. {totalEarned.toLocaleString()}</span>
+                <span className="text-[8px] font-extrabold text-[#E9D7C3]/60 uppercase tracking-widest font-sans mt-1">Total Earned</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Toggle tab */}
-        <div className="flex justify-center">
-          <div className="inline-flex gap-1.5 bg-[#FAF8F5] border border-gray-100 p-1.5 rounded-full shadow-inner">
+        {/* Filter selection */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {([
+            { key: 'ongoing' as const, label: 'Ongoing', Icon: Activity, count: activeOrders.length },
+            { key: 'completed' as const, label: 'Completed', Icon: CheckCircle2, count: completedOrders.length },
+            { key: 'cancelled' as const, label: 'Cancelled', Icon: XCircle, count: cancelledOrders.length },
+          ]).map(({ key, label, Icon, count }) => (
             <button
-              onClick={() => setListTab('active')}
-              className={`px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all cursor-pointer border-none flex items-center gap-1.5 ${
-                listTab === 'active'
-                  ? 'bg-[#5F3041] text-[#E9D7C3] shadow-sm'
-                  : 'bg-transparent text-gray-400 hover:text-gray-600'
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans cursor-pointer transition-all duration-300 flex items-center gap-2 border ${
+                filter === key
+                  ? 'bg-[#5F3041] text-[#E9D7C3] border-[#5F3041] shadow-[0_10px_25px_rgba(61,12,31,0.25)]'
+                  : 'bg-white text-gray-400 border-[#5F3041]/10 hover:text-[#5F3041] hover:border-[#C5A880]/50 hover:shadow-[0_8px_20px_rgba(61,12,31,0.08)]'
               }`}
             >
-              <Activity className="w-3.5 h-3.5" />
-              Ongoing ({activeOrders.length})
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
+                filter === key ? 'bg-white/15 text-[#E9D7C3]' : 'bg-[#FAF0F3] text-[#5F3041]'
+              }`}>
+                {count}
+              </span>
             </button>
-            <button
-              onClick={() => setListTab('history')}
-              className={`px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all cursor-pointer border-none flex items-center gap-1.5 ${
-                listTab === 'history'
-                  ? 'bg-[#5F3041] text-[#E9D7C3] shadow-sm'
-                  : 'bg-transparent text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              <History className="w-3.5 h-3.5" />
-              History ({historyOrders.length})
-            </button>
-          </div>
+          ))}
         </div>
 
-        {/* Orders list */}
-        <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-10 rounded-[2.5rem] flex flex-col gap-6 shadow-[0_15px_45px_rgba(61,12,31,0.02)]">
-          <h3 className="text-sm font-bold text-gray-800 tracking-wider uppercase font-sans border-b border-gray-100 pb-4">
-            {listTab === 'active' ? 'Ongoing Orders' : 'Order History'}
-          </h3>
-
-          {displayedOrders.length === 0 ? (
-            <div className="text-center py-16 flex flex-col items-center gap-3">
-              {listTab === 'active'
-                ? <Package className="w-9 h-9 text-[#5F3041]/20" />
-                : <History className="w-9 h-9 text-[#5F3041]/20" />
-              }
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest font-sans">
-                {listTab === 'active' ? 'No active orders yet.' : 'No order history found.'}
+        {/* Orders grid */}
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white/60 border border-dashed border-[#C5A880]/40 rounded-[2rem] py-20 flex flex-col items-center gap-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-[#FAF0F3] flex items-center justify-center">
+              <Gem className="w-6 h-6 text-[#5F3041]/40" />
+            </div>
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest font-sans">
+              {filter === 'ongoing'
+                ? 'No active orders yet.'
+                : filter === 'completed'
+                ? 'No completed commissions yet.'
+                : 'No cancelled orders.'}
+            </p>
+            {filter === 'ongoing' && (
+              <p className="text-[10px] text-gray-400 font-sans italic">
+                New commission requests from clients will appear here.
               </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {displayedOrders.map((o) => {
-                const pct = getProgressPercent(o)
-                const label = getProgressLabel(o)
-                return (
-                  <div
-                    key={o._id}
-                    onClick={() => setSelectedOrderId(o._id)}
-                    className="border border-[#5F3041]/8 hover:border-[#5F3041]/25 p-6 rounded-2xl cursor-pointer hover:shadow-md transition-all duration-300 bg-[#FAF8F5]/20 hover:bg-[#FAF8F5]/50 flex flex-col gap-4"
-                  >
-                    {/* Top row */}
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-gray-800 font-sans tracking-wide truncate">
-                          {o.title}
-                        </h4>
-                        <p className="text-[10px] text-gray-400 line-clamp-1 font-sans leading-relaxed">
-                          {o.description}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2 shrink-0">
-                        {getStatusPill(o.status)}
-                        <span className="text-sm font-bold text-gray-800 font-serif">
-                          Rs. {o.budget.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Horizontal progress bar */}
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[8px] font-extrabold text-gray-400 uppercase tracking-widest font-sans">
-                          {label}
-                        </span>
-                        <span className="text-[8px] font-bold text-gray-400 font-sans">
-                          {pct}%
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${
-                            o.status === 'completed'
-                              ? 'bg-emerald-500'
-                              : o.status === 'cancelled'
-                              ? 'bg-rose-400'
-                              : 'bg-gradient-to-r from-[#5F3041] to-[#C5A880]'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Bottom buyer row */}
-                    <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-                      <div className="relative w-6 h-6 rounded-full overflow-hidden border border-[#5F3041]/10 shrink-0 bg-[#FAF8F5]">
-                        <Image src={o.buyerId.avatar || '/buyersignup.png'} alt={o.buyerId.firstName} fill className="object-cover" />
-                      </div>
-                      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider font-sans">
-                        {o.buyerId.firstName} {o.buyerId.lastName}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredOrders.map(renderOrderCard)}
+          </div>
+        )}
 
       </div>
     </div>
