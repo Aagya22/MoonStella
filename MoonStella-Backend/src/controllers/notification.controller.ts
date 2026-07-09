@@ -60,3 +60,19 @@ export const markOneRead = async (req: Request, res: Response): Promise<void> =>
     serverError(res, err)
   }
 }
+
+// DELETE /api/notifications - clear all of the current user's notifications
+export const clearAll = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?._id
+    if (!userId) {
+      badRequest(res, 'Unauthorized')
+      return
+    }
+
+    await Notification.deleteMany({ userId })
+    ok(res, { success: true })
+  } catch (err) {
+    serverError(res, err)
+  }
+}

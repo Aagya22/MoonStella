@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getMyNotifications, markAllRead, markOneRead } from '../controllers/notification.controller'
+import { getMyNotifications, markAllRead, markOneRead, clearAll } from '../controllers/notification.controller'
 import { protect } from '../middleware/auth.middleware'
 
 const router = Router()
@@ -14,5 +14,8 @@ router.patch('/read', markAllRead)
 
 // PATCH /api/notifications/:id/read - mark one as read
 router.patch('/:id/read', markOneRead)
+
+// DELETE /api/notifications - clear all notifications
+router.delete('/', clearAll)
 
 export default router

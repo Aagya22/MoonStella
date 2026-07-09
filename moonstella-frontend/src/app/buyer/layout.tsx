@@ -304,12 +304,21 @@ export default function BuyerLayout({
     try { await api.patch('/api/notifications/read') } catch { /* ignore */ }
   }
 
-  const toggleNotification = async (id: string) => {
-    const notif = notifications.find(n => n.id === id)
+  const markNotificationRead = async (id: string) => {
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)))
     try { await api.patch(`/api/notifications/${id}/read`) } catch { /* ignore */ }
+  }
+
+  const toggleNotification = async (id: string) => {
+    const notif = notifications.find(n => n.id === id)
+    markNotificationRead(id)
     setNotificationsOpen(false)
     if (notif?.link) router.push(`/buyer/${notif.link}`)
+  }
+
+  const clearAllNotifications = async () => {
+    setNotifications([])
+    try { await api.delete('/api/notifications') } catch { /* ignore */ }
   }
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length
@@ -317,7 +326,7 @@ export default function BuyerLayout({
   if (!user) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs">Loading profile...</div>
 
   return (
-    <BuyerContext.Provider value={{ user, setUser, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans }}>
+    <BuyerContext.Provider value={{ user, setUser, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans, notifications, unreadNotificationsCount, toggleNotification, markNotificationRead, markAllNotificationsRead, clearAllNotifications }}>
       <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased relative">
 
         {/* 1. Header (Navbar) */}
