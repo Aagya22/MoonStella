@@ -5,7 +5,7 @@ import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { Review } from '../models/review.model'
-import { createNotification } from '../services/notification.service'
+import { createNotification, notifyAdmins } from '../services/notification.service'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
 
 // Create Order (Buyer initiates bespoke brief order)
@@ -550,6 +550,15 @@ export const confirmReceipt = async (req: Request, res: Response): Promise<void>
         : `Buyer reported a delivery issue for "${order.title}"`,
       link: 'orders',
     })
+
+    if (!received) {
+      await notifyAdmins({
+        actorId: buyerId,
+        type: 'system',
+        text: `New delivery dispute reported for order "${order.title}"`,
+        link: '/admin/disputes'
+      })
+    }
 
     // Send chat notification
     let thread = await Thread.findOne({

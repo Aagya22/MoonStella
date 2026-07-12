@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import * as AuthService from '../services/auth.service'
-import { createNotification } from '../services/notification.service'
+import { createNotification, notifyAdmins } from '../services/notification.service'
 import { created, ok } from '../utils/response'
 
 export const register = async (
@@ -10,6 +10,18 @@ export const register = async (
 ): Promise<void> => {
   try {
     const result = await AuthService.registerUser(req.body)
+    
+    // Notify admins
+    const registeredUser = result.user
+    if (registeredUser) {
+      await notifyAdmins({
+        actorId: registeredUser.id,
+        type: 'system',
+        text: `New user registered: ${registeredUser.firstName} ${registeredUser.lastName} (${registeredUser.role})`,
+        link: '/admin/users'
+      })
+    }
+
     created(res, result, 'Account created successfully')
   } catch (err) {
     next(err)

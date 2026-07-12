@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import api from '@/lib/api/axios'
 import { 
   Users, 
@@ -19,11 +20,13 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [roleFilter, setRoleFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const res = await api.get(`/api/admin/users?page=${page}&limit=10&search=${encodeURIComponent(search)}`)
+      const res = await api.get(`/api/admin/users?page=${page}&limit=10&search=${encodeURIComponent(search)}&role=${roleFilter}&status=${statusFilter}`)
       const data = res.data?.data || res.data
       setUsers(data?.docs || [])
       setTotalPages(data?.totalPages || 1)
@@ -34,14 +37,14 @@ export default function AdminUsersPage() {
     }
   }
 
-  // Reset page to 1 when search changes
+  // Reset page to 1 when filter changes
   useEffect(() => {
     setPage(1)
-  }, [search])
+  }, [search, roleFilter, statusFilter])
 
   useEffect(() => {
     fetchUsers()
-  }, [page])
+  }, [page, search, roleFilter, statusFilter])
 
   const handleApprove = async (id: string) => {
     if (!window.confirm('Are you sure you want to approve this artisan profile?')) return
@@ -103,6 +106,51 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#5F3041]/5 pb-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-extrabold text-[#C5A880] uppercase tracking-widest mr-2">Role:</span>
+          {([
+            { key: 'all', label: 'All Users' },
+            { key: 'buyer', label: 'Buyers Only' },
+            { key: 'seller', label: 'Artisans Only' }
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setRoleFilter(tab.key)}
+              className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider font-sans cursor-pointer transition-all border ${
+                roleFilter === tab.key
+                  ? 'bg-[#5F3041] text-[#E9D7C3] border-[#5F3041] shadow-xs'
+                  : 'bg-white text-gray-400 border-[#5F3041]/10 hover:text-[#5F3041]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-extrabold text-[#C5A880] uppercase tracking-widest mr-2">Status:</span>
+          {([
+            { key: 'all', label: 'All Status' },
+            { key: 'active', label: 'Active' },
+            { key: 'suspended', label: 'Suspended' }
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setStatusFilter(tab.key)}
+              className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider font-sans cursor-pointer transition-all border ${
+                statusFilter === tab.key
+                  ? 'bg-rose-900 text-[#E9D7C3] border-rose-900 shadow-xs'
+                  : 'bg-white text-gray-400 border-[#5F3041]/10 hover:text-rose-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Users table */}
       <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_15px_45px_rgba(61,12,31,0.02)]">
         <div className="overflow-x-auto">
@@ -127,8 +175,19 @@ export default function AdminUsersPage() {
                     
                     {/* User profile details */}
                     <td className="py-4.5 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#5F3041]/10 flex items-center justify-center text-xs font-bold text-[#5F3041] uppercase shrink-0">
-                        {u.firstName?.[0] || 'U'}
+                      <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#5F3041]/10 bg-gray-50 flex items-center justify-center shrink-0">
+                        {u.avatar ? (
+                          <Image
+                            src={u.avatar}
+                            alt={`${u.firstName || ''} ${u.lastName || ''}`}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs font-bold text-[#5F3041] uppercase">
+                            {u.firstName?.[0] || 'U'}
+                          </span>
+                        )}
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-gray-800">

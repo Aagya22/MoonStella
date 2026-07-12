@@ -4,7 +4,7 @@ import { User } from '../models/user.model'
 import { Post } from '../models/post.model'
 import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
-import { createNotification } from '../services/notification.service'
+import { createNotification, notifyAdmins } from '../services/notification.service'
 import { ok, created, badRequest, notFound } from '../utils/response'
 import mongoose from 'mongoose'
 
@@ -88,6 +88,13 @@ export const createReport = async (
       explanation,
       chatSnapshot,
       status: 'pending',
+    })
+
+    await notifyAdmins({
+      actorId: reporterId,
+      type: 'system',
+      text: `New abuse/spam report filed against a ${type}. Reason: "${reason}"`,
+      link: '/admin/reports'
     })
 
     created(res, report, 'Report submitted successfully')

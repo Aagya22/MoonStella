@@ -66,6 +66,8 @@ export const getUsers = async (
     const limit = parseInt(req.query.limit as string) || 10
     const skip = (page - 1) * limit
     const search = req.query.search as string
+    const role = req.query.role as string
+    const status = req.query.status as string
 
     const filter: any = { role: { $ne: 'admin' } }
     if (search) {
@@ -75,6 +77,16 @@ export const getUsers = async (
         { email: { $regex: search, $options: 'i' } },
         { studioName: { $regex: search, $options: 'i' } }
       ]
+    }
+
+    if (role && role !== 'all') {
+      filter.role = role
+    }
+
+    if (status === 'suspended') {
+      filter.isSuspended = true
+    } else if (status === 'active') {
+      filter.isSuspended = { $ne: true }
     }
 
     const totalDocs = await User.countDocuments(filter)
