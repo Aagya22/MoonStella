@@ -85,6 +85,7 @@ export default function AdminLayout({
     { name: 'User Management', href: '/admin/users', icon: Users },
     { name: 'Disputes Control', href: '/admin/disputes', icon: AlertTriangle },
     { name: 'Listing Moderation', href: '/admin/moderation', icon: FileEdit },
+    { name: 'Reported Issues', href: '/admin/reports', icon: Shield },
   ]
 
   return (

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api/axios'
 import BespokeOrderModal from '../orders/BespokeOrderModal'
+import ReportModal from '../../ReportModal'
 
 interface InspectPostModalProps {
   selectedInspectPost: any
@@ -32,6 +33,7 @@ export default function InspectPostModal({
   const [editDesc, setEditDesc] = useState('')
   const [editBudget, setEditBudget] = useState('')
   const [showOrderModal, setShowOrderModal] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   const [reviews, setReviews] = useState<any[]>([])
   const [reviewAvg, setReviewAvg] = useState(0)
@@ -199,9 +201,44 @@ export default function InspectPostModal({
                             setMenuOpen(false)
                             onDelete()
                           }}
-                          className="w-full text-left px-4 py-2 text-xs font-semibold text-red-650 hover:bg-red-55 border-none bg-transparent cursor-pointer"
+                          className="w-full text-left px-4 py-2 text-xs font-semibold text-red-655 hover:bg-red-50 border-none bg-transparent cursor-pointer"
                         >
                           Delete Post
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Report Option for other users' posts */}
+                {!isMyPost && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setMenuOpen(!menuOpen)}
+                      className="text-gray-450 hover:text-[#5F3041] cursor-pointer p-1 rounded-full hover:bg-gray-50 border-none bg-transparent flex items-center justify-center"
+                      title="More Options"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="19" cy="12" r="1" />
+                        <circle cx="5" cy="12" r="1" />
+                      </svg>
+                    </button>
+
+                    {menuOpen && (
+                      <div className="absolute right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 w-36 z-55 flex flex-col text-left">
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false)
+                            setShowReportModal(true)
+                          }}
+                          className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 border-none bg-transparent cursor-pointer flex items-center gap-1.5"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                            <line x1="4" y1="22" x2="4" y2="15" />
+                          </svg>
+                          Report Listing
                         </button>
                       </div>
                     )}
@@ -431,6 +468,15 @@ export default function InspectPostModal({
           </div>
         </div>
       )}
+
+      {/* Report Post Modal Overlay */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        type="post"
+        reportedId={selectedInspectPost.id || selectedInspectPost._id}
+        title="Report Jewelry Listing"
+      />
     </div>
   )
 }

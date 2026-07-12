@@ -8,6 +8,7 @@ import api from '@/lib/api/axios'
 import { io, Socket } from 'socket.io-client'
 import InspectPostModal from '@/app/components/seller/feed/InspectPostModal'
 import AudioPlayer from '@/app/components/chat/AudioPlayer'
+import ReportModal from '@/app/components/ReportModal'
 
 interface Message {
   _id: string
@@ -88,6 +89,7 @@ export default function SellerMessagesPage() {
   
   // Conversation Menu state
   const [conversationMenuOpen, setConversationMenuOpen] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
@@ -602,10 +604,25 @@ export default function SellerMessagesPage() {
                   <button
                     type="button"
                     onClick={handleDeleteConversation}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-650 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-655 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     Delete Conversation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConversationMenuOpen(false)
+                      setShowReportModal(true)
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 border-none bg-transparent cursor-pointer transition-colors flex items-center gap-1.5"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                      <line x1="4" y1="22" x2="4" y2="15" />
+                    </svg>
+                    Report Chat
                   </button>
                 </div>
               )}
@@ -916,6 +933,17 @@ export default function SellerMessagesPage() {
             </svg>
           </button>
         </div>
+      )}
+
+      {/* Report Chat Modal Overlay */}
+      {activeThreadId && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          type="chat"
+          reportedId={activeThreadId}
+          title="Report Conversation"
+        />
       )}
 
     </div>
