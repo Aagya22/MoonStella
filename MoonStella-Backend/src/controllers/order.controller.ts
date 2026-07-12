@@ -115,12 +115,39 @@ export const getBuyerOrders = async (req: Request, res: Response): Promise<void>
       return
     }
 
-    const orders = await Order.find({ buyerId })
+    const pageVal = req.query.page
+    const filter = { buyerId }
+
+    if (!pageVal) {
+      const orders = await Order.find(filter)
+        .populate('sellerId', 'firstName lastName email avatar role location bio averageResponseTime')
+        .populate('postId', 'images description category budget')
+        .sort({ createdAt: -1 })
+      ok(res, orders)
+      return
+    }
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const totalDocs = await Order.countDocuments(filter)
+    const orders = await Order.find(filter)
       .populate('sellerId', 'firstName lastName email avatar role location bio averageResponseTime')
       .populate('postId', 'images description category budget')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    ok(res, orders)
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: orders,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     serverError(res, err)
   }
@@ -135,12 +162,39 @@ export const getSellerOrders = async (req: Request, res: Response): Promise<void
       return
     }
 
-    const orders = await Order.find({ sellerId })
+    const pageVal = req.query.page
+    const filter = { sellerId }
+
+    if (!pageVal) {
+      const orders = await Order.find(filter)
+        .populate('buyerId', 'firstName lastName email avatar role location bio')
+        .populate('postId', 'images description category budget')
+        .sort({ createdAt: -1 })
+      ok(res, orders)
+      return
+    }
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const totalDocs = await Order.countDocuments(filter)
+    const orders = await Order.find(filter)
       .populate('buyerId', 'firstName lastName email avatar role location bio')
       .populate('postId', 'images description category budget')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    ok(res, orders)
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: orders,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     serverError(res, err)
   }

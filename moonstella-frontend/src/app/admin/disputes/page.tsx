@@ -16,6 +16,7 @@ import {
   Undo2,
   Lock
 } from 'lucide-react'
+import Pagination from '@/app/components/Pagination'
 
 interface TimelineEvent {
   stage: string
@@ -56,11 +57,16 @@ export default function AdminDisputesPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   const fetchDisputedOrders = async () => {
     try {
-      const res = await api.get('/api/admin/orders/disputed')
-      setOrders(res.data?.data || res.data)
+      setLoading(true)
+      const res = await api.get(`/api/admin/orders/disputed?page=${page}&limit=6`)
+      const data = res.data?.data || res.data
+      setOrders(data?.docs || [])
+      setTotalPages(data?.totalPages || 1)
     } catch (e) {
       console.error('Failed to load disputed orders:', e)
     } finally {
@@ -70,7 +76,7 @@ export default function AdminDisputesPage() {
 
   useEffect(() => {
     fetchDisputedOrders()
-  }, [])
+  }, [page])
 
   const handleResolve = async (id: string, action: 'complete' | 'refund') => {
     const term = action === 'complete' ? 'force-complete and release payment' : 'cancel and refund'
@@ -319,6 +325,7 @@ export default function AdminDisputesPage() {
                 ))}
               </div>
             )}
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
 
         </div>

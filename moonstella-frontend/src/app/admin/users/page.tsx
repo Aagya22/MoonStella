@@ -11,16 +11,22 @@ import {
   ShieldAlert, 
   BadgeHelp 
 } from 'lucide-react'
+import Pagination from '@/app/components/Pagination'
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   const fetchUsers = async () => {
     try {
-      const res = await api.get('/api/admin/users')
-      setUsers(res.data?.data || res.data)
+      setLoading(true)
+      const res = await api.get(`/api/admin/users?page=${page}&limit=10&search=${encodeURIComponent(search)}`)
+      const data = res.data?.data || res.data
+      setUsers(data?.docs || [])
+      setTotalPages(data?.totalPages || 1)
     } catch (e) {
       console.error('Failed to fetch admin users:', e)
     } finally {
@@ -28,9 +34,14 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Reset page to 1 when search changes
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [page])
 
   const handleApprove = async (id: string) => {
     if (!window.confirm('Are you sure you want to approve this artisan profile?')) return
@@ -55,13 +66,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  const filteredUsers = users.filter((u) => {
-    const term = search.toLowerCase()
-    const fullName = `${u.firstName || ''} ${u.lastName || ''}`.toLowerCase()
-    const email = (u.email || '').toLowerCase()
-    const studio = (u.studioName || '').toLowerCase()
-    return fullName.includes(term) || email.includes(term) || studio.includes(term)
-  })
+  const filteredUsers = users
 
   if (loading) {
     return (
@@ -225,6 +230,8 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+        
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
 
     </div>

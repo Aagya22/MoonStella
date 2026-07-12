@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import api from '@/lib/api/axios'
 import { 
   Users, 
@@ -135,28 +136,42 @@ export default function AdminDashboardPage() {
       {/* Activity Streams Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Recent Orders List */}
+        {/* Recent Registrations List (Switched from Recent Orders) */}
         <div className="bg-white border border-[#5F3041]/10 p-8 rounded-[2rem] shadow-[0_15px_40px_rgba(61,12,31,0.02)] flex flex-col gap-6">
-          <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase border-b border-gray-100 pb-3 flex items-center gap-2">
-            <Package className="w-4 h-4 text-gray-400" />
-            Recent Commissions placed
-          </h3>
+          <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+            <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase flex items-center gap-2">
+              <Users className="w-4 h-4 text-gray-400" />
+              Recent Registrations
+            </h3>
+            <Link 
+              href="/admin/users" 
+              className="text-[9px] font-bold text-[#5F3041] hover:underline uppercase tracking-wider transition-colors"
+            >
+              Show All
+            </Link>
+          </div>
 
           <div className="flex flex-col gap-4">
-            {activities.recentOrders.length === 0 ? (
-              <p className="text-xs text-gray-400 italic py-6 text-center">No orders registered yet</p>
+            {activities.recentUsers.length === 0 ? (
+              <p className="text-xs text-gray-400 italic py-6 text-center">No registrations yet</p>
             ) : (
-              activities.recentOrders.map((o: any) => (
-                <div key={o._id} className="flex justify-between items-center gap-4 bg-[#FAF8F5]/30 border border-[#5F3041]/5 p-4 rounded-2xl hover:bg-[#FAF8F5]/70 transition-all">
+              activities.recentUsers.slice(0, 5).map((u: any) => (
+                <div key={u._id} className="flex justify-between items-center gap-4 bg-[#FAF8F5]/30 border border-[#5F3041]/5 p-4 rounded-2xl hover:bg-[#FAF8F5]/70 transition-all">
                   <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-xs font-bold text-gray-800 truncate">{o.title}</span>
-                    <span className="text-[9px] text-gray-450 font-medium">
-                      Client: {o.buyerId?.firstName} {o.buyerId?.lastName} | Artisan: {o.sellerId?.firstName}
-                    </span>
+                    <span className="text-xs font-bold text-gray-800 truncate">{u.firstName} {u.lastName}</span>
+                    <span className="text-[9px] text-gray-455 font-medium truncate">{u.email}</span>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span className="text-[9px] font-bold text-gray-700 font-serif">Rs. {o.budget.toLocaleString()}</span>
-                    <span className="text-[8px] font-extrabold text-[#5F3041] uppercase tracking-wider">{o.status}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider bg-[#FAF0F3] text-[#5F3041]">
+                      {u.role}
+                    </span>
+                    {u.isSuspended ? (
+                      <span className="text-[8px] font-extrabold bg-rose-50 text-rose-800 px-2 py-0.5 rounded-full uppercase">Suspended</span>
+                    ) : u.role === 'seller' && !u.isApproved ? (
+                      <span className="text-[8px] font-extrabold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full uppercase">Pending</span>
+                    ) : (
+                      <span className="text-[8px] font-extrabold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full uppercase">Active</span>
+                    )}
                   </div>
                 </div>
               ))
@@ -166,16 +181,24 @@ export default function AdminDashboardPage() {
 
         {/* Recent Listing Posts */}
         <div className="bg-white border border-[#5F3041]/10 p-8 rounded-[2rem] shadow-[0_15px_40px_rgba(61,12,31,0.02)] flex flex-col gap-6">
-          <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase border-b border-gray-100 pb-3 flex items-center gap-2">
-            <ShoppingBag className="w-4 h-4 text-gray-400" />
-            Recent Listing Additions
-          </h3>
+          <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+            <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-gray-400" />
+              Recent Listing Additions
+            </h3>
+            <Link 
+              href="/admin/moderation" 
+              className="text-[9px] font-bold text-[#5F3041] hover:underline uppercase tracking-wider transition-colors"
+            >
+              Show All
+            </Link>
+          </div>
 
           <div className="flex flex-col gap-4">
             {activities.recentPosts.length === 0 ? (
               <p className="text-xs text-gray-400 italic py-6 text-center">No catalog posts created yet</p>
             ) : (
-              activities.recentPosts.map((p: any) => (
+              activities.recentPosts.slice(0, 5).map((p: any) => (
                 <div key={p._id} className="flex justify-between items-center gap-4 bg-[#FAF8F5]/30 border border-[#5F3041]/5 p-4 rounded-2xl hover:bg-[#FAF8F5]/70 transition-all">
                   <div className="flex flex-col gap-1 min-w-0">
                     <span className="text-xs font-bold text-gray-800 uppercase tracking-wide truncate">{p.category}</span>
@@ -193,63 +216,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-      </div>
-
-      {/* Recent Users Activity Table */}
-      <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_15px_45px_rgba(61,12,31,0.02)]">
-        <h3 className="text-xs font-extrabold text-gray-400 tracking-widest uppercase border-b border-gray-100 pb-4 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-gray-400" />
-          Recent User Registrations
-        </h3>
-
-        <div className="overflow-x-auto mt-4">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="py-3 text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Name</th>
-                <th className="py-3 text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Email</th>
-                <th className="py-3 text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Role</th>
-                <th className="py-3 text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Status</th>
-                <th className="py-3 text-[9px] font-extrabold text-gray-400 uppercase tracking-widest">Signup Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activities.recentUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-xs text-gray-400 italic">No users found</td>
-                </tr>
-              ) : (
-                activities.recentUsers.map((u: any) => (
-                  <tr key={u._id} className="border-b border-gray-100/50 hover:bg-[#FAF8F5]/30">
-                    <td className="py-4 text-xs font-bold text-gray-800">
-                      {u.firstName} {u.lastName}
-                    </td>
-                    <td className="py-4 text-xs text-gray-550">{u.email}</td>
-                    <td className="py-4 text-xs text-gray-450 font-bold uppercase tracking-wider">{u.role}</td>
-                    <td className="py-4 text-xs">
-                      {u.isSuspended ? (
-                        <span className="text-[8px] font-extrabold bg-rose-50 text-rose-800 border border-rose-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Suspended
-                        </span>
-                      ) : u.role === 'seller' && !u.isApproved ? (
-                        <span className="text-[8px] font-extrabold bg-amber-50 text-amber-800 border border-amber-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Pending
-                        </span>
-                      ) : (
-                        <span className="text-[8px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Active
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 text-xs text-gray-450">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
 
     </div>

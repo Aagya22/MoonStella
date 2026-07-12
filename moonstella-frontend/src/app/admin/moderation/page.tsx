@@ -10,15 +10,23 @@ import {
   AlertTriangle, 
   ExternalLink 
 } from 'lucide-react'
+import Pagination from '@/app/components/Pagination'
 
 export default function AdminModerationPage() {
   const [posts, setPosts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalDocs, setTotalDocs] = useState(0)
 
   const fetchPosts = async () => {
     try {
-      const res = await api.get('/api/admin/posts')
-      setPosts(res.data?.data || res.data)
+      setLoading(true)
+      const res = await api.get(`/api/admin/posts?page=${page}&limit=9`)
+      const data = res.data?.data || res.data
+      setPosts(data?.docs || [])
+      setTotalPages(data?.totalPages || 1)
+      setTotalDocs(data?.totalDocs || 0)
     } catch (e) {
       console.error('Failed to load posts for moderation:', e)
     } finally {
@@ -28,7 +36,7 @@ export default function AdminModerationPage() {
 
   useEffect(() => {
     fetchPosts()
-  }, [])
+  }, [page])
 
   const handleDeletePost = async (id: string, category: string) => {
     if (!window.confirm(`Are you sure you want to permanently delete this listing post under "${category}"?`)) return
@@ -65,7 +73,7 @@ export default function AdminModerationPage() {
       {/* Grid List */}
       <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_15px_45px_rgba(61,12,31,0.02)] min-h-[400px]">
         <h3 className="text-sm font-bold text-gray-800 tracking-wider uppercase font-sans border-b border-gray-100 pb-3.5 flex justify-between items-center">
-          <span>Active Post Listings ({posts.length})</span>
+          <span>Active Post Listings ({totalDocs})</span>
         </h3>
 
         {posts.length === 0 ? (
@@ -142,6 +150,7 @@ export default function AdminModerationPage() {
             ))}
           </div>
         )}
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
 
     </div>

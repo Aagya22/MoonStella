@@ -102,10 +102,17 @@ export const getReports = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const totalDocs = await Report.countDocuments({})
     const reports = await Report.find({})
       .sort({ createdAt: -1 })
       .populate('reporterId', 'firstName lastName email avatar role')
       .populate('reportedUserId', 'firstName lastName email avatar role isApproved isSuspended')
+      .skip(skip)
+      .limit(limit)
 
     // Attach post/listing info if the type is 'post'
     const enrichedReports = await Promise.all(
@@ -121,7 +128,15 @@ export const getReports = async (
       })
     )
 
-    ok(res, enrichedReports)
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: enrichedReports,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     next(err)
   }

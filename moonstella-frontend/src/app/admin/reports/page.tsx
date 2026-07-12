@@ -15,6 +15,7 @@ import {
   Calendar,
   AlertOctagon
 } from 'lucide-react'
+import Pagination from '@/app/components/Pagination'
 
 interface MessageSnapshot {
   senderId: string
@@ -65,11 +66,18 @@ export default function AdminReportsPage() {
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalDocs, setTotalDocs] = useState(0)
 
   const fetchReports = async () => {
     try {
-      const res = await api.get('/api/reports/admin')
-      setReports(res.data?.data || res.data)
+      setLoading(true)
+      const res = await api.get(`/api/reports/admin?page=${page}&limit=6`)
+      const data = res.data?.data || res.data
+      setReports(data?.docs || [])
+      setTotalPages(data?.totalPages || 1)
+      setTotalDocs(data?.totalDocs || 0)
     } catch (e) {
       console.error('Failed to load reports:', e)
     } finally {
@@ -79,7 +87,7 @@ export default function AdminReportsPage() {
 
   useEffect(() => {
     fetchReports()
-  }, [])
+  }, [page])
 
   const handleResolveReport = async (reportId: string, action: 'resolve' | 'suspend' | 'delete_post') => {
     let msg = 'Are you sure you want to resolve this report?'
@@ -351,7 +359,7 @@ export default function AdminReportsPage() {
 
           <div className="bg-white border border-[#5F3041]/10 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_15px_45px_rgba(61,12,31,0.02)] min-h-[350px]">
             <h3 className="text-sm font-bold text-gray-800 tracking-wider uppercase font-sans border-b border-gray-100 pb-3.5">
-              Active Abuse & Spam Reports ({reports.length})
+              Active Abuse & Spam Reports ({totalDocs})
             </h3>
 
             {reports.length === 0 ? (
@@ -420,6 +428,7 @@ export default function AdminReportsPage() {
                 })}
               </div>
             )}
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
 
         </div>

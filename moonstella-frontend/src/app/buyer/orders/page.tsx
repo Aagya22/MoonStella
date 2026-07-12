@@ -20,6 +20,7 @@ import {
   Star,
   Plus
 } from 'lucide-react'
+import Pagination from '@/app/components/Pagination'
 
 interface TimelineEvent {
   stage: string
@@ -57,6 +58,11 @@ export default function BuyerOrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null)
   const [filter, setFilter] = useState<'ongoing' | 'completed' | 'cancelled'>('ongoing')
+  const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    setPage(1)
+  }, [filter])
 
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [reviewRating, setReviewRating] = useState(0)
@@ -593,6 +599,10 @@ export default function BuyerOrdersPage() {
   const filteredOrders =
     filter === 'ongoing' ? activeOrders : filter === 'completed' ? completedOrders : cancelledOrders
 
+  const limit = 3
+  const totalPages = Math.ceil(filteredOrders.length / limit)
+  const paginatedOrders = filteredOrders.slice((page - 1) * limit, page * limit)
+
   return (
     <div className="flex-1 w-full mx-auto px-6 sm:px-10 py-6 max-w-[1500px] select-none">
       <div className="flex flex-col gap-6">
@@ -693,8 +703,11 @@ export default function BuyerOrdersPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filteredOrders.map(renderOrderCard)}
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {paginatedOrders.map(renderOrderCard)}
+            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
         )}
 
