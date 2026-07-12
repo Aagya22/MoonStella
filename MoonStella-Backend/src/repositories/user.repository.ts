@@ -22,7 +22,9 @@ export const createUser = async (data: {
   email: string
   phoneNumber: string
   passwordHash: string
-  role: 'buyer' | 'seller'
+  role: 'buyer' | 'seller' | 'admin'
+  isApproved?: boolean
+  isSuspended?: boolean
 }): Promise<IUser> => {
   return User.create(data)
 }

@@ -25,6 +25,8 @@ export const formatUser = (user: IUser) => ({
   averageResponseTime: user.averageResponseTime,
   onboarded: user.onboarded,
   interests: user.interests,
+  isApproved: user.isApproved,
+  isSuspended: user.isSuspended,
   following: user.following || [],
   savedPosts: user.savedPosts || [],
   createdAt: user.createdAt,
@@ -46,6 +48,8 @@ export const registerUser = async (data: RegisterDto) => {
     phoneNumber: data.phoneNumber,
     passwordHash,
     role: data.role,
+    isApproved: data.role === 'seller' ? false : true,
+    isSuspended: false,
   })
 
   const token = signToken(String(user._id))
@@ -55,6 +59,10 @@ export const registerUser = async (data: RegisterDto) => {
 export const loginUser = async (data: LoginDto) => {
   const user = await UserRepository.findByEmail(data.email)
   if (!user) throw new AppError('Invalid email or password', 401)
+
+  if (user.isSuspended) {
+    throw new AppError('Your account has been suspended by the administrator. Please contact support.', 403)
+  }
 
   const isMatch = await user.comparePassword(data.password)
   if (!isMatch) throw new AppError('Invalid email or password', 401)
