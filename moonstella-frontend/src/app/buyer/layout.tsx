@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { io, Socket } from 'socket.io-client'
 import Image from 'next/image'
 import BuyerOnboarding from '@/app/components/buyer/buyer-onboarding'
 import { BuyerContext } from './BuyerContext'
@@ -71,9 +72,8 @@ export default function BuyerLayout({
 
   // Notifications dropdown
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [notifications, setNotifications] = useState<any[]>([
-    { id: 1, text: 'Welcome to MoonStella! Your private vault is active.', time: 'Just now', read: false },
-  ])
+  const [notifications, setNotifications] = useState<any[]>([])
+  const notifSocketRef = useRef<Socket | null>(null)
 
   // Live Chat drawer states
   const [activeChat, setActiveChat] = useState<any>(null)
@@ -240,12 +240,85 @@ export default function BuyerLayout({
     }, 1500)
   }
 
-  const markAllNotificationsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })))
+  const formatNotifTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000)
+    if (mins < 1) return 'Just now'
+    if (mins < 60) return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    const days = Math.floor(hrs / 24)
+    if (days < 7) return `${days}d ago`
+    return d.toLocaleDateString()
   }
 
-  const toggleNotification = (id: number) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n))
+  const mapNotification = (n: any) => ({
+    id: n._id,
+    text: n.text,
+    time: formatNotifTime(n.createdAt),
+    read: n.read,
+    link: n.link,
+    type: n.type,
+  })
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('ms_token')
+      if (!token || token === 'mock_token_for_preview') return
+      const res = await api.get('/api/notifications')
+      if (res.data?.success) {
+        setNotifications((res.data.data.notifications || []).map(mapNotification))
+      }
+    } catch {
+      // ignore notification fetch errors
+    }
+  }
+
+  // Load notifications + subscribe to real-time updates
+  const notifUserId = user?._id || user?.id
+  useEffect(() => {
+    const token = localStorage.getItem('ms_token')
+    if (!notifUserId || !token || token === 'mock_token_for_preview') return
+
+    fetchNotifications()
+
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const socket = io(socketUrl, { auth: { token } })
+    notifSocketRef.current = socket
+    socket.on('notification', (n: any) => {
+      setNotifications(prev => [mapNotification(n), ...prev])
+    })
+
+    const onFocus = () => fetchNotifications()
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      socket.disconnect()
+      window.removeEventListener('focus', onFocus)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifUserId])
+
+  const markAllNotificationsRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    try { await api.patch('/api/notifications/read') } catch { /* ignore */ }
+  }
+
+  const markNotificationRead = async (id: string) => {
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)))
+    try { await api.patch(`/api/notifications/${id}/read`) } catch { /* ignore */ }
+  }
+
+  const toggleNotification = async (id: string) => {
+    const notif = notifications.find(n => n.id === id)
+    markNotificationRead(id)
+    setNotificationsOpen(false)
+    if (notif?.link) router.push(`/buyer/${notif.link}`)
+  }
+
+  const clearAllNotifications = async () => {
+    setNotifications([])
+    try { await api.delete('/api/notifications') } catch { /* ignore */ }
   }
 
   const unreadNotificationsCount = notifications.filter(n => !n.read).length
@@ -253,7 +326,7 @@ export default function BuyerLayout({
   if (!user) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-xs">Loading profile...</div>
 
   return (
-    <BuyerContext.Provider value={{ user, setUser, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans }}>
+    <BuyerContext.Provider value={{ user, setUser, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans, notifications, unreadNotificationsCount, toggleNotification, markNotificationRead, markAllNotificationsRead, clearAllNotifications }}>
       <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased relative">
 
         {/* 1. Header (Navbar) */}

@@ -19,6 +19,8 @@ export interface IUser extends Document{
     averageResponseTime?: string | null
     onboarded: boolean
     interests: string[]
+    isApproved: boolean
+    isSuspended: boolean
     createdAt: Date
     updatedAt: Date
     comparePassword(password: string): Promise<boolean>
@@ -86,6 +88,14 @@ const UserSchema = new Schema<IUser>(
         interests: {
             type: [String],
             default: [],
+        },
+        isApproved: {
+            type: Boolean,
+            default: true,
+        },
+        isSuspended: {
+            type: Boolean,
+            default: false,
         },
         following:[
             {

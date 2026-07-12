@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import api from '@/lib/api/axios'
+import BespokeOrderModal from '../orders/BespokeOrderModal'
 
 interface InspectPostModalProps {
   selectedInspectPost: any
@@ -29,6 +31,13 @@ export default function InspectPostModal({
   const [isEditing, setIsEditing] = useState(false)
   const [editDesc, setEditDesc] = useState('')
   const [editBudget, setEditBudget] = useState('')
+  const [showOrderModal, setShowOrderModal] = useState(false)
+
+  const [reviews, setReviews] = useState<any[]>([])
+  const [reviewAvg, setReviewAvg] = useState(0)
+  const [reviewCount, setReviewCount] = useState(0)
+  const [loadingReviews, setLoadingReviews] = useState(false)
+  const [reviewLightbox, setReviewLightbox] = useState<string | null>(null)
 
   // Sync state with incoming post info
   useEffect(() => {
@@ -37,6 +46,31 @@ export default function InspectPostModal({
       setEditBudget(selectedInspectPost.price?.replace('Rs. ', '')?.replace(/,/g, '') || '')
     }
   }, [selectedInspectPost])
+
+  // Load public reviews for this post
+  useEffect(() => {
+    const postId = selectedInspectPost?.id || selectedInspectPost?._id
+    if (!postId) return
+    setLoadingReviews(true)
+    api.get(`/api/posts/${postId}/reviews`)
+      .then(res => {
+        if (res.data?.success) {
+          setReviews(res.data.data.reviews || [])
+          setReviewAvg(res.data.data.averageRating || 0)
+          setReviewCount(res.data.data.count || 0)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingReviews(false))
+  }, [selectedInspectPost])
+
+  const renderStars = (rating: number, size = 12) =>
+    [1, 2, 3, 4, 5].map(s => (
+      <svg key={s} width={size} height={size} viewBox="0 0 24 24"
+        fill={s <= rating ? '#C5A880' : 'none'} stroke="#C5A880" strokeWidth="1.5">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ))
 
   const currentUserName = user ? `${user.firstName} ${user.lastName}` : 'Connoisseur Member'
   const isMyPost =
@@ -262,6 +296,68 @@ export default function InspectPostModal({
                 </span>
               ))}
             </div>
+
+            {/* Reviews */}
+            <div className="border-t border-gray-100 pt-5">
+              <div className="flex items-center justify-between mb-4">
+                <h5 className="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  Reviews
+                </h5>
+                {reviewCount > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-0.5">{renderStars(Math.round(reviewAvg), 13)}</div>
+                    <span className="text-[11px] font-bold text-[#5F3041] font-sans">{reviewAvg}</span>
+                    <span className="text-[10px] text-gray-400 font-sans">({reviewCount})</span>
+                  </div>
+                )}
+              </div>
+
+              {loadingReviews ? (
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-sans">Loading reviews…</p>
+              ) : reviews.length === 0 ? (
+                <p className="text-[11px] text-gray-400 italic font-sans leading-relaxed">
+                  No reviews yet. Only clients who have ordered this piece can leave a review.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-5">
+                  {reviews.map((r) => (
+                    <div key={r._id} className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full overflow-hidden relative bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center text-[10px] font-bold shrink-0">
+                          {r.buyerId?.avatar ? (
+                            <Image src={r.buyerId.avatar} alt={r.buyerId.firstName || 'Client'} fill className="object-cover" />
+                          ) : (
+                            <span>{r.buyerId?.firstName?.[0]?.toUpperCase() || 'U'}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col leading-tight min-w-0">
+                          <span className="text-[11px] font-bold text-gray-700 font-sans truncate">
+                            {r.buyerId?.firstName} {r.buyerId?.lastName}
+                          </span>
+                          <div className="flex items-center gap-0.5">{renderStars(r.rating, 11)}</div>
+                        </div>
+                        <span className="ml-auto text-[9px] text-gray-400 font-sans shrink-0">
+                          {new Date(r.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {r.comment && (
+                        <p className="text-[11px] text-gray-600 leading-relaxed font-sans pl-9">{r.comment}</p>
+                      )}
+                      {r.images?.length > 0 && (
+                        <div className="flex gap-2 flex-wrap pl-9">
+                          {r.images.map((img: string, i: number) => (
+                            <div key={i} onClick={() => setReviewLightbox(img)}
+                              className="relative w-14 h-14 rounded-lg overflow-hidden border border-[#C5A880]/30 cursor-zoom-in">
+                              <Image src={img} alt={`Review photo ${i + 1}`} fill className="object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {(() => {
@@ -286,22 +382,55 @@ export default function InspectPostModal({
               )
             }
             return (
-              <div className="border-t border-gray-100 pt-5 mt-auto">
+              <div className="border-t border-gray-100 pt-5 mt-auto flex gap-3 w-full">
                 <button
                   onClick={() => {
                     openChatWith(selectedInspectPost.artisanName)
                     onClose()
                   }}
-                  className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-white text-[10px] font-bold tracking-widest py-3.5 rounded uppercase cursor-pointer transition-all text-center shadow border-none"
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                  className="flex-1 bg-[#FAF0F3] hover:bg-[#5F3041]/10 text-[#5F3041] text-[9.5px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all text-center border border-[#5F3041]/25 hover:border-[#5F3041]/35 font-sans"
                 >
-                  Inquire Custom Commission
+                  Inquire
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOrderModal(true)
+                  }}
+                  className="flex-1 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[9.5px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all text-center border-none shadow-sm active:scale-95 font-sans"
+                >
+                  Order Now
                 </button>
               </div>
             )
           })()}
         </div>
       </div>
+
+      {/* Bespoke Order Modal Overlay */}
+      <BespokeOrderModal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        sellerId={selectedInspectPost.userId}
+        sellerName={selectedInspectPost.artisanName}
+        postId={selectedInspectPost.id || selectedInspectPost._id}
+        postCategory={selectedInspectPost.category}
+        postBudget={selectedInspectPost.rawPrice || selectedInspectPost.budget}
+        postDescription={selectedInspectPost.description}
+        postImage={selectedInspectPost.images && selectedInspectPost.images.length > 0 ? selectedInspectPost.images[0] : (selectedInspectPost.image || '')}
+        buyerLocation={user?.location || ''}
+        sellerLocation={selectedInspectPost.sellerLocation || ''}
+        postPrice={selectedInspectPost.price || selectedInspectPost.budget || selectedInspectPost.rawPrice}
+      />
+
+      {/* Review photo lightbox */}
+      {reviewLightbox && (
+        <div onClick={() => setReviewLightbox(null)}
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out">
+          <div className="relative w-full max-w-3xl h-[80vh]">
+            <Image src={reviewLightbox} alt="Review photo" fill className="object-contain" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

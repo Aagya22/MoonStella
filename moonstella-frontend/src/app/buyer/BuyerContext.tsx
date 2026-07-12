@@ -22,6 +22,12 @@ export interface BuyerContextType {
   triggerProfileEdit?: () => void
   followedArtisans?: string[]
   setFollowedArtisans?: React.Dispatch<React.SetStateAction<string[]>>
+  notifications: any[]
+  unreadNotificationsCount: number
+  toggleNotification: (id: string) => void
+  markNotificationRead: (id: string) => void
+  markAllNotificationsRead: () => void
+  clearAllNotifications: () => void
 }
 
 export const BuyerContext = createContext<BuyerContextType | null>(null)

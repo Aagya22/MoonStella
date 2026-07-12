@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import BespokeOrderModal from '../orders/BespokeOrderModal'
 
 interface PostCardProps {
   post: any
@@ -40,6 +41,7 @@ export default function PostCard({
 }: PostCardProps) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [showOrderModal, setShowOrderModal] = useState(false)
 
   const imagesList = post.images || (post.image ? [post.image] : [])
   const isFollowing = user?.following?.some((id: any) => String(id) === String(post.userId)) || false
@@ -47,6 +49,20 @@ export default function PostCard({
   const isMyPost = post.artisanName === currentUserName || String(post.userId?._id || post.userId) === String(user?.id || user?._id)
   const isSaved = wishlist.includes(post.id)
   const savesCount = isSaved ? 1 : 0
+
+  const reviewStats = post.reviewStats || { count: 0, average: 0 }
+  const reviewSummary = reviewStats.count > 0 ? (
+    <button
+      onClick={() => { setSelectedInspectPost(post); setActiveInspectIndex(0) }}
+      className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[#C5A880] transition-colors cursor-pointer border-none bg-transparent"
+      style={{ fontFamily: 'var(--font-montserrat)' }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#C5A880" stroke="#C5A880" strokeWidth="1">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+      <span>{reviewStats.average} · {reviewStats.count} {reviewStats.count === 1 ? 'Review' : 'Reviews'}</span>
+    </button>
+  ) : null
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -241,6 +257,7 @@ export default function PostCard({
                   </svg>
                   <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
                 </button>
+                {reviewSummary}
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1">
@@ -282,18 +299,7 @@ export default function PostCard({
             <div className="w-full md:w-36 shrink-0 flex flex-col pt-2 select-none">
               <button
                 onClick={() => {
-                  const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
-                  const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
-                  openChatWith(
-                    post.artisanName,
-                    post.userId,
-                    text,
-                    post.id || post._id,
-                    post.description,
-                    post.category,
-                    post.budget ? String(post.budget) : '',
-                    postImage
-                  )
+                  setShowOrderModal(true)
                 }}
                 className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all duration-300 border-none text-center shadow-[0_4px_12px_rgba(95,48,65,0.15)] hover:shadow-[0_6px_16px_rgba(95,48,65,0.25)] active:scale-95 transform hover:-translate-y-[1px]"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
@@ -370,6 +376,7 @@ export default function PostCard({
                   </svg>
                   <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
                 </button>
+                {reviewSummary}
               </div>
             )}
 
@@ -387,6 +394,22 @@ export default function PostCard({
           </div>
         )}
       </div>
+
+      {/* Bespoke Order Modal Overlay */}
+      <BespokeOrderModal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        sellerId={post.userId}
+        sellerName={post.artisanName}
+        postId={post.id || post._id}
+        postCategory={post.category}
+        postBudget={post.budget}
+        postDescription={post.description}
+        postImage={post.images && post.images.length > 0 ? post.images[0] : (post.image || '')}
+        buyerLocation={user?.location || ''}
+        sellerLocation={post.sellerLocation || ''}
+        postPrice={post.price || post.budget}
+      />
     </article>
   )
 }

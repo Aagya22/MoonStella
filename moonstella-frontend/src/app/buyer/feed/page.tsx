@@ -60,6 +60,7 @@ export default function BuyerFeedPage() {
             : 'Connoisseur Member',
           artisanTitle: p.userId?.role === 'seller' ? 'MASTER ARTISAN' : 'CONNOISSEUR MEMBER',
           avatar: p.userId?.avatar || null,
+          sellerLocation: p.userId?.location || null,
           image: p.images?.[0] || null,
           images: p.images || [],
           category: p.category,
@@ -79,6 +80,7 @@ export default function BuyerFeedPage() {
             location: u.location || 'Nepal'
           })) || [],
           comments: p.comments || [],
+          reviewStats: p.reviewStats || { count: 0, average: 0 },
           time: new Date(p.createdAt).toLocaleDateString(),
           rawDate: p.createdAt,
         }))

@@ -7,7 +7,7 @@ interface HeaderProps {
   notificationsOpen: boolean
   setNotificationsOpen: (open: boolean) => void
   notifications: any[]
-  toggleNotification: (id: number) => void
+  toggleNotification: (id: string) => void
   markAllNotificationsRead: () => void
   unreadNotificationsCount: number
   sidebarOpen: boolean
@@ -125,6 +125,13 @@ export default function Header({
                   </div>
                 ))}
               </div>
+              <button
+                onClick={() => { router.push('/buyer/notifications'); setNotificationsOpen(false) }}
+                className="w-full text-center py-2.5 text-[10px] font-bold text-[#5F3041] uppercase tracking-widest hover:bg-gray-50 border-t border-gray-50 cursor-pointer bg-white"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                View all notifications
+              </button>
             </div>
           )}
         </div>

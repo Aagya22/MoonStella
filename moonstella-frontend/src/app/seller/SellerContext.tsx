@@ -18,6 +18,12 @@ export interface SellerContextType {
     postImage?: string
   ) => void
   triggerProfileEdit?: () => void
+  notifications: any[]
+  unreadNotificationsCount: number
+  toggleNotification: (id: string) => void
+  markNotificationRead: (id: string) => void
+  markAllNotificationsRead: () => void
+  clearAllNotifications: () => void
 }
 
 export const SellerContext = createContext<SellerContextType | null>(null)

@@ -15,7 +15,27 @@ export const createPost = async (userId: string, data: CreatePostDto) => {
 }
 
 export const getAllPosts = async () => {
-  return PostRepository.findAll()
+  const posts = await PostRepository.findAll()
+
+  // Attach public review stats (count + average) to each post, sourced from
+  // reviews left on completed orders that reference the post.
+  const { Review } = require('../models/review.model')
+  const stats = await Review.aggregate([
+    { $lookup: { from: 'orders', localField: 'orderId', foreignField: '_id', as: 'order' } },
+    { $unwind: '$order' },
+    { $group: { _id: '$order.postId', count: { $sum: 1 }, average: { $avg: '$rating' } } }
+  ])
+  const statMap = new Map<string, any>(stats.map((s: any) => [String(s._id), s]))
+
+  return posts.map((p: any) => {
+    const obj = typeof p.toObject === 'function' ? p.toObject() : p
+    const s = statMap.get(String(obj._id))
+    obj.reviewStats = {
+      count: s ? s.count : 0,
+      average: s ? Math.round(s.average * 10) / 10 : 0,
+    }
+    return obj
+  })
 }
 
 export const toggleLikePost = async (postId: string, userId: string) => {

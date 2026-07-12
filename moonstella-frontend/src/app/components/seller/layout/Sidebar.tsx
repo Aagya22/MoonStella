@@ -46,6 +46,17 @@ export default function Sidebar({
           <nav className="flex flex-col gap-1 px-4">
             {[
               {
+                id: 'dashboard',
+                label: 'DASHBOARD',
+                icon: (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" />
+                    <rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" />
+                  </svg>
+                ),
+                onClick: () => { router.push('/seller/dashboard'); closeSidebar(); }
+              },
+              {
                 id: 'home',
                 label: 'REQUESTS FEED',
                 icon: (
@@ -79,6 +90,18 @@ export default function Sidebar({
                 onClick: () => { router.push('/seller/saved'); closeSidebar(); }
               },
               {
+                id: 'orders',
+                label: 'MY COMMISSIONS',
+                icon: (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" /><line x1="8" y1="14" x2="16" y2="14" />
+                  </svg>
+                ),
+                onClick: () => { router.push('/seller/orders'); closeSidebar(); }
+              },
+              {
                 id: 'profile',
                 label: 'PROFILE',
                 icon: (
@@ -91,9 +114,11 @@ export default function Sidebar({
               }
             ].map((item) => {
               const isVisitingProfile = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')
-              const isActive = (item.id === 'home' && pathname === '/seller/feed') ||
+              const isActive = (item.id === 'dashboard' && pathname === '/seller/dashboard') ||
+                (item.id === 'home' && pathname === '/seller/feed') ||
                 (item.id === 'messages' && pathname === '/seller/messages') ||
                 (item.id === 'saved' && pathname === '/seller/saved') ||
+                (item.id === 'orders' && pathname === '/seller/orders') ||
                 (item.id === 'profile' && pathname === '/seller/profile' && !isVisitingProfile)
               return (
                 <button
