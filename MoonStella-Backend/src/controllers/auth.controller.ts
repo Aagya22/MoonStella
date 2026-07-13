@@ -149,3 +149,29 @@ export const toggleFollowUser = async (
     next(err)
   }
 }
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await AuthService.forgotPassword(req.body)
+    ok(res, null, 'Password reset email sent successfully')
+  } catch (err) {
+    next(err)
+  }
+}
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    await AuthService.resetPassword(req.body)
+    ok(res, null, 'Password reset successfully')
+  } catch (err) {
+    next(err)
+  }
+}

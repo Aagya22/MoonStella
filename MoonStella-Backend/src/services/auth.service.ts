@@ -3,8 +3,9 @@ import jwt from 'jsonwebtoken'
 import { env } from '../config/env'
 import { AppError } from '../errors/app.error'
 import * as UserRepository from '../repositories/user.repository'
+import { sendEmail } from '../utils/email'
 import type { IUser } from '../models/user.model'
-import type { RegisterDto, LoginDto, UpdateProfileDto, ChangePasswordDto } from '../dtos/auth.dto'
+import type { RegisterDto, LoginDto, UpdateProfileDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from '../dtos/auth.dto'
 
 const signToken = (id: string): string => {
   return jwt.sign({ id }, env.JWT_SECRET, { expiresIn: '30d' })
@@ -173,4 +174,69 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
       location: u.location
     }))
   }
+}
+
+export const forgotPassword = async (data: ForgotPasswordDto): Promise<void> => {
+  const user = await UserRepository.findByEmail(data.email)
+  if (!user) {
+    throw new AppError('No account found with this email', 404)
+  }
+
+  // Generate short-lived reset token (1 hour)
+  const token = jwt.sign(
+    { id: user._id, type: 'reset' },
+    env.JWT_SECRET,
+    { expiresIn: '1h' }
+  )
+
+  const resetLink = `${env.CLIENT_URL}/reset-password?token=${token}`
+
+  const html = `
+    <div style="font-family: 'Playfair Display', 'Georgia', serif; background-color: #FAF8F5; padding: 40px 20px; color: #1a1a1a; max-width: 600px; margin: 0 auto; border-radius: 16px; border: 1px solid rgba(95, 48, 65, 0.1);">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #5F3041; font-size: 28px; margin: 0; font-weight: bold; letter-spacing: 0.05em;">MoonStella</h1>
+        <p style="font-family: 'Montserrat', 'Helvetica', sans-serif; font-size: 9px; color: #8C8C8C; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 5px;">Exquisite Artistry, Defined by You</p>
+      </div>
+      <div style="background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(95, 48, 65, 0.03);">
+        <h2 style="font-size: 20px; color: #1a1a1a; margin-top: 0; margin-bottom: 20px; font-weight: 600; text-align: center;">Reset Your Password</h2>
+        <p style="font-family: 'Montserrat', 'Helvetica', sans-serif; font-size: 13px; line-height: 1.6; color: #4A4A4A; margin-bottom: 30px;">
+          Hello ${user.firstName},<br/><br/>
+          We received a request to reset the password for your MoonStella account. Please click the button below to choose a new password. This link is valid for 1 hour.
+        </p>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <a href="${resetLink}" style="display: inline-block; background-color: #5F3041; color: #E9D7C3; font-family: 'Montserrat', 'Helvetica', sans-serif; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.15em; padding: 16px 32px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 10px rgba(95, 48, 65, 0.2);">Reset Password</a>
+        </div>
+        <p style="font-family: 'Montserrat', 'Helvetica', sans-serif; font-size: 11px; line-height: 1.6; color: #8C8C8C; text-align: center;">
+          If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
+        </p>
+      </div>
+      <div style="text-align: center; margin-top: 30px; font-family: 'Montserrat', 'Helvetica', sans-serif; font-size: 9px; color: #8C8C8C;">
+        <p>&copy; ${new Date().getFullYear()} MoonStella. All rights reserved.</p>
+      </div>
+    </div>
+  `
+
+  await sendEmail(user.email, 'Reset your MoonStella Password', html)
+}
+
+export const resetPassword = async (data: ResetPasswordDto): Promise<void> => {
+  let decoded: any
+  try {
+    decoded = jwt.verify(data.token, env.JWT_SECRET)
+  } catch (err) {
+    throw new AppError('The password reset link is invalid or has expired', 400)
+  }
+
+  if (!decoded || decoded.type !== 'reset') {
+    throw new AppError('The password reset link is invalid or has expired', 400)
+  }
+
+  const user = await UserRepository.findWithPasswordById(decoded.id)
+  if (!user) {
+    throw new AppError('User not found', 404)
+  }
+
+  const passwordHash = await bcrypt.hash(data.password, 12)
+  user.passwordHash = passwordHash
+  await user.save()
 }

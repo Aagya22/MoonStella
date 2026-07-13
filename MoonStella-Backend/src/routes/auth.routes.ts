@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { register, login, getMe, updateProfile, logout, checkUnique, getUserProfile, changePassword, toggleFollowUser } from '../controllers/auth.controller'
+import { register, login, getMe, updateProfile, logout, checkUnique, getUserProfile, changePassword, toggleFollowUser, forgotPassword, resetPassword } from '../controllers/auth.controller'
 import { protect } from '../middleware/auth.middleware'
-import { registerSchema, loginDto, checkUniqueSchema, changePasswordSchema } from '../dtos/auth.dto'
+import { registerSchema, loginDto, checkUniqueSchema, changePasswordSchema, forgotPasswordSchema, resetPasswordSchema } from '../dtos/auth.dto'
 import { validate } from '../middleware/validate.middleware'
 
 const router = Router()
@@ -15,6 +15,12 @@ router.post('/login', validate(loginDto), login)
 
 // POST /api/auth/check-unique
 router.post('/check-unique', validate(checkUniqueSchema), checkUnique)
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword)
+
+// POST /api/auth/reset-password
+router.post('/reset-password', validate(resetPasswordSchema), resetPassword)
 
 // GET /api/auth/me
 // protect runs first — if no valid token, controller never runs

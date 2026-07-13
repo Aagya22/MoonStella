@@ -85,7 +85,27 @@ export const checkUniqueSchema = z.object({
     .min(7, 'Phone number is too short'),
 })
 
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .email('Please enter a valid email address')
+    .toLowerCase(),
+})
+
+export const resetPasswordSchema = z.object({
+  token: z.string({ required_error: 'Token is required' }),
+  password: z
+    .string({ required_error: 'Password is required' })
+    .min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string({ required_error: 'Confirm password is required' }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+})
+
 export type RegisterDto = z.infer<typeof registerSchema>
 export type LoginDto = z.infer<typeof loginDto>
-export type UpdateProfileDto=z.infer<typeof updateProfileDto>
+export type UpdateProfileDto = z.infer<typeof updateProfileDto>
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>

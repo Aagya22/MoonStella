@@ -12,6 +12,8 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD: z.string().min(1),
   CLOUDINARY_KEY: z.string().min(1),
   CLOUDINARY_SECRET: z.string().min(1),
+  EMAIL_USER: z.string().default(''),
+  EMAIL_PASS: z.string().default(''),
 })
 
 
