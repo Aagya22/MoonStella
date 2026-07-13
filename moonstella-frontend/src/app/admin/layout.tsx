@@ -23,6 +23,16 @@ import {
   Bell
 } from 'lucide-react'
 
+export const AdminContext = React.createContext<{
+  showToast: (text: string, type?: 'success' | 'error' | 'info') => void
+} | null>(null)
+
+export const useAdmin = () => {
+  const context = React.useContext(AdminContext)
+  if (!context) throw new Error('useAdmin must be used inside AdminContext')
+  return context
+}
+
 export default function AdminLayout({
   children,
 }: {
@@ -39,6 +49,16 @@ export default function AdminLayout({
   const [editAvatar, setEditAvatar] = useState('')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const [toasts, setToasts] = useState<{ id: string; text: string; type: 'success' | 'error' | 'info' }[]>([])
+
+  const showToast = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Math.random().toString(36).substring(2, 9)
+    setToasts(prev => [...prev, { id, text, type }])
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, 4000)
+  }
 
   useEffect(() => {
     if (adminUser) {
@@ -122,6 +142,7 @@ export default function AdminLayout({
     notifSocketRef.current = socket
     socket.on('notification', (n: any) => {
       setNotifications(prev => [mapNotification(n), ...prev])
+      showToast(n.text, 'info')
     })
 
     const onFocus = () => fetchNotifications()
@@ -307,7 +328,8 @@ export default function AdminLayout({
   ]
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex flex-col md:flex-row select-none font-sans text-gray-800">
+    <AdminContext.Provider value={{ showToast }}>
+      <div className="min-h-screen bg-[#FAF8F5] flex flex-col md:flex-row select-none font-sans text-gray-800">
 
       {/* Mobile Top Header */}
       <header className="md:hidden bg-white border-b border-[#5F3041]/10 px-6 py-4 flex justify-between items-center z-50">
@@ -646,6 +668,31 @@ export default function AdminLayout({
         </div>
       )}
 
+      {/* Toast Notifications Container */}
+      <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-3 max-w-sm pointer-events-none select-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`p-4 rounded-2xl shadow-xl flex items-center justify-between gap-4 border text-[10px] font-bold uppercase tracking-wider pointer-events-auto transition-all duration-300 ${
+              toast.type === 'error'
+                ? 'bg-rose-50 text-rose-800 border-rose-250'
+                : toast.type === 'info'
+                ? 'bg-amber-50 text-amber-800 border-amber-250'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-250'
+            }`}
+          >
+            <span>{toast.text}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+              className="bg-transparent border-none text-current hover:opacity-75 cursor-pointer font-bold ml-2 text-[11px]"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+
     </div>
+    </AdminContext.Provider>
   )
 }

@@ -16,6 +16,7 @@ import {
   AlertOctagon
 } from 'lucide-react'
 import Pagination from '@/app/components/Pagination'
+import { useAdmin } from '../layout'
 
 interface MessageSnapshot {
   senderId: string
@@ -63,6 +64,7 @@ interface Report {
 }
 
 export default function AdminReportsPage() {
+  const { showToast } = useAdmin()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
@@ -101,11 +103,11 @@ export default function AdminReportsPage() {
 
     try {
       await api.patch(`/api/reports/admin/${reportId}/resolve`, { action })
-      alert(`Report resolved successfully with action: ${action}`)
+      showToast(`Report resolved successfully with action: ${action}`, 'success')
       setSelectedReportId(null)
       fetchReports()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to resolve report')
+      showToast(err.response?.data?.message || 'Failed to resolve report', 'error')
     }
   }
 

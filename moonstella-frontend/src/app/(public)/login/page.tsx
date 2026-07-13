@@ -52,37 +52,40 @@ export default function LoginPage() {
       {/* Page content — centred vertically and horizontally */}
       <div className="flex-1 flex items-center justify-center px-4 py-10">
 
-        {/* Card container */}
+        {/* Card container — CSS Grid, two equal columns */}
         <div
-          className="w-full flex overflow-hidden"
+          className="login-card-grid w-full overflow-hidden bg-white border border-[#5F3041]/10 rounded-[2rem] shadow-2xl animate-scale-up"
           style={{
             maxWidth: '900px',
-            minHeight: '580px',
-            borderRadius: '4px',
-            boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
+            minHeight: '500px',
+            display: 'grid',
           }}
         >
+          <style>{`
+            @media (min-width: 768px) {
+              .login-card-grid { grid-template-columns: 1fr 1fr !important; }
+            }
+          `}</style>
 
           {/* Left — image */}
-          <div className="hidden md:block relative" style={{ width: '45%', flexShrink: 0 }}>
-            <Image
+          <div className="hidden md:block overflow-hidden">
+            <img
               src="/artisan.png"
               alt="Artisan crafting jewellery"
-              fill
-              className="object-cover object-center"
-              priority
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
 
           {/* Right — form */}
           <div
-            className="flex-1 bg-white flex items-center justify-center px-10 py-12"
+            className="flex flex-col items-center justify-center px-12 py-12 bg-white"
+            style={{ gridColumn: 'span 1' }}
           >
             <div className="w-full" style={{ maxWidth: '340px' }}>
 
               {/* Title */}
               <h1
-                className="font-bold text-gray-900 mb-2 leading-tight"
+                className="font-serif font-bold text-gray-900 mb-2 leading-tight"
                 style={{
                   fontFamily: 'var(--font-playfair)',
                   fontSize: '28px',
@@ -91,10 +94,10 @@ export default function LoginPage() {
                 Sign In to MoonStella
               </h1>
               <p
-                className="text-gray-500 mb-8 leading-relaxed"
+                className="text-gray-400 leading-relaxed text-xs"
                 style={{
                   fontFamily: 'var(--font-montserrat)',
-                  fontSize: '13px',
+                  marginBottom: '24px',
                 }}
               >
                 Enter your credentials to access your personal workspace.
@@ -104,17 +107,14 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
                 {/* Email */}
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 text-left">
                   <label
-                    className="uppercase text-gray-700"
+                    className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest"
                     style={{
                       fontFamily: 'var(--font-montserrat)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
                     }}
                   >
-                    Email
+                    Email Address
                   </label>
                   <input
                     type="email"
@@ -122,25 +122,19 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-4 py-3 text-sm rounded focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 text-xs bg-white border border-[#5F3041]/10 rounded-xl focus:outline-none focus:border-[#5F3041]/35 shadow-xs transition-all text-gray-800"
                     style={{
                       fontFamily: 'var(--font-montserrat)',
-                      backgroundColor: '#F5F2F2',
-                      border: 'none',
-                      color: '#1a1a1a',
                     }}
                   />
                 </div>
 
                 {/* Password */}
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 text-left">
                   <label
-                    className="uppercase text-gray-700"
+                    className="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest"
                     style={{
                       fontFamily: 'var(--font-montserrat)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
                     }}
                   >
                     Password
@@ -152,38 +146,34 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="w-full px-4 py-3 text-sm rounded focus:outline-none transition-colors pr-10"
+                      className="w-full px-4 py-3 pr-10 text-xs bg-white border border-[#5F3041]/10 rounded-xl focus:outline-none focus:border-[#5F3041]/35 shadow-xs transition-all text-gray-800"
                       style={{
                         fontFamily: 'var(--font-montserrat)',
-                        backgroundColor: '#F5F2F2',
-                        border: 'none',
-                        color: '#1a1a1a',
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
                     >
                       {showPassword ? (
-                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                           <path d="M3 12s3.6-7 9-7 9 7 9 7-3.6 7-9 7-9-7-9-7z"/>
                           <circle cx="12" cy="12" r="3"/>
                         </svg>
                       ) : (
-                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                           <path d="M17.94 17.94A10.1 10.1 0 0112 20c-5.4 0-9-7-9-7a17.6 17.6 0 014.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c5.4 0 9 7 9 7a17.6 17.6 0 01-2.06 3.06M3 3l18 18"/>
                         </svg>
                       )}
                     </button>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end mt-1">
                     <Link
                       href="/forgot-password"
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-gray-400 hover:text-[#5F3041] transition-colors text-[9px] font-bold uppercase tracking-wider"
                       style={{
                         fontFamily: 'var(--font-montserrat)',
-                        fontSize: '11px',
                       }}
                     >
                       Forgot Password?
@@ -194,10 +184,9 @@ export default function LoginPage() {
                 {/* Error */}
                 {error && (
                   <p
-                    className="text-red-500 -mt-2"
+                    className="text-rose-600 text-[10px] font-bold uppercase tracking-wide"
                     style={{
                       fontFamily: 'var(--font-montserrat)',
-                      fontSize: '12px',
                     }}
                   >
                     {error}
@@ -208,13 +197,9 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 text-white rounded transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed uppercase"
+                  className="w-full py-3.5 bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-wider cursor-pointer border-none transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    backgroundColor: '#5F3041',
                     fontFamily: 'var(--font-montserrat)',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    letterSpacing: '0.15em',
                   }}
                 >
                   {loading ? 'Signing in...' : 'Sign In'}
@@ -223,26 +208,20 @@ export default function LoginPage() {
               </form>
 
               {/* Join section */}
-              <div className="mt-6 flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-3" style={{ marginTop: '28px' }}>
                 <p
-                  className="text-gray-500"
+                  className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider"
                   style={{
                     fontFamily: 'var(--font-montserrat)',
-                    fontSize: '12px',
                   }}
                 >
-                  Are you a new and seeking to join us?
+                  Are you new here and seeking to join us?
                 </p>
                 <Link
                   href="/get-started"
-                  className="w-full py-3.5 text-center rounded border-2 transition-colors hover:bg-gray-50 uppercase"
+                  className="w-full py-3 bg-transparent hover:bg-gray-50 border border-[#5F3041]/35 text-[#5F3041] rounded-xl text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center text-center leading-none"
                   style={{
-                    borderColor: '#5F3041',
-                    color: '#5F3041',
                     fontFamily: 'var(--font-montserrat)',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    letterSpacing: '0.15em',
                   }}
                 >
                   Join the Circle

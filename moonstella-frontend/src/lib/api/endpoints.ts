@@ -5,6 +5,8 @@ export const ENDPOINTS = {
     me: '/api/auth/me',
     profile: '/api/auth/profile',
     checkUnique: '/api/auth/check-unique',
+    forgotPassword: '/api/auth/forgot-password',
+    resetPassword: '/api/auth/reset-password',
   },
   upload: {
     image: '/api/upload/image',

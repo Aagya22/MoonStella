@@ -10,7 +10,9 @@ interface NotifyInput {
   link?: string
 }
 
-/
+/**
+ * Create a notification for a user and push it in real-time via socket.
+ */
 export const createNotification = async (input: NotifyInput): Promise<void> => {
   try {
     // Don't notify a user about their own action

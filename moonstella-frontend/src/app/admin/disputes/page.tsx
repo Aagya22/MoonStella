@@ -17,6 +17,7 @@ import {
   Lock
 } from 'lucide-react'
 import Pagination from '@/app/components/Pagination'
+import { useAdmin } from '../layout'
 
 interface TimelineEvent {
   stage: string
@@ -54,6 +55,7 @@ interface Order {
 }
 
 export default function AdminDisputesPage() {
+  const { showToast } = useAdmin()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
@@ -84,11 +86,11 @@ export default function AdminDisputesPage() {
 
     try {
       await api.patch(`/api/admin/orders/${id}/resolve`, { action })
-      alert(`Dispute resolved! Action: ${action} registered.`)
+      showToast(`Dispute resolved! Action: ${action} registered.`, 'success')
       setSelectedOrderId(null)
       fetchDisputedOrders()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to resolve dispute')
+      showToast(err.response?.data?.message || 'Failed to resolve dispute', 'error')
     }
   }
 

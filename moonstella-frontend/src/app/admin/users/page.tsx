@@ -13,8 +13,10 @@ import {
   BadgeHelp 
 } from 'lucide-react'
 import Pagination from '@/app/components/Pagination'
+import { useAdmin } from '../layout'
 
 export default function AdminUsersPage() {
+  const { showToast } = useAdmin()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -50,10 +52,10 @@ export default function AdminUsersPage() {
     if (!window.confirm('Are you sure you want to approve this artisan profile?')) return
     try {
       const res = await api.patch(`/api/admin/users/${id}/approve`)
-      alert('Artisan approved successfully! System notification sent.')
+      showToast('Artisan approved successfully! System notification sent.', 'success')
       fetchUsers()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to approve artisan')
+      showToast(err.response?.data?.message || 'Failed to approve artisan', 'error')
     }
   }
 
@@ -62,10 +64,10 @@ export default function AdminUsersPage() {
     if (!window.confirm(`Are you sure you want to ${action} this user account?`)) return
     try {
       const res = await api.patch(`/api/admin/users/${id}/suspend`)
-      alert(`User account ${suspended ? 'restored' : 'suspended'} successfully!`)
+      showToast(`User account ${suspended ? 'restored' : 'suspended'} successfully!`, 'success')
       fetchUsers()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update user status')
+      showToast(err.response?.data?.message || 'Failed to update user status', 'error')
     }
   }
 

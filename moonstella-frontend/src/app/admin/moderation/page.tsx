@@ -11,8 +11,10 @@ import {
   ExternalLink 
 } from 'lucide-react'
 import Pagination from '@/app/components/Pagination'
+import { useAdmin } from '../layout'
 
 export default function AdminModerationPage() {
+  const { showToast } = useAdmin()
   const [posts, setPosts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -42,10 +44,10 @@ export default function AdminModerationPage() {
     if (!window.confirm(`Are you sure you want to permanently delete this listing post under "${category}"?`)) return
     try {
       await api.delete(`/api/admin/posts/${id}`)
-      alert('Listing deleted successfully! Notification sent to the seller.')
+      showToast('Listing deleted successfully! Notification sent to the seller.', 'success')
       fetchPosts()
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete listing')
+      showToast(err.response?.data?.message || 'Failed to delete listing', 'error')
     }
   }
 

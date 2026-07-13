@@ -72,3 +72,19 @@ export const toggleFollowUserApi = async (id: string, token: string): Promise<an
   })
   return response.data.data
 }
+
+export const forgotPasswordApi = async (data: {
+  email: string
+}): Promise<any> => {
+  const response = await api.post(ENDPOINTS.auth.forgotPassword, data)
+  return response.data
+}
+
+export const resetPasswordApi = async (data: {
+  token: string
+  password: string
+  confirmPassword: string
+}): Promise<any> => {
+  const response = await api.post(ENDPOINTS.auth.resetPassword, data)
+  return response.data
+}
