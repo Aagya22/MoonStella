@@ -82,18 +82,13 @@ export default function BuyerLayout({
   const [sellersHistory, setSellersHistory] = useState<any[]>([])
 
   useEffect(() => {
-    let storedUser = localStorage.getItem('ms_user')
-    if (!storedUser) {
-      const mockUser = {
-        firstName: 'Anya',
-        lastName: 'Stella',
-        email: 'anya@moonstella.com',
-        onboarded: true,
-        interests: ['Emerald', 'Sapphire', 'Diamond']
-      }
-      localStorage.setItem('ms_user', JSON.stringify(mockUser))
-      localStorage.setItem('ms_token', 'mock_token_for_preview')
-      storedUser = JSON.stringify(mockUser)
+    const storedUser = localStorage.getItem('ms_user')
+    const storedToken = localStorage.getItem('ms_token')
+    if (!storedUser || !storedToken || storedToken === 'mock_token_for_preview') {
+      localStorage.removeItem('ms_token')
+      localStorage.removeItem('ms_user')
+      router.push('/login')
+      return
     }
     const parsed = JSON.parse(storedUser)
     if (parsed.role && parsed.role !== 'buyer') {

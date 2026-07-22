@@ -5,8 +5,23 @@ import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { Review } from '../models/review.model'
+import { io } from '../server'
 import { createNotification, notifyAdmins } from '../services/notification.service'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
+
+const emitThreadMessage = async (threadId: any, messageId: any): Promise<void> => {
+  const populated = await Message.findById(messageId)
+    .populate('senderId', 'firstName lastName email avatar role')
+    .populate({
+      path: 'postId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName email avatar role bio'
+      }
+    })
+
+  io.to(`thread:${String(threadId)}`).emit('new_message', populated)
+}
 
 // Create Order (Buyer initiates bespoke brief order)
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
@@ -82,15 +97,7 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
     await thread.save()
 
     // Socket.io live notification
-    const socketIo = (global as any).io
-    if (socketIo) {
-      socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      socketIo.to(String(thread._id)).emit('threadUpdated', {
-        threadId: thread._id,
-        lastMessageText: thread.lastMessageText,
-        lastMessageAt: thread.lastMessageAt,
-      })
-    }
+    await emitThreadMessage(thread._id, systemMsg._id)
 
     await createNotification({
       userId: sellerId,
@@ -259,10 +266,7 @@ export const acceptOrder = async (req: Request, res: Response): Promise<void> =>
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -342,10 +346,7 @@ export const updateOrderProgress = async (req: Request, res: Response): Promise<
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -413,10 +414,7 @@ export const completeOrder = async (req: Request, res: Response): Promise<void> 
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -485,10 +483,7 @@ export const cancelOrder = async (req: Request, res: Response): Promise<void> =>
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -584,10 +579,7 @@ export const confirmReceipt = async (req: Request, res: Response): Promise<void>
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
