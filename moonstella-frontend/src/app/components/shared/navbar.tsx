@@ -34,7 +34,7 @@ export default function Navbar() {
 
     {/* Right - Button */}
     <div className="hidden md:block">
-      <Link href="/login" className="btn-primary">GET STARTED</Link>
+      <Link href="/get-started" className="btn-primary">GET STARTED</Link>
     </div>
 
     {/* Mobile toggle */}
@@ -54,7 +54,7 @@ export default function Navbar() {
             <Link href="/product" className="text-xs font-semibold tracking-widest text-gray-600" style={{ fontFamily: 'var(--font-montserrat)' }}>PRODUCT</Link>
             <Link href="/about" className="text-xs font-semibold tracking-widest text-gray-600" style={{ fontFamily: 'var(--font-montserrat)' }}>ABOUT</Link>
             <Link
-              href="/login"
+              href="/get-started"
               className="btn-primary text-center"
             >
               GET STARTED

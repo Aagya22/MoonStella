@@ -158,7 +158,7 @@ export default function HeroSection() {
               }}
             >
               <Link
-                href="/register/buyer/step-one"
+                href="/get-started"
                 className="hero-btn-primary"
                 style={{
                   backgroundColor: '#5F3041',
