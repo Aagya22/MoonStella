@@ -94,6 +94,11 @@ export default function SellerMessagesPage() {
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
 
+  // Typing indicator, cleared on a timer since there is no stop event
+  const [peerTyping, setPeerTyping] = useState(false)
+  const peerTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastTypingEmitRef = useRef(0)
+
   // Initialize socket connection
   useEffect(() => {
     const token = localStorage.getItem('ms_token')
@@ -150,12 +155,37 @@ export default function SellerMessagesPage() {
       )
     }
 
+    const handleTyping = ({ threadId }: { threadId: string }) => {
+      if (threadId !== activeThreadId) return
+      setPeerTyping(true)
+      if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current)
+      peerTypingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 3000)
+    }
+
     socketRef.current.on('new_message', handleNewMessage)
+    socketRef.current.on('typing', handleTyping)
 
     return () => {
       socketRef.current?.off('new_message', handleNewMessage)
+      socketRef.current?.off('typing', handleTyping)
     }
   }, [activeThreadId])
+
+  // Drop the indicator when switching threads so it can't leak across chats
+  useEffect(() => {
+    setPeerTyping(false)
+    if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current)
+  }, [activeThreadId])
+
+  // Ping at most once per 1.5s while typing
+  const handleChatInputChange = (value: string) => {
+    setChatInput(value)
+    if (!socketRef.current || !activeThreadId) return
+    const now = Date.now()
+    if (now - lastTypingEmitRef.current < 1500) return
+    lastTypingEmitRef.current = now
+    socketRef.current.emit('typing', activeThreadId)
+  }
 
   // Load threads on mount / query param update
   useEffect(() => {
@@ -730,6 +760,15 @@ export default function SellerMessagesPage() {
                 )
               })
             )}
+            {peerTyping && (
+              <div className="flex justify-start animate-fade-in">
+                <div className="bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-4 py-2.5 flex items-center gap-1.5 select-none">
+                  <span className="w-1.5 h-1.5 bg-[#5F3041]/45 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-[#5F3041]/45 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-[#5F3041]/45 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
             <div ref={chatEndRef} />
           </div>
 
@@ -866,7 +905,7 @@ export default function SellerMessagesPage() {
                 type="text"
                 placeholder="Type your message..."
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
+                onChange={(e) => handleChatInputChange(e.target.value)}
                 className="flex-1 bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-707 placeholder-[#5F3041]/40 focus:outline-none focus:bg-white focus:border-[#5F3041]/25 transition-all"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               />

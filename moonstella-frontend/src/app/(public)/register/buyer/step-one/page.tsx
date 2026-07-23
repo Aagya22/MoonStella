@@ -104,10 +104,10 @@ export default function BuyerRegisterStepOne() {
       {/* Floating Premium Card Wrapper */}
       <div className="flex-1 flex items-center justify-center px-4 py-3 md:px-8 md:py-4">
         <div
-          className="w-full flex flex-col md:flex-row bg-[#FDFBF7]"
+          className="w-full flex flex-col md:flex-row bg-[#FDFBF7] overflow-hidden"
           style={{
             maxWidth: '980px',
-            borderRadius: '28px',
+            borderRadius: '2rem',
             boxShadow: '0 24px 60px rgba(75, 19, 37, 0.04)',
             border: '1px solid rgba(75, 19, 37, 0.05)',
           }}

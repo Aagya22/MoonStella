@@ -68,18 +68,6 @@ export const updateProfile = async (
   }
 }
 
-export const logout = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    ok(res, null, 'Logged out successfully')
-  } catch (err) {
-    next(err)
-  }
-}
-
 export const checkUnique = async (
   req: Request,
   res: Response,

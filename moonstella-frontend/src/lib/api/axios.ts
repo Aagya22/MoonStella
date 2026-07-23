@@ -26,14 +26,8 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined') {
         localStorage.removeItem('ms_token')
         localStorage.removeItem('ms_user')
-        if (window.location.pathname.startsWith('/admin')) {
-          if (window.location.pathname !== '/admin/login') {
-            window.location.href = '/admin/login'
-          }
-        } else {
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login'
-          }
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
         }
       }
     }

@@ -55,6 +55,11 @@ export const changePasswordApi = async (data: {
   const response = await api.patch('/api/auth/change-password', data, {
     headers: { Authorization: `Bearer ${token}` }
   })
+  // The old token is now invalid, so store the replacement
+  const refreshedToken = response.data?.data?.token
+  if (refreshedToken && typeof window !== 'undefined') {
+    localStorage.setItem('ms_token', refreshedToken)
+  }
   return response.data
 }
 

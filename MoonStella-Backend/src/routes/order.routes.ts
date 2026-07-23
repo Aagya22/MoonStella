@@ -5,7 +5,6 @@ import {
   getSellerOrders,
   acceptOrder,
   updateOrderProgress,
-  completeOrder,
   cancelOrder,
   confirmReceipt,
   createReview,
@@ -32,9 +31,6 @@ router.patch('/:id/accept', acceptOrder)
 
 // PATCH /api/orders/:id/progress - Post bench progress timeline update
 router.patch('/:id/progress', updateOrderProgress)
-
-// PATCH /api/orders/:id/complete - Mark commission order completed
-router.patch('/:id/complete', completeOrder)
 
 // PATCH /api/orders/:id/cancel - Cancel order (Buyer/Seller)
 router.patch('/:id/cancel', cancelOrder)

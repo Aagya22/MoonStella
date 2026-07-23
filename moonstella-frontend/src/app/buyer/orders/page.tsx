@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import api from '@/lib/api/axios'
 import { useBuyerContext } from '../BuyerContext'
 import OrderMilestoneSteps from '@/app/components/shared/OrderMilestoneSteps'
@@ -51,8 +52,11 @@ interface Order {
   updatedAt: string
 }
 
-export default function BuyerOrdersPage() {
+function BuyerOrdersContent() {
   const { user } = useBuyerContext()
+  const searchParams = useSearchParams()
+  const orderParam = searchParams.get('order')
+  const reviewParam = searchParams.get('review')
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
@@ -89,6 +93,18 @@ export default function BuyerOrdersPage() {
   useEffect(() => {
     if (user) loadOrders()
   }, [user])
+
+  // Open a specific order when linked here from the dashboard
+  useEffect(() => {
+    if (!orderParam || !orders.length) return
+    const target = orders.find(o => o._id === orderParam)
+    if (!target) return
+    setSelectedOrderId(orderParam)
+    if (target.status === 'completed') setFilter('completed')
+    else if (target.status === 'cancelled') setFilter('cancelled')
+    else setFilter('ongoing')
+    if (reviewParam === '1' && target.status === 'completed') setShowReviewModal(true)
+  }, [orderParam, reviewParam, orders])
 
   // Fetch the review for a completed order when its detail view opens
   useEffect(() => {
@@ -713,5 +729,17 @@ export default function BuyerOrdersPage() {
 
       </div>
     </div>
+  )
+}
+
+export default function BuyerOrdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center min-h-[400px] text-xs font-bold text-gray-400 tracking-widest uppercase">
+        Loading Commissions...
+      </div>
+    }>
+      <BuyerOrdersContent />
+    </Suspense>
   )
 }

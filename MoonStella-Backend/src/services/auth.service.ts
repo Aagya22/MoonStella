@@ -11,6 +11,9 @@ const signToken = (id: string): string => {
   return jwt.sign({ id }, env.JWT_SECRET, { expiresIn: '30d' })
 }
 
+// Backdated a second: `iat` is whole seconds and can tie with this stamp
+const passwordChangedStamp = (): Date => new Date(Date.now() - 1000)
+
 export const formatUser = (user: IUser) => ({
   id: user._id,
   firstName: user.firstName,
@@ -136,9 +139,11 @@ export const changePassword = async (userId: string, data: ChangePasswordDto) =>
 
   const passwordHash = await bcrypt.hash(data.newPassword, 12)
   user.passwordHash = passwordHash
+  user.passwordChangedAt = passwordChangedStamp()
   await user.save()
 
-  return { success: true }
+  // The caller's own token is now rejected too, so hand back a fresh one
+  return { success: true, token: signToken(String(user._id)) }
 }
 
 export const followUser = async (currentUserId: string, targetUserId: string) => {
@@ -178,9 +183,8 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
 
 export const forgotPassword = async (data: ForgotPasswordDto): Promise<void> => {
   const user = await UserRepository.findByEmail(data.email)
-  if (!user) {
-    throw new AppError('No account found with this email', 404)
-  }
+  // Stay quiet on unknown addresses so registered emails can't be probed
+  if (!user) return
 
   // Generate short-lived reset token (1 hour)
   const token = jwt.sign(
@@ -233,10 +237,16 @@ export const resetPassword = async (data: ResetPasswordDto): Promise<void> => {
 
   const user = await UserRepository.findWithPasswordById(decoded.id)
   if (!user) {
-    throw new AppError('User not found', 404)
+    throw new AppError('The password reset link is invalid or has expired', 400)
+  }
+
+  // One use only: the token's iat now falls behind passwordChangedAt
+  if (user.passwordChangedAt && decoded.iat * 1000 < new Date(user.passwordChangedAt).getTime()) {
+    throw new AppError('The password reset link is invalid or has expired', 400)
   }
 
   const passwordHash = await bcrypt.hash(data.password, 12)
   user.passwordHash = passwordHash
+  user.passwordChangedAt = passwordChangedStamp()
   await user.save()
 }

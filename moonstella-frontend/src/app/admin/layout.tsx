@@ -215,14 +215,8 @@ export default function AdminLayout({
     const token = localStorage.getItem('ms_token')
     const userStr = localStorage.getItem('ms_user')
 
-    // Bypass check for the login page to avoid redirection loops
-    if (pathname === '/admin/login') {
-      setChecking(false)
-      return
-    }
-
     if (!token || !userStr) {
-      router.replace('/admin/login')
+      router.replace('/login')
       return
     }
 
@@ -231,7 +225,7 @@ export default function AdminLayout({
       if (user.role !== 'admin') {
         localStorage.removeItem('ms_token')
         localStorage.removeItem('ms_user')
-        router.replace('/admin/login')
+        router.replace('/login')
       } else {
         setAdminUser(user)
         setChecking(false)
@@ -239,7 +233,7 @@ export default function AdminLayout({
     } catch (e) {
       localStorage.removeItem('ms_token')
       localStorage.removeItem('ms_user')
-      router.replace('/admin/login')
+      router.replace('/login')
     }
   }, [router, pathname])
 
@@ -302,7 +296,7 @@ export default function AdminLayout({
     if (window.confirm('Are you sure you want to sign out of the Admin panel?')) {
       localStorage.removeItem('ms_token')
       localStorage.removeItem('ms_user')
-      router.replace('/admin/login')
+      router.replace('/login')
     }
   }
 
@@ -312,11 +306,6 @@ export default function AdminLayout({
         Verifying Credentials...
       </div>
     )
-  }
-
-  // If on login page, just render the child login panel directly
-  if (pathname === '/admin/login') {
-    return <>{children}</>
   }
 
   const menuItems = [

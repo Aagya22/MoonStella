@@ -23,6 +23,20 @@ const emitThreadMessage = async (threadId: any, messageId: any): Promise<void> =
   io.to(`thread:${String(threadId)}`).emit('new_message', populated)
 }
 
+// Tag each order with whether it already has a review
+const withReviewFlags = async (orders: any[]): Promise<any[]> => {
+  if (!orders.length) return []
+
+  const reviews = await Review.find({ orderId: { $in: orders.map((o) => o._id) } }).select('orderId')
+  const reviewed = new Set(reviews.map((r: any) => String(r.orderId)))
+
+  return orders.map((o) => {
+    const obj = typeof o.toObject === 'function' ? o.toObject() : o
+    obj.hasReview = reviewed.has(String(obj._id))
+    return obj
+  })
+}
+
 // Create Order (Buyer initiates bespoke brief order)
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -130,7 +144,7 @@ export const getBuyerOrders = async (req: Request, res: Response): Promise<void>
         .populate('sellerId', 'firstName lastName email avatar role location bio averageResponseTime')
         .populate('postId', 'images description category budget')
         .sort({ createdAt: -1 })
-      ok(res, orders)
+      ok(res, await withReviewFlags(orders))
       return
     }
 
@@ -149,7 +163,7 @@ export const getBuyerOrders = async (req: Request, res: Response): Promise<void>
     const totalPages = Math.ceil(totalDocs / limit)
 
     ok(res, {
-      docs: orders,
+      docs: await withReviewFlags(orders),
       page,
       limit,
       totalPages,
@@ -343,74 +357,6 @@ export const updateOrderProgress = async (req: Request, res: Response): Promise<
       await systemMsg.save()
 
       thread.lastMessageText = `Workbench Update: ${stage}`
-      thread.lastMessageAt = new Date()
-      await thread.save()
-
-      await emitThreadMessage(thread._id, systemMsg._id)
-    }
-
-    ok(res, order)
-  } catch (err) {
-    serverError(res, err)
-  }
-}
-
-// Complete Order (Only allowed by buyer confirming they got the product)
-export const completeOrder = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params
-    const buyerId = req.user?._id
-
-    if (!buyerId) {
-      badRequest(res, 'Unauthorized')
-      return
-    }
-
-    const order = await Order.findById(id)
-    if (!order) {
-      notFound(res, 'Not found')
-      return
-    }
-
-    if (String(order.buyerId) !== String(buyerId)) {
-      badRequest(res, 'Only the buyer can mark the order as complete after confirming receipt of the product.')
-      return
-    }
-
-    order.status = 'completed'
-    order.currentStage = 'Delivered'
-    order.timeline.push({
-      stage: 'Delivered',
-      note: 'Buyer confirmed receipt of the bespoke jewelry product.',
-      image: null,
-      createdAt: new Date(),
-    })
-
-    await order.save()
-
-    await createNotification({
-      userId: order.sellerId,
-      actorId: buyerId,
-      type: 'order',
-      text: `Order "${order.title}" was marked as delivered`,
-      link: 'orders',
-    })
-
-    // Send chat system message notification
-    let thread = await Thread.findOne({
-      participants: { $all: [order.buyerId, order.sellerId], $size: 2 },
-    })
-    if (thread) {
-      const systemMsg = new Message({
-        threadId: thread._id,
-        senderId: buyerId,
-        text: `DELIVERY CONFIRMED:\nThe buyer has confirmed that they received their bespoke product for "${order.title}".`,
-        postId: order.postId || null,
-        createdAt: new Date(),
-      })
-      await systemMsg.save()
-
-      thread.lastMessageText = `Delivery Confirmed: "${order.title}"`
       thread.lastMessageAt = new Date()
       await thread.save()
 

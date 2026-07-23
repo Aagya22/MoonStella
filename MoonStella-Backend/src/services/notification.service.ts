@@ -10,9 +10,7 @@ interface NotifyInput {
   link?: string
 }
 
-/**
- * Create a notification for a user and push it in real-time via socket.
- */
+// Create a notification for a user and push it over the socket
 export const createNotification = async (input: NotifyInput): Promise<void> => {
   try {
     // Don't notify a user about their own action
@@ -37,9 +35,7 @@ export const createNotification = async (input: NotifyInput): Promise<void> => {
   }
 }
 
-/**
- * Create a notification for all admin users.
- */
+// Create a notification for every admin
 export const notifyAdmins = async (input: Omit<NotifyInput, 'userId'>): Promise<void> => {
   try {
     const admins = await User.find({ role: 'admin' })

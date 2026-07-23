@@ -199,6 +199,17 @@ export default function SellerFeedPage() {
     }
   }, [user])
 
+  // Open the create modal when linked here from the dashboard button
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('newPost') === 'true') {
+        setShowCreateModal(true)
+        router.replace('/seller/feed')
+      }
+    }
+  }, [router])
+
   // 3. Toggle Follow Client Action
   const toggleFollowClient = async (targetId: string) => {
     try {

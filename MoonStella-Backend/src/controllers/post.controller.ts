@@ -46,18 +46,6 @@ export const toggleLike = async (req: Request, res: Response, next: NextFunction
   }
 }
 
-export const addComment = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = (req as any).user._id
-    const { id } = req.params
-    const { text } = req.body
-    const post = await PostService.addCommentToPost(id, String(userId), text)
-    res.json(post)
-  } catch (error) {
-    next(error)
-  }
-}
-
 export const deletePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).user._id

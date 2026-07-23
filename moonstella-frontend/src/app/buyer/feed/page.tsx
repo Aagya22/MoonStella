@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useBuyerContext } from '../BuyerContext'
 import { useSnackbar } from '@/context/SnackbarContext'
 import api from '@/lib/api/axios'
@@ -14,8 +14,10 @@ import CreatePostModal from '@/app/components/buyer/feed/CreatePostModal'
 import InspectPostModal from '@/app/components/buyer/feed/InspectPostModal'
 import FollowModal from '@/app/components/profile/FollowModal'
 
-export default function BuyerFeedPage() {
+function BuyerFeedContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const postParam = searchParams.get('post')
   const {
     user,
     setUser,
@@ -114,6 +116,13 @@ export default function BuyerFeedPage() {
       fetchPosts()
     }
   }, [user])
+
+  // Open a specific piece when linked here from the dashboard
+  useEffect(() => {
+    if (!postParam || !posts.length) return
+    const target = posts.find((p: any) => String(p.id) === String(postParam))
+    if (target) setSelectedInspectPost(target)
+  }, [postParam, posts])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -499,5 +508,17 @@ export default function BuyerFeedPage() {
       />
 
     </div>
+  )
+}
+
+export default function BuyerFeedPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center min-h-[400px] text-xs font-bold text-gray-400 tracking-widest uppercase">
+        Loading Feed...
+      </div>
+    }>
+      <BuyerFeedContent />
+    </Suspense>
   )
 }

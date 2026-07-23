@@ -15,7 +15,6 @@ export const create = async (data: {
 export const findAll = async (): Promise<IPost[]> => {
   return Post.find()
     .populate('userId', 'firstName lastName avatar role location')
-    .populate('comments.userId', 'firstName lastName avatar role location')
     .populate('likes', 'firstName lastName avatar role location')
     .sort({ createdAt: -1 })
 }
@@ -23,7 +22,6 @@ export const findAll = async (): Promise<IPost[]> => {
 export const findById = async (id: string): Promise<IPost | null> => {
   return Post.findById(id)
     .populate('userId', 'firstName lastName avatar role location')
-    .populate('comments.userId', 'firstName lastName avatar role location')
     .populate('likes', 'firstName lastName avatar role location')
 }
 
@@ -38,20 +36,6 @@ export const toggleLike = async (postId: string, userId: string): Promise<IPost 
   } else {
     post.likes = post.likes.filter(like => String(like) !== String(userId))
   }
-
-  await post.save()
-  return findById(postId)
-}
-
-export const addComment = async (postId: string, comment: { userId: string; text: string }): Promise<IPost | null> => {
-  const post = await Post.findById(postId)
-  if (!post) return null
-
-  post.comments.push({
-    userId: comment.userId as any,
-    text: comment.text,
-    createdAt: new Date()
-  })
 
   await post.save()
   return findById(postId)
@@ -77,7 +61,6 @@ export const updatePost = async (postId: string, userId: string, data: any): Pro
 export const findSavedPosts = async (postIds: any[]): Promise<IPost[]> => {
   return Post.find({ _id: { $in: postIds } })
     .populate('userId', 'firstName lastName avatar role location')
-    .populate('comments.userId', 'firstName lastName avatar role location')
     .populate('likes', 'firstName lastName avatar role location')
     .sort({ createdAt: -1 })
 }

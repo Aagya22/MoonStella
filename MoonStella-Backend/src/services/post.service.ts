@@ -17,8 +17,7 @@ export const createPost = async (userId: string, data: CreatePostDto) => {
 export const getAllPosts = async () => {
   const posts = await PostRepository.findAll()
 
-  // Attach public review stats (count + average) to each post, sourced from
-  // reviews left on completed orders that reference the post.
+  // Attach public review stats (count + average) to each post
   const { Review } = require('../models/review.model')
   const stats = await Review.aggregate([
     { $lookup: { from: 'orders', localField: 'orderId', foreignField: '_id', as: 'order' } },
@@ -40,13 +39,6 @@ export const getAllPosts = async () => {
 
 export const toggleLikePost = async (postId: string, userId: string) => {
   const post = await PostRepository.toggleLike(postId, userId)
-  if (!post) throw new AppError('Post not found', 404)
-  return post
-}
-
-export const addCommentToPost = async (postId: string, userId: string, text: string) => {
-  if (!text || !text.trim()) throw new AppError('Comment text cannot be empty', 400)
-  const post = await PostRepository.addComment(postId, { userId, text })
   if (!post) throw new AppError('Post not found', 404)
   return post
 }
