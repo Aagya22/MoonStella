@@ -1,12 +1,28 @@
 import React from 'react'
+import { METALS, GEMSTONES } from '@/lib/materials/material'
 
 interface FeedHeaderProps {
   selectedCuration: string
   setSelectedCuration: (curation: string) => void
   setShowCreateModal: (show: boolean) => void
+  sortMode: 'trending' | 'latest'
+  setSortMode: (mode: 'trending' | 'latest') => void
+  selectedMaterial: string | null
+  setSelectedMaterial: (material: string | null) => void
 }
 
-export default function FeedHeader({ selectedCuration, setSelectedCuration, setShowCreateModal }: FeedHeaderProps) {
+export default function FeedHeader({
+  selectedCuration,
+  setSelectedCuration,
+  setShowCreateModal,
+  sortMode,
+  setSortMode,
+  selectedMaterial,
+  setSelectedMaterial,
+}: FeedHeaderProps) {
+  // Own requests are always newest-first
+  const showSort = selectedCuration !== 'my-requests'
+
   return (
     <aside className="w-full">
       <div className="sticky top-20 h-fit bg-white rounded-3xl p-5 border border-gray-100 shadow-[0_8px_30px_rgba(61,12,31,0.015)] flex flex-col gap-5 select-none">
@@ -46,6 +62,76 @@ export default function FeedHeader({ selectedCuration, setSelectedCuration, setS
               )
             })}
           </ul>
+        </div>
+
+        {/* Ordering */}
+        {showSort && (
+          <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
+            <h3
+              className="text-[9px] font-extrabold tracking-[0.25em] text-gray-400 uppercase pl-1"
+              style={{ fontFamily: 'var(--font-montserrat)' }}
+            >
+              Order By
+            </h3>
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#FAF8F5] rounded-xl border border-gray-100">
+              {[
+                { id: 'trending' as const, label: 'Trending' },
+                { id: 'latest' as const, label: 'Newest' },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setSortMode(option.id)}
+                  className={`text-[9px] font-bold tracking-widest uppercase py-2 rounded-lg cursor-pointer border-none transition-all duration-300 ${
+                    sortMode === option.id
+                      ? 'bg-white text-[#5F3041] shadow-sm'
+                      : 'bg-transparent text-gray-400 hover:text-[#5F3041]'
+                  }`}
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Material filter */}
+        <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
+          <div className="flex items-center justify-between pl-1">
+            <h3
+              className="text-[9px] font-extrabold tracking-[0.25em] text-gray-400 uppercase"
+              style={{ fontFamily: 'var(--font-montserrat)' }}
+            >
+              Material
+            </h3>
+            {selectedMaterial && (
+              <button
+                onClick={() => setSelectedMaterial(null)}
+                className="text-[9px] font-bold uppercase tracking-wider text-[#5F3041] bg-transparent border-none cursor-pointer hover:underline"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <select
+            value={selectedMaterial || ''}
+            onChange={(e) => setSelectedMaterial(e.target.value || null)}
+            className="w-full bg-[#FAF8F5] border border-gray-100 rounded-xl px-3 py-2.5 text-[11px] text-gray-600 cursor-pointer focus:outline-none focus:border-[#5F3041]/25 transition-all"
+            style={{ fontFamily: 'var(--font-montserrat)' }}
+          >
+            <option value="">All Materials</option>
+            <optgroup label="Metals">
+              {METALS.map((metal) => (
+                <option key={metal} value={metal}>{metal}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Gemstones">
+              {GEMSTONES.map((gem) => (
+                <option key={gem} value={gem}>{gem}</option>
+              ))}
+            </optgroup>
+          </select>
         </div>
 
         {/* Outlined Action CTA */}

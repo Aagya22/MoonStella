@@ -3,6 +3,24 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import BespokeOrderModal from '../orders/BespokeOrderModal'
 
+// Content-area type scale
+const chipClass =
+  'self-start text-[11px] font-semibold tracking-[0.14em] uppercase text-[var(--ms-ink-soft)] bg-[var(--ms-surface-alt)] px-2.5 py-1 rounded-full select-none'
+const titleClass =
+  'text-[18px] font-semibold text-[var(--ms-ink)] leading-snug line-clamp-2'
+const materialsClass =
+  'text-[11px] tracking-[0.12em] uppercase text-[var(--ms-ink-soft)] select-none'
+const priceClass =
+  'text-[24px] leading-none font-medium text-[var(--ms-plum)]'
+const iconBtnClass =
+  'h-10 px-1.5 min-w-10 rounded-full flex items-center justify-center gap-1.5 border-none bg-transparent cursor-pointer transition-colors duration-300'
+
+// One grey for every resting icon
+const MUTED = '#8A8A8A'
+
+// Below this the icon stands alone
+const COUNT_THRESHOLD = 5
+
 interface PostCardProps {
   post: any
   user: any
@@ -51,18 +69,6 @@ export default function PostCard({
   const savesCount = isSaved ? 1 : 0
 
   const reviewStats = post.reviewStats || { count: 0, average: 0 }
-  const reviewSummary = reviewStats.count > 0 ? (
-    <button
-      onClick={() => { setSelectedInspectPost(post); setActiveInspectIndex(0) }}
-      className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-[#C5A880] transition-colors cursor-pointer border-none bg-transparent"
-      style={{ fontFamily: 'var(--font-montserrat)' }}
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="#C5A880" stroke="#C5A880" strokeWidth="1">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-      <span>{reviewStats.average} · {reviewStats.count} {reviewStats.count === 1 ? 'Review' : 'Reviews'}</span>
-    </button>
-  ) : null
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -75,7 +81,7 @@ export default function PostCard({
   }
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
+    <article className="surface surface-raise rounded-2xl overflow-hidden flex flex-col hover:-translate-y-0.5">
       {/* Post Header */}
       <div className="p-5 flex items-center justify-between gap-4">
         <div
@@ -86,7 +92,7 @@ export default function PostCard({
             }
           }}
         >
-          <div className="w-10 h-10 rounded-full overflow-hidden relative border border-gray-100 bg-[#5F3041] text-[#E9D7C3] flex items-center justify-center font-extrabold text-sm select-none flex-shrink-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden relative border border-[var(--ms-line)] bg-[var(--ms-plum)] text-white flex items-center justify-center font-extrabold text-sm select-none flex-shrink-0">
             {post.avatar ? (
               <Image
                 src={post.avatar}
@@ -100,18 +106,18 @@ export default function PostCard({
           </div>
           <div className="flex-1 min-w-0">
             <h4
-              className="text-xs font-bold text-gray-800 tracking-wide truncate"
-              style={{ fontFamily: 'var(--font-montserrat)' }}
+              className="text-[17px] font-medium text-[var(--ms-ink)] leading-tight truncate"
+              style={{ fontFamily: 'var(--font-playfair)' }}
             >
               {post.artisanName}
             </h4>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {post.artisanTitle === 'MASTER ARTISAN' ? (
-                <span className="text-[8px] font-extrabold text-[#5F3041] bg-[#5F3041]/5 px-2 py-0.5 rounded tracking-widest uppercase inline-block select-none">
+                <span className="text-[8.5px] font-semibold text-[var(--ms-ink-soft)] tracking-[0.18em] uppercase inline-block select-none">
                   {post.artisanTitle}
                 </span>
               ) : (
-                <span className="text-[8px] font-extrabold text-[#5F3041] bg-[#5F3041]/5 px-2 py-0.5 rounded tracking-widest uppercase inline-block select-none">
+                <span className="text-[8.5px] font-semibold text-[var(--ms-ink-soft)] tracking-[0.18em] uppercase inline-block select-none">
                   Client Brief
                 </span>
               )}
@@ -123,9 +129,9 @@ export default function PostCard({
         {!isMyPost && post.artisanTitle === 'MASTER ARTISAN' && (
           <button
             onClick={() => toggleFollow(post.userId)}
-            className={`text-[9px] font-bold tracking-widest px-4 py-2 rounded-full uppercase transition-all duration-300 cursor-pointer border ${isFollowing
-              ? 'bg-[#5F3041] text-white border-[#5F3041]'
-              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            className={`text-[9px] font-semibold tracking-[0.18em] px-4 py-2 rounded-full uppercase transition-all duration-300 cursor-pointer active:scale-95 hover:bg-[var(--ms-plum)] hover:text-white hover:border-[var(--ms-plum)] ${isFollowing
+              ? 'bg-transparent border border-[var(--ms-line)] text-[var(--ms-ink-soft)]'
+              : 'bg-[var(--ms-quiet)] border border-transparent text-[var(--ms-plum)]'
               }`}
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
@@ -137,14 +143,14 @@ export default function PostCard({
       {/* Post Image Collage / Slider */}
       {imagesList.length > 0 && (
         <div
-          className="relative w-full aspect-[4/3] bg-[#FAF8F5] overflow-hidden group select-none border-y border-gray-50 flex items-center justify-center"
+          className="relative w-full aspect-square max-h-[560px] bg-[var(--ms-surface-alt)] overflow-hidden group select-none"
           onDoubleClick={() => toggleLike(post.id)}
         >
           <Image
             src={imagesList[currentIndex]}
             alt="Bespoke jewelry design"
             fill
-            className="object-contain transition-all duration-500 ease-out cursor-pointer"
+            className="object-cover transition-transform duration-[900ms] ease-out cursor-pointer group-hover:scale-[1.04]"
             onClick={() => {
               setSelectedInspectPost(post)
               setActiveInspectIndex(currentIndex)
@@ -156,7 +162,7 @@ export default function PostCard({
             <>
               <button
                 onClick={handlePrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-[#5F3041]/80 text-white backdrop-blur-[2px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border-none cursor-pointer z-10 active:scale-95"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/35 hover:bg-black/55 text-white backdrop-blur-[2px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border-none cursor-pointer z-10 active:scale-95"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="15 18 9 12 15 6" />
@@ -164,7 +170,7 @@ export default function PostCard({
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-[#5F3041]/80 text-white backdrop-blur-[2px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border-none cursor-pointer z-10 active:scale-95"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/35 hover:bg-black/55 text-white backdrop-blur-[2px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border-none cursor-pointer z-10 active:scale-95"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <polyline points="9 18 15 12 9 6" />
@@ -186,211 +192,232 @@ export default function PostCard({
             </div>
           )}
 
-          <div className="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pointer-events-none pb-8">
-            <span
-              className="bg-white/90 backdrop-blur text-[8px] font-bold tracking-widest text-[#5F3041] uppercase px-3 py-2 rounded shadow pointer-events-auto cursor-pointer"
-              onClick={() => {
-                setSelectedInspectPost(post)
-                setActiveInspectIndex(currentIndex)
-              }}
-            >
-              Double Click to Like · Click to Inspect
-            </span>
-          </div>
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          />
         </div>
       )}
 
-      <div className="p-5 flex flex-col gap-4">
-        {/* Category & Budget Indicator */}
-        <div className="flex justify-between items-center text-[9px] font-extrabold tracking-widest uppercase mb-1">
-          <span className="text-[#5F3041] bg-[#5F3041]/10 px-3 py-1 rounded-full select-none">
-            {post.category || 'Bespoke Request'}
-          </span>
-          <span className="text-amber-800 bg-amber-50 px-3 py-1 rounded-full normal-case tracking-normal select-none">
-            {post.artisanTitle === 'MASTER ARTISAN' ? 'Price' : 'Est. Budget'}: {post.price || 'Contact'}
-          </span>
-        </div>
-
+      <div className="p-6 flex flex-col gap-4">
         {!isMyPost && post.artisanTitle === 'MASTER ARTISAN' ? (
-          <div className="flex flex-col md:flex-row gap-5 justify-between items-start w-full">
+          <div className="flex flex-col md:flex-row gap-6 justify-between items-start w-full">
 
-            <div className="flex-1 min-w-0 flex flex-col gap-3 w-full">
-              <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
+            <div className="flex-1 min-w-0 flex flex-col gap-3">
+              <span className={chipClass}>{post.category || 'Bespoke Request'}</span>
+
+              <h3 className={titleClass} style={{ fontFamily: 'var(--font-montserrat)' }}>
                 {post.description}
-              </p>
+              </h3>
 
-              {/* Likes & Saves Interactive */}
-              <div className="flex items-center gap-6 pt-1">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide">
-                  <button
-                    onClick={() => toggleLike(post.id)}
-                    className={`flex items-center hover:scale-110 transition-transform cursor-pointer border-none bg-transparent ${post.liked ? 'text-rose-600' : 'text-gray-400 hover:text-rose-600'
-                      }`}
-                  >
-                    <svg
-                      width="16" height="16" viewBox="0 0 24 24"
-                      fill={post.liked ? 'currentColor' : 'none'}
-                      stroke="currentColor" strokeWidth="2.2"
-                    >
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                  </button>
+              {post.materials.length > 0 && (
+                <p className={materialsClass} style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  {post.materials.join('  ·  ')}
+                </p>
+              )}
+
+              <div className="flex items-center gap-3 pt-0.5">
+                {reviewStats.count > 0 && (
                   <span
-                    className="text-gray-500 select-none"
+                    className="flex items-center gap-1.5 text-[12px] text-[var(--ms-ink)] select-none"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
-                    {post.likes} {post.likes === 1 ? 'Like' : 'Likes'}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={MUTED} stroke="none">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    <span className="font-semibold">{reviewStats.average}</span>
+                    <span className="text-[var(--ms-ink-soft)]">
+                      ({reviewStats.count})
+                    </span>
                   </span>
-                </div>
+                )}
+
                 <button
+                  type="button"
+                  onClick={() => toggleLike(post.id)}
+                  aria-label={post.liked ? 'Unlike' : 'Like'}
+                  aria-pressed={Boolean(post.liked)}
+                  className={`${iconBtnClass} ${post.liked ? 'text-[var(--ms-plum)]' : 'text-[#8A8A8A] hover:text-[var(--ms-plum)]'}`}
+                >
+                  <svg
+                    width="16" height="16" viewBox="0 0 24 24"
+                    fill={post.liked ? 'currentColor' : 'none'}
+                    stroke="currentColor" strokeWidth="1.8"
+                  >
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  {post.likes >= COUNT_THRESHOLD && (
+                    <span className="text-[12px] font-medium tabular-nums">{post.likes}</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => toggleSave(post.id)}
-                  className={`flex items-center gap-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer border-none bg-transparent ${isSaved ? 'text-amber-600' : 'text-gray-400 hover:text-amber-600'
-                    }`}
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                  aria-label={isSaved ? 'Remove from saved' : 'Save'}
+                  aria-pressed={isSaved}
+                  className={`${iconBtnClass} ${isSaved ? 'text-[var(--ms-plum)]' : 'text-[#8A8A8A] hover:text-[var(--ms-plum)]'}`}
                 >
                   <svg
                     width="16" height="16" viewBox="0 0 24 24"
                     fill={isSaved ? 'currentColor' : 'none'}
-                    stroke="currentColor" strokeWidth="2.2"
+                    stroke="currentColor" strokeWidth="1.8"
                   >
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
-                </button>
-                {reviewSummary}
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-1">
-                {post.materials.map((mat: string) => (
-                  <span
-                    key={mat}
-                    className="text-[9px] font-bold tracking-widest text-[#5F3041]/90 bg-[#FAF0F3]/50 border border-[#5F3041]/10 px-2.5 py-1 rounded-md uppercase select-none"
-                    style={{ fontFamily: 'var(--font-montserrat)' }}
-                  >
-                    {mat}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3 pt-2 text-[11px] text-gray-500 font-medium select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                <span>Want to know more?</span>
-                <button
-                  onClick={() => {
-                    const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
-                    const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
-                    openChatWith(
-                      post.artisanName,
-                      post.userId,
-                      text,
-                      post.id || post._id,
-                      post.description,
-                      post.category,
-                      post.budget ? String(post.budget) : '',
-                      postImage
-                    )
-                  }}
-                  className="bg-[#FAF0F3] hover:bg-[#5F3041] text-[#5F3041] hover:text-[#FAF8F5] border border-[#5F3041]/15 hover:border-[#5F3041] px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider text-[9px] transition-all duration-350 active:scale-95 cursor-pointer"
-                >
-                  Inquire Now
+                  {savesCount >= COUNT_THRESHOLD && (
+                    <span className="text-[12px] font-medium tabular-nums">{savesCount}</span>
+                  )}
                 </button>
               </div>
             </div>
 
-            <div className="w-full md:w-36 shrink-0 flex flex-col pt-2 select-none">
+            <div className="w-full md:w-44 shrink-0 flex flex-col gap-3.5 select-none">
+              {/* centred over the button below */}
+              <span className={`${priceClass} text-center`} style={{ fontFamily: 'var(--font-playfair)' }}>
+                {post.price || 'Contact'}
+              </span>
+
               <button
                 onClick={() => {
                   setShowOrderModal(true)
                 }}
-                className="w-full bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest py-2.5 rounded-full uppercase cursor-pointer transition-all duration-300 border-none text-center shadow-[0_4px_12px_rgba(95,48,65,0.15)] hover:shadow-[0_6px_16px_rgba(95,48,65,0.25)] active:scale-95 transform hover:-translate-y-[1px]"
+                className="w-full bg-[var(--ms-plum)] hover:bg-[var(--ms-plum-hover)] text-white text-[10px] font-bold tracking-widest py-3 rounded-full uppercase cursor-pointer transition-all duration-300 border-none text-center active:scale-95"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               >
                 Order Now
+              </button>
+
+              <button
+                onClick={() => {
+                  const text = user?.role === 'seller' ? 'Can I know about this?' : 'Hi ! I am interested .'
+                  const postImage = post.images && post.images.length > 0 ? post.images[0] : (post.image || '')
+                  openChatWith(
+                    post.artisanName,
+                    post.userId,
+                    text,
+                    post.id || post._id,
+                    post.description,
+                    post.category,
+                    post.budget ? String(post.budget) : '',
+                    postImage
+                  )
+                }}
+                className="w-full text-center text-[11px] font-semibold text-[var(--ms-plum)] underline underline-offset-4 decoration-[var(--ms-plum)]/35 hover:decoration-[var(--ms-plum)] bg-transparent border-none cursor-pointer transition-all duration-300"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Inquire Now
               </button>
             </div>
           </div>
         ) : (
           /* Single-Column details layout for user's own posts or non-artisan briefs */
           <div className="flex flex-col gap-3 w-full">
-            <p className="text-xs text-gray-600 leading-relaxed font-normal mb-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
-              {post.description}
-            </p>
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex-1 min-w-0 flex flex-col gap-3">
+                <span className={chipClass}>{post.category || 'Bespoke Request'}</span>
+                <h3 className={titleClass} style={{ fontFamily: 'var(--font-montserrat)' }}>
+                  {post.description}
+                </h3>
+              </div>
+              <span className={`${priceClass} text-right`} style={{ fontFamily: 'var(--font-playfair)' }}>
+                {post.price || 'Contact'}
+              </span>
+            </div>
 
             {/* Read-Only or standard likes and saves */}
             {isMyPost ? (
-              <div className="flex items-center gap-6 pt-1">
-                <div
-                  onClick={() => onShowLikes && onShowLikes(post.likesList || [])}
-                  className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer select-none"
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
-                >
-                  <svg
-                    width="16" height="16" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" strokeWidth="2.2"
+              <div className="flex items-center gap-3 pt-0.5">
+                {reviewStats.count > 0 && (
+                  <span
+                    className="flex items-center gap-1.5 text-[12px] text-[var(--ms-ink)] select-none"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={MUTED} stroke="none">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    <span className="font-semibold">{reviewStats.average}</span>
+                    <span className="text-[var(--ms-ink-soft)]">
+                      ({reviewStats.count})
+                    </span>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onShowLikes && onShowLikes(post.likesList || [])}
+                  aria-label="View who liked this"
+                  className={`${iconBtnClass} text-[#8A8A8A] hover:text-[var(--ms-plum)]`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                   </svg>
-                  <span className="hover:underline">{post.likes} {post.likes === 1 ? 'Like' : 'Likes'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 tracking-wide select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                  <svg
-                    width="16" height="16" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" strokeWidth="2.2"
-                  >
+                  {post.likes >= COUNT_THRESHOLD && (
+                    <span className="text-[12px] font-medium tabular-nums">{post.likes}</span>
+                  )}
+                </button>
+
+                <span className={`${iconBtnClass} text-[#8A8A8A] cursor-default`}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
-                </div>
+                  {savesCount >= COUNT_THRESHOLD && (
+                    <span className="text-[12px] font-medium tabular-nums">{savesCount}</span>
+                  )}
+                </span>
               </div>
             ) : (
-              <div className="flex items-center gap-6 pt-1">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide">
-                  <button
-                    onClick={() => toggleLike(post.id)}
-                    className={`flex items-center hover:scale-110 transition-transform cursor-pointer border-none bg-transparent ${post.liked ? 'text-rose-600' : 'text-gray-400 hover:text-rose-600'
-                      }`}
+              <div className="flex items-center gap-3 pt-0.5">
+                {reviewStats.count > 0 && (
+                  <span
+                    className="flex items-center gap-1.5 text-[12px] text-[var(--ms-ink)] select-none"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
-                    <svg
-                      width="16" height="16" viewBox="0 0 24 24"
-                      fill={post.liked ? 'currentColor' : 'none'}
-                      stroke="currentColor" strokeWidth="2.2"
-                    >
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={MUTED} stroke="none">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
-                  </button>
-                  <span className="text-gray-500 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                    {post.likes} {post.likes === 1 ? 'Like' : 'Likes'}
+                    <span className="font-semibold">{reviewStats.average}</span>
+                    <span className="text-[var(--ms-ink-soft)]">
+                      ({reviewStats.count})
+                    </span>
                   </span>
-                </div>
+                )}
                 <button
-                  onClick={() => toggleSave(post.id)}
-                  className={`flex items-center gap-2 text-xs font-semibold tracking-wide transition-colors cursor-pointer border-none bg-transparent ${isSaved ? 'text-amber-600' : 'text-gray-400 hover:text-amber-600'
-                    }`}
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                  type="button"
+                  onClick={() => toggleLike(post.id)}
+                  aria-label={post.liked ? 'Unlike' : 'Like'}
+                  aria-pressed={Boolean(post.liked)}
+                  className={`${iconBtnClass} ${post.liked ? 'text-[var(--ms-plum)]' : 'text-[#8A8A8A] hover:text-[var(--ms-plum)]'}`}
                 >
-                  <svg
-                    width="16" height="16" viewBox="0 0 24 24"
-                    fill={isSaved ? 'currentColor' : 'none'}
-                    stroke="currentColor" strokeWidth="2.2"
-                  >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={post.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  {post.likes >= COUNT_THRESHOLD && (
+                    <span className="text-[12px] font-medium tabular-nums">{post.likes}</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleSave(post.id)}
+                  aria-label={isSaved ? 'Remove from saved' : 'Save'}
+                  aria-pressed={isSaved}
+                  className={`${iconBtnClass} ${isSaved ? 'text-[var(--ms-plum)]' : 'text-[#8A8A8A] hover:text-[var(--ms-plum)]'}`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span>{savesCount} {savesCount === 1 ? 'Save' : 'Saves'}</span>
+                  {savesCount >= COUNT_THRESHOLD && (
+                    <span className="text-[12px] font-medium tabular-nums">{savesCount}</span>
+                  )}
                 </button>
-                {reviewSummary}
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              {post.materials.map((mat: string) => (
-                <span
-                  key={mat}
-                  className="text-[9px] font-bold tracking-widest text-[#5F3041]/90 bg-[#FAF0F3]/50 border border-[#5F3041]/10 px-2.5 py-1 rounded-md uppercase select-none"
-                  style={{ fontFamily: 'var(--font-montserrat)' }}
-                >
-                  {mat}
-                </span>
-              ))}
-            </div>
+            {post.materials.length > 0 && (
+              <p className={materialsClass} style={{ fontFamily: 'var(--font-montserrat)' }}>
+                {post.materials.join('  ·  ')}
+              </p>
+            )}
           </div>
         )}
       </div>

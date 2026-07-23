@@ -178,7 +178,7 @@ export default function SellerMessagesPage() {
     }
   }, [activeThreadId])
 
-  // Drop the indicator when switching threads so it can't leak across chats
+  // Drop the indicator when switching threads
   useEffect(() => {
     setPeerTyping(false)
     if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current)

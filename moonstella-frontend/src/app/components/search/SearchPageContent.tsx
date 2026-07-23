@@ -73,8 +73,8 @@ export default function SearchPageContent({
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await api.get('/api/posts')
-        const formatted = response.data.map((p: any) => ({
+        const response = await api.get('/api/posts', { params: { limit: '100', sort: 'latest' } })
+        const formatted = (response.data?.data?.docs || []).map((p: any) => ({
           id: p._id,
           userId: p.userId?._id || p.userId,
           artisanName: p.userId

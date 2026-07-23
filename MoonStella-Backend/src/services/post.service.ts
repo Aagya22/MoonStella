@@ -1,9 +1,10 @@
 import * as PostRepository from '../repositories/post.repository'
+import { FeedQuery } from '../repositories/post.repository'
 import { AppError } from '../errors/app.error'
 import { CreatePostDto } from '../dtos/post.dto'
 
 export const createPost = async (userId: string, data: CreatePostDto) => {
-  return PostRepository.create({
+  const post = await PostRepository.create({
     userId,
     description: data.description,
     category: data.category,
@@ -12,16 +13,20 @@ export const createPost = async (userId: string, data: CreatePostDto) => {
     materials: data.materials,
     images: data.images
   })
+  // Populated so the feed can render it without a second call
+  return PostRepository.findById(String(post._id))
 }
 
-export const getAllPosts = async () => {
-  const posts = await PostRepository.findAll()
+// Scoped to the ids on screen, not the whole collection
+const attachReviewStats = async (posts: any[]) => {
+  if (!posts.length) return posts
 
-  // Attach public review stats (count + average) to each post
   const { Review } = require('../models/review.model')
+  const ids = posts.map((p) => p._id)
   const stats = await Review.aggregate([
     { $lookup: { from: 'orders', localField: 'orderId', foreignField: '_id', as: 'order' } },
     { $unwind: '$order' },
+    { $match: { 'order.postId': { $in: ids } } },
     { $group: { _id: '$order.postId', count: { $sum: 1 }, average: { $avg: '$rating' } } }
   ])
   const statMap = new Map<string, any>(stats.map((s: any) => [String(s._id), s]))
@@ -35,6 +40,28 @@ export const getAllPosts = async () => {
     }
     return obj
   })
+}
+
+export const getFeed = async (query: FeedQuery) => {
+  const { docs, totalDocs } = await PostRepository.findFeed(query)
+  const withStats = await attachReviewStats(docs)
+
+  return {
+    docs: withStats,
+    page: query.page,
+    limit: query.limit,
+    totalDocs,
+    totalPages: Math.ceil(totalDocs / query.limit),
+    hasMore: query.page * query.limit < totalDocs,
+  }
+}
+
+export const getSuggestedAuthors = async (opts: {
+  role: 'buyer' | 'seller'
+  excludeAuthorId: string
+  limit: number
+}) => {
+  return PostRepository.findSuggestedAuthors(opts)
 }
 
 export const toggleLikePost = async (postId: string, userId: string) => {

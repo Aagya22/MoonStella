@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { io } from 'socket.io-client'
 import SellerOnboarding from '@/app/components/seller/seller-onboarding'
 import { updateProfileApi } from '@/lib/api/auth'
 import { useSnackbar } from '@/context/SnackbarContext'
 import { useSellerContext } from '../SellerContext'
 import api from '@/lib/api/axios'
+import FeedSkeleton from '@/app/components/feed/FeedSkeleton'
 
 // Subcomponents
 import FeedHeader from '@/app/components/seller/feed/FeedHeader'
@@ -60,9 +62,22 @@ export default function SellerFeedPage() {
 
   // Feed Curation States
   const [selectedCuration, setSelectedCuration] = useState('latest') // 'latest', 'following', 'my-designs'
+  const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
+  const [sortMode, setSortMode] = useState<'trending' | 'latest'>('trending')
   const [posts, setPosts] = useState<any[]>([])
   const [suggestedBuyers, setSuggestedBuyers] = useState<any[]>([])
   const [followedClients, setFollowedClients] = useState<string[]>([])
+
+  // Paging & fetch status
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState('')
+
+  // New posts from others, held until asked for
+  const [pendingPosts, setPendingPosts] = useState<any[]>([])
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   // Modal creation and zoom inspect states
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -98,106 +113,159 @@ export default function SellerFeedPage() {
     }
   }, [router])
 
-  // 2. Fetch all feed posts (client requests + artisan designs)
+  const uid = String(user?.id || user?._id || '')
+
+  const mapPost = useCallback((p: any) => ({
+    id: p._id,
+    userId: p.userId?._id || p.userId,
+    role: p.userId?.role || 'buyer',
+    artisanName: p.userId
+      ? `${p.userId.firstName} ${p.userId.lastName}`
+      : 'Anonymous Member',
+    artisanTitle: p.userId?.role === 'seller' ? 'MASTER ARTISAN' : 'CONNOISSEUR MEMBER',
+    avatar: p.userId?.avatar || null,
+    image: p.images?.[0] || null,
+    images: p.images || [],
+    category: p.category,
+    price: p.budget ? `Rs. ${p.budget.toLocaleString()}` : p.price || 'Contact for Quote',
+    description: p.description,
+    materials: p.materials || [],
+    likes: p.likes?.length || 0,
+    liked: p.likes?.some((like: any) => String(like._id || like) === uid),
+    likesList: p.likes?.map((u: any) => ({
+      id: u._id || u,
+      firstName: u.firstName || 'Anonymous',
+      lastName: u.lastName || '',
+      avatar: u.avatar || null,
+      role: u.role || 'buyer',
+      location: u.location || 'Nepal'
+    })) || [],
+    reviewStats: p.reviewStats || { count: 0, average: 0 },
+    time: new Date(p.createdAt).toLocaleDateString(),
+    rawDate: p.createdAt,
+  }), [uid])
+
+  // The server does the curating now
+  const feedParams = useCallback((page: number) => {
+    const params: Record<string, string> = { page: String(page), limit: '8', sort: sortMode }
+
+    if (selectedCuration === 'my-designs') {
+      params.authorId = uid
+      params.sort = 'latest'
+    } else if (selectedCuration === 'following') {
+      params.following = 'true'
+      params.excludeSelf = 'true'
+    } else {
+      // The bench feed is client briefs, so buyers only
+      params.authorRole = 'buyer'
+      params.excludeSelf = 'true'
+    }
+    if (selectedMaterial) params.material = selectedMaterial
+
+    return params
+  }, [selectedCuration, selectedMaterial, sortMode, uid])
+
+  const loadPage = useCallback(async (page: number) => {
+    const isFirstPage = page === 1
+    if (isFirstPage) setLoading(true)
+    else setLoadingMore(true)
+    setError('')
+
+    try {
+      const response = await api.get('/api/posts', { params: feedParams(page) })
+      const payload = response.data?.data
+      const batch = (payload?.docs || []).map(mapPost)
+
+      setPosts((prev) => (isFirstPage ? batch : [...prev, ...batch]))
+      setHasMore(Boolean(payload?.hasMore))
+      setCurrentPage(page)
+    } catch (err) {
+      console.error('Failed to load feed posts:', err)
+      setError('We could not load the feed just now.')
+      setHasMore(false)
+      if (isFirstPage) setPosts([])
+    } finally {
+      if (isFirstPage) setLoading(false)
+      else setLoadingMore(false)
+    }
+  }, [feedParams, mapPost])
+
+  // Keyed on uid; the user object changes on every follow
   useEffect(() => {
-    const fetchFeedPosts = async () => {
-      try {
-        const response = await api.get('/api/posts')
+    if (!uid) return
+    setPendingPosts([])
+    loadPage(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, selectedCuration, selectedMaterial, sortMode])
 
-        const formatted = response.data.map((p: any) => ({
-          id: p._id,
-          userId: p.userId?._id || p.userId,
-          artisanName: p.userId
-            ? `${p.userId.firstName} ${p.userId.lastName}`
-            : 'Anonymous Member',
-          artisanTitle: p.userId?.role === 'seller' ? 'MASTER ARTISAN' : 'CONNOISSEUR MEMBER',
-          avatar: p.userId?.avatar || null,
-          image: p.images?.[0] || null,
-          images: p.images || [],
-          category: p.category,
-          price: p.budget ? `Rs. ${p.budget.toLocaleString()}` : p.price || 'Contact for Quote',
-          description: p.description,
-          materials: p.materials?.length > 0 ? p.materials : ['Bespoke Custom'],
-          likes: p.likes?.length || 0,
-          liked: p.likes?.some(
-            (like: any) => String(like._id || like) === String(user?.id || user?._id || '')
-          ),
-          likesList: p.likes?.map((u: any) => ({
-            id: u._id || u,
-            firstName: u.firstName || 'Anonymous',
-            lastName: u.lastName || '',
-            avatar: u.avatar || null,
-            role: u.role || 'buyer',
-            location: u.location || 'Nepal'
-          })) || [],
-          comments: p.comments || [],
-          reviewStats: p.reviewStats || { count: 0, average: 0 },
-          time: new Date(p.createdAt).toLocaleDateString(),
-          rawDate: p.createdAt,
-        }))
-        setPosts(formatted)
+  // Infinite scroll
+  useEffect(() => {
+    const node = sentinelRef.current
+    if (!node || !hasMore || loading || loadingMore) return
 
-        // Compile suggested active buyers/clients (excluding ourselves and already followed clients)
-        const buyersMap = new Map()
-        const followingList = user?.following || []
-        const latestPostAuthorId = response.data[0]?.userId?._id || response.data[0]?.userId
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadPage(currentPage + 1)
+      },
+      { rootMargin: '400px' }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, loadingMore, currentPage])
 
-        response.data.forEach((p: any) => {
-          if (p.userId && p.userId.role === 'buyer') {
-            const buyerIdStr = String(p.userId._id)
-            if (buyerIdStr === String(user?.id || user?._id)) return
-            // Exclude already followed buyers
-            if (followingList.some((f: any) => String(f._id || f) === buyerIdStr || String(f) === buyerIdStr)) return
+  useEffect(() => {
+    if (!uid) return
+    api
+      .get('/api/posts/authors', { params: { role: 'buyer', limit: '6' } })
+      .then((res) => {
+        setSuggestedBuyers(
+          (res.data?.data || []).map((a: any) => ({
+            id: a._id,
+            name: `${a.firstName || ''} ${a.lastName || ''}`.trim(),
+            image: a.avatar || null,
+          }))
+        )
+      })
+      .catch(() => setSuggestedBuyers([]))
+  }, [uid])
 
-            const nameStr = `${p.userId.firstName} ${p.userId.lastName}`
-            const avatarUrl = p.userId.avatar || null
-            // If the user's avatar is one of the post's images, fallback to initial letter avatar
-            const isPostImage = p.images?.includes(avatarUrl)
+  // Live arrivals wait behind a banner
+  useEffect(() => {
+    if (!uid) return
+    const token = localStorage.getItem('ms_token')
+    if (!token || token === 'mock_token_for_preview') return
 
-            buyersMap.set(p.userId._id, {
-              id: p.userId._id,
-              name: nameStr,
-              image: isPostImage ? null : avatarUrl,
-            })
-          }
-        })
-        let compiledBuyers = Array.from(buyersMap.values())
+    const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', {
+      auth: { token },
+    })
 
-        // Fallback: If all active buyers in the feed are already followed, show them as suggested anyway instead of showing an empty sidebar
-        if (compiledBuyers.length === 0) {
-          response.data.forEach((p: any) => {
-            if (p.userId && p.userId.role === 'buyer') {
-              const buyerIdStr = String(p.userId._id)
-              if (buyerIdStr === String(user?.id || user?._id)) return
-
-              const nameStr = `${p.userId.firstName} ${p.userId.lastName}`
-              const avatarUrl = p.userId.avatar || null
-              const isPostImage = p.images?.includes(avatarUrl)
-
-              buyersMap.set(p.userId._id, {
-                id: p.userId._id,
-                name: nameStr,
-                image: isPostImage ? null : avatarUrl,
-              })
-            }
-          })
-          compiledBuyers = Array.from(buyersMap.values())
-        }
-
-        // Filter out the author of the latest post if we have other suggestions to avoid duplicate names in the viewport
-        if (compiledBuyers.length > 1 && latestPostAuthorId) {
-          compiledBuyers = compiledBuyers.filter(b => String(b.id) !== String(latestPostAuthorId))
-        }
-        setSuggestedBuyers(compiledBuyers)
-      } catch (err) {
-        console.error('Failed to load feed posts:', err)
+    socket.on('post:new', (p: any) => {
+      const authorId = String(p?.userId?._id || p?.userId || '')
+      if (!authorId || authorId === uid) return
+      if (selectedCuration === 'my-designs') return
+      if (selectedCuration === 'following') {
+        if (!user?.following?.some((id: any) => String(id) === authorId)) return
+      } else if (p?.userId?.role !== 'buyer') {
+        return
       }
-    }
+      if (selectedMaterial && !(p.materials || []).includes(selectedMaterial)) return
 
-    if (user) {
-      fetchFeedPosts()
+      setPendingPosts((prev) =>
+        prev.some((x) => x.id === p._id) ? prev : [mapPost(p), ...prev]
+      )
+    })
+
+    return () => {
+      socket.disconnect()
     }
-  }, [user])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, selectedCuration, selectedMaterial])
+
+  const showPendingPosts = () => {
+    setPosts((prev) => [...pendingPosts, ...prev])
+    setPendingPosts([])
+  }
 
   // Open the create modal when linked here from the dashboard button
   useEffect(() => {
@@ -318,28 +386,12 @@ export default function SellerFeedPage() {
       }
 
       const response = await api.post('/api/posts', postPayload)
-      const p = response.data
+      const newPost = { ...mapPost(response.data), time: 'Just now' }
 
-      const newPost = {
-        id: p._id,
-        userId: p.userId?._id || p.userId || user?.id || user?._id,
-        artisanName: user?.firstName ? `${user.firstName} ${user.lastName}` : 'Master Artisan',
-        artisanTitle: 'MASTER ARTISAN',
-        avatar: user?.avatar || null,
-        image: p.images?.[0] || '/recom_emerald.png',
-        images: p.images?.length > 0 ? p.images : ['/recom_emerald.png'],
-        category: p.category,
-        price: p.budget ? `Rs. ${p.budget.toLocaleString()}` : p.price || 'Contact for Quote',
-        description: p.description,
-        materials: p.materials?.length > 0 ? p.materials : ['Bespoke Custom'],
-        likes: p.likes?.length || 0,
-        liked: false,
-        comments: p.comments || [],
-        time: 'Just now',
-        rawDate: p.createdAt,
+      // Only belongs on screen if the tab in view is My Designs
+      if (selectedCuration === 'my-designs') {
+        setPosts((prev) => [newPost, ...prev])
       }
-
-      setPosts([newPost, ...posts])
       setShowCreateModal(false)
       showSnackbar('Design sketches shared successfully!', 'success')
     } catch (err: any) {
@@ -390,34 +442,22 @@ export default function SellerFeedPage() {
     }
   }
 
-  // Filter posts based on selected curation filter
-  const filteredPosts = posts.filter((post) => {
-    const currentUserName = user ? `${user.firstName} ${user.lastName}` : ''
-    const isMyPost = post.artisanName === currentUserName || String(post.userId?._id || post.userId) === String(user?.id || user?._id)
-
-    // 1. My Designs tab shows ONLY the seller's own designs
-    if (selectedCuration === 'my-designs') {
-      return isMyPost
-    }
-
-    // 2. Following Feed shows only clients followed by this seller
-    if (selectedCuration === 'following') {
-      if (isMyPost) return false
-      return user?.following?.some((id: any) => String(id) === String(post.userId)) || false
-    }
-
-    // 3. Latest Feed curation shows all client requests (non-seller posts)
-    if (selectedCuration === 'latest') {
-      if (isMyPost) return false
-      return post.artisanTitle !== 'MASTER ARTISAN'
-    }
-
-    return true
-  })
-
-  // Sort My Designs from latest to old posts
-  if (selectedCuration === 'my-designs') {
-    filteredPosts.sort((a, b) => new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime())
+  const emptyMessage = {
+    'my-designs': {
+      title: 'No Designs Shared',
+      body: 'Your shared bespoke sketches and portfolio collection will appear here.',
+    },
+    following: {
+      title: 'Nothing From Your Circle',
+      body: 'Follow a few clients and their newest briefs will gather here.',
+    },
+    latest: {
+      title: 'No Client Briefs Posted',
+      body: 'There are no client custom briefs matching this curation.',
+    },
+  }[selectedCuration] || {
+    title: 'Nothing to Show',
+    body: 'Try another curation or clear the material filter.',
   }
 
   if (!localUser) return null
@@ -430,6 +470,10 @@ export default function SellerFeedPage() {
           selectedCuration={selectedCuration}
           setSelectedCuration={setSelectedCuration}
           setShowCreateModal={setShowCreateModal}
+          sortMode={sortMode}
+          setSortMode={setSortMode}
+          selectedMaterial={selectedMaterial}
+          setSelectedMaterial={setSelectedMaterial}
         />
       </div>
 
@@ -459,7 +503,49 @@ export default function SellerFeedPage() {
           </button>
         </div>
 
-        {filteredPosts.length === 0 ? (
+        {/* New briefs published while the feed has been open */}
+        {pendingPosts.length > 0 && (
+          <div className="sticky top-20 z-20 flex justify-center pointer-events-none">
+            <button
+              onClick={showPendingPosts}
+              className="pointer-events-auto bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest uppercase px-6 py-2.5 rounded-full border-none cursor-pointer shadow-lg transition-all active:scale-95 flex items-center gap-2 animate-fade-in"
+              style={{ fontFamily: 'var(--font-montserrat)' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+              {pendingPosts.length} New {pendingPosts.length === 1 ? 'Brief' : 'Briefs'}
+            </button>
+          </div>
+        )}
+
+        {loading ? (
+          <FeedSkeleton count={3} />
+        ) : error ? (
+          <div className="text-center py-20 bg-white border border-gray-150 rounded-3xl flex flex-col items-center gap-4 shadow-sm select-none">
+            <div className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center text-gray-305 border border-gray-50 shadow-inner">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v5M12 16h.01" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-gray-800" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                {error}
+              </h4>
+              <p className="text-[10px] text-gray-400 mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                Check your connection and try again.
+              </p>
+            </div>
+            <button
+              onClick={() => loadPage(1)}
+              className="bg-[#5F3041] hover:bg-[#4A2231] text-[#E9D7C3] hover:text-white text-[10px] font-bold tracking-widest uppercase px-6 py-2.5 rounded-full border-none cursor-pointer transition-all active:scale-95"
+              style={{ fontFamily: 'var(--font-montserrat)' }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : posts.length === 0 ? (
           <div className="text-center py-20 bg-white border border-gray-150 rounded-3xl flex flex-col items-center gap-4 shadow-sm select-none">
             <div className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center text-gray-305 border border-gray-50 shadow-inner">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -469,18 +555,25 @@ export default function SellerFeedPage() {
             </div>
             <div>
               <h4 className="text-xs font-bold text-gray-800" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                {selectedCuration === 'my-designs' ? 'No Designs Shared' : 'No Client Briefs Posted'}
+                {emptyMessage.title}
               </h4>
               <p className="text-[10px] text-gray-400 mt-1" style={{ fontFamily: 'var(--font-montserrat)' }}>
-                {selectedCuration === 'my-designs'
-                  ? 'Your shared bespoke sketches and portfolio collection will appear here.'
-                  : 'There are no client custom briefs matching this curation.'}
+                {emptyMessage.body}
               </p>
             </div>
+            {selectedMaterial && (
+              <button
+                onClick={() => setSelectedMaterial(null)}
+                className="text-[10px] font-bold tracking-widest uppercase text-[#5F3041] border border-[#5F3041]/20 bg-[#FAF6F0] px-6 py-2.5 rounded-full cursor-pointer transition-all active:scale-95"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Clear {selectedMaterial}
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 animate-scale-up">
-            {filteredPosts.map((post) => (
+          <div className="grid grid-cols-1 gap-6">
+            {posts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -496,6 +589,17 @@ export default function SellerFeedPage() {
                 onShowLikes={handleShowLikes}
               />
             ))}
+
+            {loadingMore && <FeedSkeleton count={1} />}
+
+            {/* Tripped before it comes into view, so the next page is ready */}
+            <div ref={sentinelRef} aria-hidden className="h-px" />
+
+            {!hasMore && (
+              <p className="text-center text-[10px] text-gray-400 tracking-widest uppercase py-6 select-none" style={{ fontFamily: 'var(--font-montserrat)' }}>
+                You have reached the end
+              </p>
+            )}
           </div>
         )}
       </main>

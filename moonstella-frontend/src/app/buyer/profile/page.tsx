@@ -225,11 +225,13 @@ function BuyerProfileContent() {
   useEffect(() => {
     const fetchProfilePosts = async () => {
       try {
-        const response = await api.get('/api/posts')
         const targetUserId = profileUser?.id || profileUser?._id
+        const response = await api.get('/api/posts', {
+          params: { authorId: String(targetUserId || ''), limit: '100', sort: 'latest' },
+        })
         const targetUserName = profileUser ? `${profileUser.firstName} ${profileUser.lastName}` : ''
 
-        const formatted = response.data
+        const formatted = (response.data?.data?.docs || [])
           .filter((p: any) => {
             const authorId = p.userId?._id || p.userId
             return String(authorId) === String(targetUserId)

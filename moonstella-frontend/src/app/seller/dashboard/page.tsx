@@ -149,7 +149,7 @@ export default function SellerDashboardPage() {
 
   const uid = String(user?.id || user?._id || '')
 
-  // Set after mount so the server markup can't disagree with the client clock
+  // Set after mount to avoid a server/client clock mismatch
   useEffect(() => {
     setNow(new Date())
     const t = setInterval(() => setNow(new Date()), 1000)
@@ -203,7 +203,7 @@ export default function SellerDashboardPage() {
     [threads]
   )
 
-  // Keyed on updatedAt, when the order actually closed and the money is earned
+  // Keyed on updatedAt, when the order actually closed
   const monthly = useMemo(() => {
     const base = new Date()
     const buckets = Array.from({ length: 6 }, (_, i) => {

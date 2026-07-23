@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { normalizeMaterial } from '../constants/materials'
 
 export const createPostDto = z.object({
   description: z
@@ -12,7 +13,27 @@ export const createPostDto = z.object({
 
   budget: z.number().optional().nullable(),
   price: z.string().optional().nullable(),
-  materials: z.array(z.string()).default([]),
+
+  // Canonical spelling, so one material can't split into two tags
+  materials: z
+    .array(z.string())
+    .default([])
+    .transform((list, ctx) => {
+      const normalized: string[] = []
+      for (const raw of list) {
+        const match = normalizeMaterial(raw)
+        if (!match) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `"${raw}" is not a recognised material`,
+          })
+          return z.NEVER
+        }
+        if (!normalized.includes(match)) normalized.push(match)
+      }
+      return normalized
+    }),
+
   images: z.array(z.string()).default([]),
 })
 

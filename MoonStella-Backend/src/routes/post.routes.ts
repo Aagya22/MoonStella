@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { create, getAll, toggleLike, deletePost, editPost, toggleSave, getSaved } from '../controllers/post.controller'
+import { create, getAll, getSuggestedAuthors, toggleLike, deletePost, editPost, toggleSave, getSaved } from '../controllers/post.controller'
 import { getPostReviews } from '../controllers/order.controller'
 import { protect } from '../middleware/auth.middleware'
 import { createPostDto } from '../dtos/post.dto'
@@ -7,8 +7,11 @@ import { validate } from '../middleware/validate.middleware'
 
 const router = Router()
 
-// GET /api/posts - Get all posts (public)
-router.get('/', getAll)
+// GET /api/posts - Paginated feed (protected)
+router.get('/', protect, getAll)
+
+// GET /api/posts/authors - Sidebar suggestions (protected)
+router.get('/authors', protect, getSuggestedAuthors)
 
 // GET /api/posts/saved - Get saved posts / wishlist (protected)
 router.get('/saved', protect, getSaved)

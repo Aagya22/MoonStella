@@ -152,7 +152,7 @@ export default function BuyerDashboardPage() {
 
   const uid = String(user?.id || user?._id || '')
 
-  // Set after mount so the server markup can't disagree with the client clock
+  // Set after mount to avoid a server/client clock mismatch
   useEffect(() => {
     setNow(new Date())
     const t = setInterval(() => setNow(new Date()), 1000)

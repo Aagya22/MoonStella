@@ -11,7 +11,7 @@ const signToken = (id: string): string => {
   return jwt.sign({ id }, env.JWT_SECRET, { expiresIn: '30d' })
 }
 
-// Backdated a second: `iat` is whole seconds and can tie with this stamp
+// Backdated a second: `iat` is whole seconds and can tie
 const passwordChangedStamp = (): Date => new Date(Date.now() - 1000)
 
 export const formatUser = (user: IUser) => ({
@@ -142,7 +142,7 @@ export const changePassword = async (userId: string, data: ChangePasswordDto) =>
   user.passwordChangedAt = passwordChangedStamp()
   await user.save()
 
-  // The caller's own token is now rejected too, so hand back a fresh one
+  // The caller's token is rejected too, so return a fresh one
   return { success: true, token: signToken(String(user._id)) }
 }
 
@@ -183,7 +183,7 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
 
 export const forgotPassword = async (data: ForgotPasswordDto): Promise<void> => {
   const user = await UserRepository.findByEmail(data.email)
-  // Stay quiet on unknown addresses so registered emails can't be probed
+  // Stay quiet on unknown addresses so emails can't be probed
   if (!user) return
 
   // Generate short-lived reset token (1 hour)

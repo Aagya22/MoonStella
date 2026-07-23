@@ -73,7 +73,7 @@ export default function PostCard({
   }
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden flex flex-col transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)]">
+    <article className="surface surface-raise rounded-2xl overflow-hidden flex flex-col hover:-translate-y-0.5">
       {/* Post Header */}
       <div className="p-5 flex items-center justify-between gap-4">
         <div
@@ -98,13 +98,13 @@ export default function PostCard({
           </div>
           <div className="flex-1 min-w-0">
             <h4
-              className="text-xs font-bold text-gray-800 tracking-wide truncate"
-              style={{ fontFamily: 'var(--font-montserrat)' }}
+              className="text-[17px] font-medium text-[#1B1613] leading-tight truncate"
+              style={{ fontFamily: 'var(--font-playfair)' }}
             >
               {post.artisanName}
             </h4>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="text-[8px] font-extrabold text-[#5F3041] bg-[#5F3041]/5 px-2 py-0.5 rounded tracking-widest uppercase inline-block select-none">
+              <span className="text-[8.5px] font-semibold text-[#8A6A38] tracking-[0.18em] uppercase inline-block select-none">
                 {post.artisanTitle === 'MASTER ARTISAN' ? 'Master Artisan' : 'Client Brief'}
               </span>
               <span className="text-[8px] font-bold text-gray-400">· {post.time}</span>
@@ -129,14 +129,14 @@ export default function PostCard({
       {/* Sketch Collage / Slider */}
       {imagesList.length > 0 && (
         <div
-          className="relative w-full aspect-[4/3] bg-[#FAF8F5] overflow-hidden group select-none border-y border-gray-50 flex items-center justify-center"
+          className="relative w-full aspect-[4/3] max-h-[520px] bg-[#17120F] overflow-hidden group select-none"
           onDoubleClick={() => toggleLike(post.id)}
         >
           <Image
             src={imagesList[currentIndex]}
             alt="Client brief sketches"
             fill
-            className="object-contain transition-all duration-500 ease-out cursor-pointer"
+            className="object-cover transition-transform duration-[900ms] ease-out cursor-pointer group-hover:scale-[1.04]"
             onClick={() => {
               setSelectedInspectPost(post)
               setActiveInspectIndex(currentIndex)
@@ -177,17 +177,10 @@ export default function PostCard({
             </div>
           )}
 
-          <div className="absolute inset-0 bg-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pointer-events-none pb-8">
-            <span
-              className="bg-white/90 backdrop-blur text-[8px] font-bold tracking-widest text-[#5F3041] uppercase px-3 py-2 rounded shadow pointer-events-auto cursor-pointer"
-              onClick={() => {
-                setSelectedInspectPost(post)
-                setActiveInspectIndex(currentIndex)
-              }}
-            >
-              Double Click to Like · Click to Inspect
-            </span>
-          </div>
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          />
         </div>
       )}
 
@@ -256,7 +249,7 @@ export default function PostCard({
                 {post.materials.map((mat: string) => (
                   <span
                     key={mat}
-                    className="text-[9px] font-bold tracking-widest text-[#5F3041]/90 bg-[#FAF0F3]/50 border border-[#5F3041]/10 px-2.5 py-1 rounded-md uppercase select-none"
+                    className="text-[10px] font-normal text-[#6B625A] border border-[#8A6A38]/25 px-2.5 py-1 rounded-full select-none"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     {mat}
@@ -362,7 +355,7 @@ export default function PostCard({
               {post.materials.map((mat: string) => (
                 <span
                   key={mat}
-                  className="text-[9px] font-bold tracking-widest text-[#5F3041]/90 bg-[#FAF0F3]/50 border border-[#5F3041]/10 px-2.5 py-1 rounded-md uppercase select-none"
+                  className="text-[10px] font-normal text-[#6B625A] border border-[#8A6A38]/25 px-2.5 py-1 rounded-full select-none"
                   style={{ fontFamily: 'var(--font-montserrat)' }}
                 >
                   {mat}

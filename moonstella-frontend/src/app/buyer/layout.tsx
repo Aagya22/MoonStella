@@ -322,7 +322,7 @@ export default function BuyerLayout({
 
   return (
     <BuyerContext.Provider value={{ user, setUser, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans, notifications, unreadNotificationsCount, toggleNotification, markNotificationRead, markAllNotificationsRead, clearAllNotifications }}>
-      <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased relative">
+      <div className="min-h-screen bg-[var(--ms-ground)] text-gray-900 flex flex-col font-sans antialiased relative">
 
         {/* 1. Header (Navbar) */}
         <Header

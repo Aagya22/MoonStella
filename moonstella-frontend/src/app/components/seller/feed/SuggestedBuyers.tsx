@@ -18,9 +18,9 @@ export default function SuggestedBuyers({
   return (
     <aside className="w-full">
       <div className="sticky top-20 h-fit flex flex-col gap-6">
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
+        <div className="surface-alt rounded-2xl p-6">
           <h3
-            className="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase mb-5"
+            className="title-rule text-[10px] font-bold tracking-[0.2em] text-[var(--ms-ink-soft)] uppercase mb-5"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Suggested Buyers
@@ -34,7 +34,7 @@ export default function SuggestedBuyers({
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 max-h-[220px] overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-gray-200">
+            <div className="flex flex-col gap-4">
               {suggestedBuyers.map((buyer) => (
                 <div
                   key={buyer.id}
@@ -64,7 +64,7 @@ export default function SuggestedBuyers({
             onClick={() => {
               setSelectedCuration('latest')
             }}
-            className="w-full text-center text-[10px] font-bold tracking-widest text-[#5F3041] hover:bg-[#5F3041] hover:text-[#FAF8F5] transition-all duration-300 uppercase py-2.5 rounded-xl border border-[#5F3041]/20 cursor-pointer block bg-[#FAF6F0] shadow-sm active:scale-95 mt-4"
+            className="w-full text-center text-[10px] font-bold tracking-widest text-[var(--ms-plum)] hover:text-[var(--ms-plum-hover)] transition-all duration-300 uppercase pt-4 pb-1 cursor-pointer block bg-transparent border-0 border-t border-[var(--ms-line)] active:scale-95 mt-4"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
             Explore All
