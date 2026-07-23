@@ -50,6 +50,13 @@ interface Thread {
   lastMessageAt?: string
 }
 
+// Openers offered while a conversation is still empty
+const QUICK_MESSAGES = [
+  'Thank you for reaching out. How may I help with your piece?',
+  'I can craft this to order, may I know your budget and timeline?',
+  'Happy to share more photographs and details of my work.',
+]
+
 export default function SellerMessagesPage() {
   const searchParams = useSearchParams()
   const chatWithParam = searchParams.get('chatWith')
@@ -671,8 +678,22 @@ export default function SellerMessagesPage() {
                 </div>
                 <h4 className="text-xs font-bold text-gray-700" style={{ fontFamily: 'var(--font-montserrat)' }}>No Messages Yet</h4>
                 <p className="text-[10px] text-gray-400 mt-1 max-w-[240px] leading-relaxed">
-                  Start your conversation by typing a message below to coordinate details.
+                  Start your conversation below, or open with one of these.
                 </p>
+
+                <div className="flex flex-col gap-2 mt-4 w-full max-w-[280px]">
+                  {QUICK_MESSAGES.map((text) => (
+                    <button
+                      key={text}
+                      type="button"
+                      onClick={() => handleChatInputChange(text)}
+                      className="text-[10px] leading-snug text-[#5F3041] bg-white border border-[#5F3041]/15 rounded-full px-4 py-2.5 hover:bg-[#FAF8F5] hover:border-[#5F3041]/35 transition-all duration-300 cursor-pointer"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      {text}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               messages.map((m) => {
