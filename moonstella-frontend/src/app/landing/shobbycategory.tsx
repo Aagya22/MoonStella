@@ -61,24 +61,24 @@ function CategoryCard({ item, index }: { item: typeof categories[0], index: numb
 
 export default function ShopByCategory() {
   return (
-    <section className="py-20 bg-[#FCF9F8] w-full">
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px' }}>
+    <section className="pt-4 pb-20 bg-[#FCF9F8] w-full">
 
-        <div className="text-center mb-12">
+      {/* Header — left-aligned, in the same px-16 frame as the cards below */}
+      <div className="w-full px-16">
+        <div className="pb-6 border-b border-gray-200 mb-12">
           <p
-            className="text-xs font-semibold tracking-widest mb-3"
+            className="text-xs font-semibold tracking-widest mb-2"
             style={{ color: '#5F3041', fontFamily: 'var(--font-montserrat)' }}
           >
             CURATION
           </p>
           <h2
-            className="text-4xl md:text-5xl font-bold text-gray-900"
+            className="text-3xl md:text-4xl font-bold text-gray-900"
             style={{ fontFamily: 'var(--font-playfair)' }}
           >
             Shop by Category
           </h2>
         </div>
-
       </div>
 
       {/* Horizontal scroll — full width */}
