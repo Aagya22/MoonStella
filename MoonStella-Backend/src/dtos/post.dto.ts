@@ -4,12 +4,13 @@ import { normalizeMaterial } from '../constants/materials'
 export const createPostDto = z.object({
   description: z
     .string({ required_error: 'Description is required' })
-    .min(1, 'Description cannot be empty')
-    .trim(),
+    .trim()
+    .min(1, 'Description cannot be empty'),
 
-  category: z.string({
-    required_error: 'Category is required',
-  }),
+  category: z
+    .string({ required_error: 'Category is required' })
+    .trim()
+    .min(1, 'Category is required'),
 
   budget: z.number().optional().nullable(),
   price: z.string().optional().nullable(),

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import * as PostService from '../services/post.service'
 import { createNotification } from '../services/notification.service'
-import { io } from '../server'
+import { emitToAll } from '../socket'
 import { ok } from '../utils/response'
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
@@ -10,7 +10,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
     const post = await PostService.createPost(String(userId), req.body)
 
     // Push to open feeds instead of polling
-    io.emit('post:new', post)
+    emitToAll('post:new', post)
 
     res.status(201).json(post)
   } catch (error) {

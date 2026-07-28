@@ -5,6 +5,13 @@ import { useSnackbar } from '@/context/SnackbarContext'
 import api from '@/lib/api/axios'
 import InspectPostModal from '@/app/components/buyer/feed/InspectPostModal'
 
+// Fixed filter catalogs, so the refine panel is always usable even before any
+// piece has been posted. Gemstone/material entries are broad keywords that
+// match the fuller material names via substring.
+const CATEGORY_OPTIONS = ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Pendants', 'Complete Set', 'Others']
+const GEMSTONE_OPTIONS = ['Diamond', 'Emerald', 'Sapphire', 'Ruby', 'Pearl', 'Opal', 'Topaz', 'Jade', 'Amethyst', 'Aquamarine', 'Garnet', 'Moonstone']
+const MATERIAL_OPTIONS = ['Yellow Gold', 'White Gold', 'Rose Gold', 'Platinum', 'Silver']
+
 interface SearchPageContentProps {
   user: any
   setUser: (user: any) => void
@@ -48,12 +55,8 @@ export default function SearchPageContent({
   const [maxPrice, setMaxPrice] = useState<number | ''>('')
   const [sortBy, setSortBy] = useState('newest')
   const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading] = useState(true)
   const ITEMS_PER_PAGE = 6
-
-  // Dynamic filter catalogs derived from database posts
-  const [dynamicCategories, setDynamicCategories] = useState<string[]>([])
-  const [dynamicGemstones, setDynamicGemstones] = useState<string[]>([])
-  const [dynamicMaterials, setDynamicMaterials] = useState<string[]>([])
 
   // Modal inspection states
   const [selectedInspectPost, setSelectedInspectPost] = useState<any>(null)
@@ -69,9 +72,11 @@ export default function SearchPageContent({
     setCurrentPage(1)
   }, [searchQuery, selectedCategories, selectedGemstones, selectedMaterial, minPrice, maxPrice, sortBy])
 
-  // Load all posts & compile categories, gemstones, and materials dynamically
+  // Load posts. The paginated endpoint returns { data: { docs } }, so the
+  // catalog is fixed (above) rather than derived from this payload.
   useEffect(() => {
     const fetchPosts = async () => {
+      setLoading(true)
       try {
         const response = await api.get('/api/posts', { params: { limit: '100', sort: 'latest' } })
         const formatted = (response.data?.data?.docs || []).map((p: any) => ({
@@ -86,7 +91,7 @@ export default function SearchPageContent({
           image: p.images?.[0] || null,
           images: p.images || [],
           category: p.category,
-          price: p.budget ? `$${p.budget.toLocaleString()}` : p.price || 'Contact for Quote',
+          price: p.budget ? `Rs. ${p.budget.toLocaleString()}` : p.price || 'Contact for Quote',
           rawPrice: p.budget || 0,
           description: p.description,
           materials: p.materials?.length > 0 ? p.materials : ['Bespoke Custom'],
@@ -107,47 +112,11 @@ export default function SearchPageContent({
           rawDate: p.createdAt,
         }))
         setPosts(formatted)
-
-
-        const relevantRawPosts = response.data.filter((p: any) => {
-          const isSellerPost = p.userId?.role === 'seller'
-          if (role === 'buyer') return isSellerPost
-          if (role === 'seller') return !isSellerPost
-          return true
-        })
-
-        // 1. Compile Unique Categories used in posts
-        const uniqueCategories = Array.from(
-          new Set(relevantRawPosts.map((p: any) => p.category).filter(Boolean))
-        ) as string[]
-        setDynamicCategories(uniqueCategories)
-
-        // 2. Compile Unique Gemstones used in posts
-        const gemstoneKeywords = ['Diamond', 'Sapphire', 'Emerald', 'Ruby', 'Pearl', 'Opal', 'Ruby', 'Topaz', 'Jade']
-        const uniqueGemstones = Array.from(
-          new Set(
-            relevantRawPosts
-              .flatMap((p: any) => p.materials || [])
-              .map((m: string) => gemstoneKeywords.find(k => m.toLowerCase().includes(k.toLowerCase())))
-              .filter(Boolean)
-          )
-        ) as string[]
-        setDynamicGemstones(uniqueGemstones)
-
-        // 3. Compile Unique Materials used in posts
-        const materialKeywords = ['Rose Gold', 'Yellow Gold', 'Platinum', 'White Gold', 'Silver']
-        const uniqueMaterials = Array.from(
-          new Set(
-            relevantRawPosts
-              .flatMap((p: any) => p.materials || [])
-              .map((m: string) => materialKeywords.find(k => m.toLowerCase().includes(k.toLowerCase())))
-              .filter(Boolean)
-          )
-        ) as string[]
-        setDynamicMaterials(uniqueMaterials)
-
       } catch (err) {
         console.error('Failed to load posts in search:', err)
+        setPosts([])
+      } finally {
+        setLoading(false)
       }
     }
     fetchPosts()
@@ -171,7 +140,7 @@ export default function SearchPageContent({
       await api.patch(`/api/posts/${postId}`, {
         description: newDesc,
         budget: budgetNum,
-        price: budgetNum ? `$${budgetNum.toLocaleString()}` : 'Contact for Quote',
+        price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote',
       })
 
       setPosts((prev) =>
@@ -181,7 +150,7 @@ export default function SearchPageContent({
               ...p,
               description: newDesc,
               budget: budgetNum,
-              price: budgetNum ? `$${budgetNum.toLocaleString()}` : 'Contact for Quote',
+              price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote',
             }
           }
           return p
@@ -191,7 +160,7 @@ export default function SearchPageContent({
       setSelectedInspectPost((prev: any) => ({
         ...prev,
         description: newDesc,
-        price: budgetNum ? `$${budgetNum.toLocaleString()}` : 'Contact for Quote',
+        price: budgetNum ? `Rs. ${budgetNum.toLocaleString()}` : 'Contact for Quote',
       }))
       showSnackbar('Changes saved successfully!', 'success')
     } catch (err) {
@@ -226,6 +195,14 @@ export default function SearchPageContent({
     const words = cleanDesc.split(' ').slice(0, 4).join(' ')
     return words ? words + '...' : post.category || 'Bespoke Request'
   }
+
+  const hasActiveFilters =
+    Boolean(searchQuery) ||
+    selectedCategories.length > 0 ||
+    selectedGemstones.length > 0 ||
+    selectedMaterial !== null ||
+    minPrice !== '' ||
+    maxPrice !== ''
 
   // Filter application
   const filteredPosts = posts.filter((post) => {
@@ -327,30 +304,26 @@ export default function SearchPageContent({
               Category
             </h4>
             <div className="flex flex-col gap-3">
-              {dynamicCategories.length === 0 ? (
-                <span className="text-[10px] text-gray-405 italic">No categories posted yet</span>
-              ) : (
-                dynamicCategories.map((cat) => {
-                  const isChecked = selectedCategories.includes(cat)
-                  return (
-                    <label key={cat} className="flex items-center gap-3 text-xs text-gray-600 font-semibold cursor-pointer select-none font-sans">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          if (isChecked) {
-                            setSelectedCategories(prev => prev.filter(c => c !== cat))
-                          } else {
-                            setSelectedCategories(prev => [...prev, cat])
-                          }
-                        }}
-                        className="w-4 h-4 border border-[#5F3041]/20 rounded text-[#5F3041] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#5F3041] flex-shrink-0"
-                      />
-                      <span>{cat}</span>
-                    </label>
-                  )
-                })
-              )}
+              {CATEGORY_OPTIONS.map((cat) => {
+                const isChecked = selectedCategories.includes(cat)
+                return (
+                  <label key={cat} className="flex items-center gap-3 text-xs text-gray-600 font-semibold cursor-pointer select-none font-sans">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        if (isChecked) {
+                          setSelectedCategories(prev => prev.filter(c => c !== cat))
+                        } else {
+                          setSelectedCategories(prev => [...prev, cat])
+                        }
+                      }}
+                      className="w-4 h-4 border border-[#5F3041]/20 rounded text-[#5F3041] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#5F3041] flex-shrink-0"
+                    />
+                    <span>{cat}</span>
+                  </label>
+                )
+              })}
             </div>
           </div>
 
@@ -360,30 +333,26 @@ export default function SearchPageContent({
               Gemstone Type
             </h4>
             <div className="flex flex-col gap-3">
-              {dynamicGemstones.length === 0 ? (
-                <span className="text-[10px] text-gray-450 italic">No gemstones found in posts</span>
-              ) : (
-                dynamicGemstones.map((gem) => {
-                  const isChecked = selectedGemstones.includes(gem)
-                  return (
-                    <label key={gem} className="flex items-center gap-3 text-xs text-gray-600 font-semibold cursor-pointer select-none font-sans">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          if (isChecked) {
-                            setSelectedGemstones(prev => prev.filter(g => g !== gem))
-                          } else {
-                            setSelectedGemstones(prev => [...prev, gem])
-                          }
-                        }}
-                        className="w-4 h-4 border border-[#5F3041]/20 rounded text-[#5F3041] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#5F3041] flex-shrink-0"
-                      />
-                      <span>{gem}</span>
-                    </label>
-                  )
-                })
-              )}
+              {GEMSTONE_OPTIONS.map((gem) => {
+                const isChecked = selectedGemstones.includes(gem)
+                return (
+                  <label key={gem} className="flex items-center gap-3 text-xs text-gray-600 font-semibold cursor-pointer select-none font-sans">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        if (isChecked) {
+                          setSelectedGemstones(prev => prev.filter(g => g !== gem))
+                        } else {
+                          setSelectedGemstones(prev => [...prev, gem])
+                        }
+                      }}
+                      className="w-4 h-4 border border-[#5F3041]/20 rounded text-[#5F3041] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#5F3041] flex-shrink-0"
+                    />
+                    <span>{gem}</span>
+                  </label>
+                )
+              })}
             </div>
           </div>
 
@@ -417,26 +386,22 @@ export default function SearchPageContent({
               Material
             </h4>
             <div className="flex flex-wrap gap-2 pt-0.5">
-              {dynamicMaterials.length === 0 ? (
-                <span className="text-[10px] text-gray-450 italic">No materials found in posts</span>
-              ) : (
-                dynamicMaterials.map((mat) => {
-                  const isActive = selectedMaterial === mat
-                  return (
-                    <button
-                      key={mat}
-                      onClick={() => setSelectedMaterial(isActive ? null : mat)}
-                      className={`text-[8px] font-bold tracking-widest px-3 py-1.5 rounded-full uppercase border transition-all duration-300 cursor-pointer flex-shrink-0 ${isActive
-                          ? 'bg-[#5F3041] text-white border-[#5F3041]'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                        }`}
-                      style={{ fontFamily: 'var(--font-montserrat)' }}
-                    >
-                      {mat}
-                    </button>
-                  )
-                })
-              )}
+              {MATERIAL_OPTIONS.map((mat) => {
+                const isActive = selectedMaterial === mat
+                return (
+                  <button
+                    key={mat}
+                    onClick={() => setSelectedMaterial(isActive ? null : mat)}
+                    className={`text-[8px] font-bold tracking-widest px-3 py-1.5 rounded-full uppercase border transition-all duration-300 cursor-pointer flex-shrink-0 ${isActive
+                        ? 'bg-[#5F3041] text-white border-[#5F3041]'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {mat}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -471,7 +436,20 @@ export default function SearchPageContent({
         </div>
 
         {/* Dynamic Gallery Stream */}
-        {filteredPosts.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="bg-white border border-[#5F3041]/10 overflow-hidden flex flex-col">
+                <div className="skeleton w-full aspect-[4/5]" />
+                <div className="p-5 flex flex-col items-center gap-2.5">
+                  <div className="skeleton h-3 w-2/3 rounded" />
+                  <div className="skeleton h-2 w-1/2 rounded" />
+                  <div className="skeleton h-2.5 w-1/3 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div className="bg-white border border-[#5F3041]/10 p-20 text-center flex flex-col items-center justify-center gap-4 min-h-[360px]">
             <div className="w-16 h-16 rounded-full bg-[#FAF8F5] flex items-center justify-center text-[#5F3041]/40 shadow-inner">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -480,11 +458,24 @@ export default function SearchPageContent({
               </svg>
             </div>
             <div>
-              <h4 className="text-sm font-bold text-gray-805 font-sans">No matching creations found</h4>
+              <h4 className="text-sm font-bold text-gray-805 font-sans">
+                {hasActiveFilters ? 'No results found' : 'Nothing here yet'}
+              </h4>
               <p className="text-xs text-gray-400 max-w-xs mx-auto mt-1 leading-normal font-sans">
-                Adjust your filters or type search tags to discover alternative jewelry commissions.
+                {hasActiveFilters
+                  ? 'No pieces match your search. Try clearing a filter or a different term.'
+                  : 'No pieces have been posted yet. Check back soon — new commissions appear here as they are shared.'}
               </p>
             </div>
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearAll}
+                className="mt-1 text-[9px] font-extrabold tracking-widest text-[#5F3041] border border-[#5F3041]/20 hover:bg-[#5F3041] hover:text-white uppercase px-5 py-2.5 rounded-full transition-all cursor-pointer bg-white"
+                style={{ fontFamily: 'var(--font-montserrat)' }}
+              >
+                Clear All Filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-10">

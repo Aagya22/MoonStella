@@ -5,7 +5,7 @@ import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { Review } from '../models/review.model'
-import { io } from '../server'
+import { emitToRoom } from '../socket'
 import { createNotification, notifyAdmins } from '../services/notification.service'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
 
@@ -20,7 +20,7 @@ const emitThreadMessage = async (threadId: any, messageId: any): Promise<void> =
       }
     })
 
-  io.to(`thread:${String(threadId)}`).emit('new_message', populated)
+  emitToRoom(`thread:${String(threadId)}`, 'new_message', populated)
 }
 
 // Tag each order with whether it already has a review

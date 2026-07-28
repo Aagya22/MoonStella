@@ -2,6 +2,7 @@ import app from './app'
 import {Server} from 'socket.io'
 import { connectDB } from './config/db'
 import {env} from './config/env'
+import { setIo } from './socket'
 import http from 'http'
 import jwt from 'jsonwebtoken'
 import { Thread } from './models/thread.model'
@@ -15,6 +16,9 @@ export const io=new Server(server,{
     credentials:true,
   },
 })
+
+// Publish the instance so controllers can emit through ./socket
+setIo(io)
 
 io.use(async (socket, next) => {
   const token = socket.handshake.auth.token

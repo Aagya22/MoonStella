@@ -1,6 +1,6 @@
 import { Notification } from '../models/notification.model'
 import { User } from '../models/user.model'
-import { io } from '../server'
+import { emitToRoom } from '../socket'
 
 interface NotifyInput {
   userId: string | any // recipient
@@ -29,7 +29,7 @@ export const createNotification = async (input: NotifyInput): Promise<void> => {
       'firstName lastName avatar'
     )
 
-    io.to(`user:${String(input.userId)}`).emit('notification', populated)
+    emitToRoom(`user:${String(input.userId)}`, 'notification', populated)
   } catch (err) {
     console.error('Failed to create notification:', err)
   }

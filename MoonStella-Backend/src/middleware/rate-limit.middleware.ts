@@ -10,7 +10,12 @@ interface RateLimitOptions {
   scope: string
 }
 
-const createRateLimit = ({ windowMs, max, message, scope }: RateLimitOptions) => {
+// Clears every counter. Exposed for tests so limits don't leak between cases.
+export const resetRateLimits = (): void => {
+  buckets.clear()
+}
+
+export const createRateLimit = ({ windowMs, max, message, scope }: RateLimitOptions) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const caller = (req as any).user?._id
       ? String((req as any).user._id)
