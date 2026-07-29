@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express'
 import { createRateLimit } from '../../src/middleware/rate-limit.middleware'
-import { describe } from 'node:test'
 
 // Minimal Express req/res doubles
 const makeReq = (ip = '1.2.3.4') => ({ ip, socket: {}, headers: {} }) as unknown as Request
