@@ -35,7 +35,7 @@ const notificationSchema = new Schema<INotification>(
       type: String,
       required: true,
     },
-    // Role-agnostic path suffix the frontend prefixes with the current role, e.g. 'orders', 'messages', 'feed'
+    // Path suffix the frontend prefixes with the current role, e.g. 'orders'
     link: {
       type: String,
       default: null,

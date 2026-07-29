@@ -82,18 +82,13 @@ export default function BuyerLayout({
   const [sellersHistory, setSellersHistory] = useState<any[]>([])
 
   useEffect(() => {
-    let storedUser = localStorage.getItem('ms_user')
-    if (!storedUser) {
-      const mockUser = {
-        firstName: 'Anya',
-        lastName: 'Stella',
-        email: 'anya@moonstella.com',
-        onboarded: true,
-        interests: ['Emerald', 'Sapphire', 'Diamond']
-      }
-      localStorage.setItem('ms_user', JSON.stringify(mockUser))
-      localStorage.setItem('ms_token', 'mock_token_for_preview')
-      storedUser = JSON.stringify(mockUser)
+    const storedUser = localStorage.getItem('ms_user')
+    const storedToken = localStorage.getItem('ms_token')
+    if (!storedUser || !storedToken || storedToken === 'mock_token_for_preview') {
+      localStorage.removeItem('ms_token')
+      localStorage.removeItem('ms_user')
+      router.push('/login')
+      return
     }
     const parsed = JSON.parse(storedUser)
     if (parsed.role && parsed.role !== 'buyer') {
@@ -327,7 +322,7 @@ export default function BuyerLayout({
 
   return (
     <BuyerContext.Provider value={{ user, setUser, wishlist, setWishlist, openChatWith, setTimelineOpen, timelineOpen, triggerProfileEdit: () => setEditProfileOpen(true), followedArtisans, setFollowedArtisans, notifications, unreadNotificationsCount, toggleNotification, markNotificationRead, markAllNotificationsRead, clearAllNotifications }}>
-      <div className="min-h-screen bg-[#FAF8F5] text-gray-900 flex flex-col font-sans antialiased relative">
+      <div className="min-h-screen bg-[var(--ms-ground)] text-gray-900 flex flex-col font-sans antialiased relative">
 
         {/* 1. Header (Navbar) */}
         <Header

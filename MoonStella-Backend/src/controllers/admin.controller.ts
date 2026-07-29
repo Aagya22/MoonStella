@@ -62,10 +62,49 @@ export const getUsers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const users = await User.find({ role: { $ne: 'admin' } })
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+    const search = req.query.search as string
+    const role = req.query.role as string
+    const status = req.query.status as string
+
+    const filter: any = { role: { $ne: 'admin' } }
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { studioName: { $regex: search, $options: 'i' } }
+      ]
+    }
+
+    if (role && role !== 'all') {
+      filter.role = role
+    }
+
+    if (status === 'suspended') {
+      filter.isSuspended = true
+    } else if (status === 'active') {
+      filter.isSuspended = { $ne: true }
+    }
+
+    const totalDocs = await User.countDocuments(filter)
+    const users = await User.find(filter)
       .sort({ createdAt: -1 })
       .select('-passwordHash')
-    ok(res, users)
+      .skip(skip)
+      .limit(limit)
+
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: users,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     next(err)
   }
@@ -140,15 +179,32 @@ export const getDisputedOrders = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const orders = await Order.find({
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const filter = {
       $or: [
         { currentStage: 'Delivery Issue Reported' },
         { currentStage: 'Delivery Dispute' }
       ]
-    })
+    }
+    const totalDocs = await Order.countDocuments(filter)
+    const orders = await Order.find(filter)
       .sort({ updatedAt: -1 })
       .populate('buyerId sellerId')
-    ok(res, orders)
+      .skip(skip)
+      .limit(limit)
+
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: orders,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     next(err)
   }
@@ -235,10 +291,26 @@ export const getPosts = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const totalDocs = await Post.countDocuments({})
     const posts = await Post.find({})
       .sort({ createdAt: -1 })
       .populate('userId', 'firstName lastName avatar studioName role')
-    ok(res, posts)
+      .skip(skip)
+      .limit(limit)
+
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: posts,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     next(err)
   }

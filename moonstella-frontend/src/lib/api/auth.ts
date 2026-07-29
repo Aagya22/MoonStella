@@ -55,6 +55,11 @@ export const changePasswordApi = async (data: {
   const response = await api.patch('/api/auth/change-password', data, {
     headers: { Authorization: `Bearer ${token}` }
   })
+  // The old token is now invalid, so store the replacement
+  const refreshedToken = response.data?.data?.token
+  if (refreshedToken && typeof window !== 'undefined') {
+    localStorage.setItem('ms_token', refreshedToken)
+  }
   return response.data
 }
 
@@ -71,4 +76,20 @@ export const toggleFollowUserApi = async (id: string, token: string): Promise<an
     headers: { Authorization: `Bearer ${token}` }
   })
   return response.data.data
+}
+
+export const forgotPasswordApi = async (data: {
+  email: string
+}): Promise<any> => {
+  const response = await api.post(ENDPOINTS.auth.forgotPassword, data)
+  return response.data
+}
+
+export const resetPasswordApi = async (data: {
+  token: string
+  password: string
+  confirmPassword: string
+}): Promise<any> => {
+  const response = await api.post(ENDPOINTS.auth.resetPassword, data)
+  return response.data
 }

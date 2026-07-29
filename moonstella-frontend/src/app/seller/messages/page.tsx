@@ -8,6 +8,7 @@ import api from '@/lib/api/axios'
 import { io, Socket } from 'socket.io-client'
 import InspectPostModal from '@/app/components/seller/feed/InspectPostModal'
 import AudioPlayer from '@/app/components/chat/AudioPlayer'
+import ReportModal from '@/app/components/ReportModal'
 
 interface Message {
   _id: string
@@ -49,6 +50,13 @@ interface Thread {
   lastMessageAt?: string
 }
 
+// Openers offered while a conversation is still empty
+const QUICK_MESSAGES = [
+  'Thank you for reaching out. How may I help with your piece?',
+  'I can craft this to order, may I know your budget and timeline?',
+  'Happy to share more photographs and details of my work.',
+]
+
 export default function SellerMessagesPage() {
   const searchParams = useSearchParams()
   const chatWithParam = searchParams.get('chatWith')
@@ -88,9 +96,15 @@ export default function SellerMessagesPage() {
   
   // Conversation Menu state
   const [conversationMenuOpen, setConversationMenuOpen] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
+
+  // Typing indicator, cleared on a timer since there is no stop event
+  const [peerTyping, setPeerTyping] = useState(false)
+  const peerTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastTypingEmitRef = useRef(0)
 
   // Initialize socket connection
   useEffect(() => {
@@ -148,12 +162,37 @@ export default function SellerMessagesPage() {
       )
     }
 
+    const handleTyping = ({ threadId }: { threadId: string }) => {
+      if (threadId !== activeThreadId) return
+      setPeerTyping(true)
+      if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current)
+      peerTypingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 3000)
+    }
+
     socketRef.current.on('new_message', handleNewMessage)
+    socketRef.current.on('typing', handleTyping)
 
     return () => {
       socketRef.current?.off('new_message', handleNewMessage)
+      socketRef.current?.off('typing', handleTyping)
     }
   }, [activeThreadId])
+
+  // Drop the indicator when switching threads
+  useEffect(() => {
+    setPeerTyping(false)
+    if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current)
+  }, [activeThreadId])
+
+  // Ping at most once per 1.5s while typing
+  const handleChatInputChange = (value: string) => {
+    setChatInput(value)
+    if (!socketRef.current || !activeThreadId) return
+    const now = Date.now()
+    if (now - lastTypingEmitRef.current < 1500) return
+    lastTypingEmitRef.current = now
+    socketRef.current.emit('typing', activeThreadId)
+  }
 
   // Load threads on mount / query param update
   useEffect(() => {
@@ -602,10 +641,25 @@ export default function SellerMessagesPage() {
                   <button
                     type="button"
                     onClick={handleDeleteConversation}
-                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-650 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-655 hover:bg-red-50 border-none bg-transparent cursor-pointer transition-colors"
                     style={{ fontFamily: 'var(--font-montserrat)' }}
                   >
                     Delete Conversation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConversationMenuOpen(false)
+                      setShowReportModal(true)
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 border-none bg-transparent cursor-pointer transition-colors flex items-center gap-1.5"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                      <line x1="4" y1="22" x2="4" y2="15" />
+                    </svg>
+                    Report Chat
                   </button>
                 </div>
               )}
@@ -624,8 +678,22 @@ export default function SellerMessagesPage() {
                 </div>
                 <h4 className="text-xs font-bold text-gray-700" style={{ fontFamily: 'var(--font-montserrat)' }}>No Messages Yet</h4>
                 <p className="text-[10px] text-gray-400 mt-1 max-w-[240px] leading-relaxed">
-                  Start your conversation by typing a message below to coordinate details.
+                  Start your conversation below, or open with one of these.
                 </p>
+
+                <div className="flex flex-col gap-2 mt-4 w-full max-w-[280px]">
+                  {QUICK_MESSAGES.map((text) => (
+                    <button
+                      key={text}
+                      type="button"
+                      onClick={() => handleChatInputChange(text)}
+                      className="text-[10px] leading-snug text-[#5F3041] bg-white border border-[#5F3041]/15 rounded-full px-4 py-2.5 hover:bg-[#FAF8F5] hover:border-[#5F3041]/35 transition-all duration-300 cursor-pointer"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      {text}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               messages.map((m) => {
@@ -712,6 +780,15 @@ export default function SellerMessagesPage() {
                   </div>
                 )
               })
+            )}
+            {peerTyping && (
+              <div className="flex justify-start animate-fade-in">
+                <div className="bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-4 py-2.5 flex items-center gap-1.5 select-none">
+                  <span className="w-1.5 h-1.5 bg-[#5F3041]/45 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-[#5F3041]/45 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-[#5F3041]/45 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
             )}
             <div ref={chatEndRef} />
           </div>
@@ -849,7 +926,7 @@ export default function SellerMessagesPage() {
                 type="text"
                 placeholder="Type your message..."
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
+                onChange={(e) => handleChatInputChange(e.target.value)}
                 className="flex-1 bg-[#FAF8F5]/85 border border-[#5F3041]/10 rounded-full px-5 py-2.5 text-xs text-gray-707 placeholder-[#5F3041]/40 focus:outline-none focus:bg-white focus:border-[#5F3041]/25 transition-all"
                 style={{ fontFamily: 'var(--font-montserrat)' }}
               />
@@ -916,6 +993,17 @@ export default function SellerMessagesPage() {
             </svg>
           </button>
         </div>
+      )}
+
+      {/* Report Chat Modal Overlay */}
+      {activeThreadId && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          type="chat"
+          reportedId={activeThreadId}
+          title="Report Conversation"
+        />
       )}
 
     </div>

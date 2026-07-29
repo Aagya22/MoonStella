@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Navbar from '@/app/components/shared/navbar'
-import StepProgressBar from '@/app/components/shared/stepprogressbar'
 import { registerApi, updateProfileApi } from '@/lib/api/auth'
 import { nepalLocations, districts } from '@/lib/nepal-locations/location'
 import { useSnackbar } from '@/context/SnackbarContext'
@@ -59,18 +58,21 @@ export default function BuyerRegisterStepTwo() {
 
     try {
       const stepOne = sessionStorage.getItem('buyer_step_one')
-      if (!stepOne) { router.push('/register/buyer/step-one'); return }
+      if (!stepOne) {
+        router.push('/register/buyer/step-one')
+        return
+      }
       const stepOneData = JSON.parse(stepOne)
 
-      // Step 1 — register user
+      // Register user
       const result = await registerApi(stepOneData)
       const token = result.token
 
-      // Step 2 — save token immediately so axios can use it
+      // Save token immediately
       localStorage.setItem('ms_token', token)
       localStorage.setItem('ms_user', JSON.stringify(result.user))
 
-      // Step 3 — upload avatar if provided
+      // Upload avatar if provided
       let avatarUrl: string | null = null
       if (file) {
         const formData = new FormData()
@@ -88,11 +90,14 @@ export default function BuyerRegisterStepTwo() {
         }
       }
 
-      // Step 4 — update profile with token passed directly
-      await updateProfileApi({
-        avatar: avatarUrl,
-        location: `${locality}, ${district}, Nepal`,
-      }, token)
+      // Update profile
+      await updateProfileApi(
+        {
+          avatar: avatarUrl,
+          location: `${locality}, ${district}, Nepal`,
+        },
+        token
+      )
 
       sessionStorage.removeItem('buyer_step_one')
       sessionStorage.removeItem('buyer_step_two')
@@ -107,220 +112,302 @@ export default function BuyerRegisterStepTwo() {
     }
   }
 
-  const selectStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-montserrat)',
-    backgroundColor: '#F5F2F2',
-    border: 'none',
-    fontSize: '13px',
-    color: '#1a1a1a',
-    width: '100%',
-    padding: '12px 16px',
-    borderRadius: '4px',
-    outline: 'none',
-    appearance: 'none',
-    cursor: 'pointer',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-montserrat)',
-    fontSize: '11px',
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    color: '#374151',
-    marginBottom: '6px',
-    display: 'block',
-  }
-
   const localities = district ? nepalLocations[district] || [] : []
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
+    <div
+      className="min-h-screen flex flex-col justify-between"
+      style={{ backgroundColor: '#FAF8F5' }}
+    >
       <Navbar />
 
-      {/* Centered card container container */}
-      <div className="flex-1 flex items-start justify-center px-4 pb-8 pt-0 md:px-10 md:pb-12 md:pt-0">
-
-        {/* Card container */}
+      {/* Floating Premium Card Wrapper */}
+      <div className="flex-1 flex items-center justify-center px-4 py-3 md:px-8 md:py-4">
         <div
-          className="w-full flex overflow-hidden bg-white"
+          className="w-full flex flex-col md:flex-row bg-[#FDFBF7] overflow-hidden"
           style={{
-            maxWidth: '1200px',
-            minHeight: '700px',
-            borderRadius: '4px',
-            boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
+            maxWidth: '980px',
+            borderRadius: '2rem',
+            boxShadow: '0 24px 60px rgba(75, 19, 37, 0.04)',
+            border: '1px solid rgba(75, 19, 37, 0.05)',
           }}
         >
-          {/* Left image */}
-          <div className="hidden md:flex relative flex-col justify-end overflow-hidden" style={{ width: '42%', flexShrink: 0 }}>
-            <Image src="/buyersignupp.png" alt="Jewellery" fill className="object-cover object-center" priority />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.05) 50%)' }} />
-            <div className="relative z-10 p-8">
-              <p className="text-white/90 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px' }}>
+          {/* Left panel - 40% Width Image with subtle divider */}
+          <div
+            className="hidden md:block relative border-r border-[#E6DFD5]/40"
+            style={{ width: '40%', flexShrink: 0 }}
+          >
+            <Image
+              src="/buyersignupp.png"
+              alt="Jewellery Sanctuary"
+              fill
+              className="object-cover object-center"
+              priority
+            />
+            {/* Dark Gradient Overlay */}
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                background: 'linear-gradient(to top, rgba(15, 5, 8, 0.85) 0%, rgba(15, 5, 8, 0.15) 100%)',
+              }}
+            />
+            {/* Elegant bottom typography */}
+            <div className="absolute bottom-0 left-0 p-8 z-20">
+              <h2
+                className="font-bold text-[#FDFBF7] leading-tight mb-2.5"
+                style={{
+                  fontFamily: 'var(--font-playfair)',
+                  fontSize: '28px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Define Your
+                <br />
+                Identity
+              </h2>
+              <div
+                style={{
+                  width: '32px',
+                  height: '2px',
+                  backgroundColor: '#B78A3C',
+                  marginBottom: '10px',
+                }}
+              />
+              <p
+                className="text-[#FAF8F5]/80 leading-relaxed font-light"
+                style={{
+                  fontFamily: 'var(--font-montserrat)',
+                  fontSize: '11px',
+                  maxWidth: '240px',
+                  letterSpacing: '0.01em',
+                }}
+              >
                 Begin your exclusive access to the Vault and our bespoke artisan services.
               </p>
             </div>
           </div>
 
-          {/* Right — form column */}
-          <div className="flex-1 bg-white flex flex-col items-center justify-center p-6 md:p-12">
-            <div className="w-full flex flex-col gap-6" style={{ maxWidth: '480px' }}>
-
-              {/* Progress bar inside aligned column */}
-              <StepProgressBar currentStep={2} />
-
-              <div>
-                <h1 className="font-bold text-gray-900 mb-1" style={{ fontFamily: 'var(--font-playfair)', fontSize: '24px' }}>
-                  Define Your Identity
+          {/* Right panel - 60% Width Form vertically centered */}
+          <div className="flex-1 flex flex-col justify-center px-6 py-6 md:px-14 md:py-8 bg-[#FDFBF7]">
+            <div className="w-full mx-auto" style={{ maxWidth: '420px' }}>
+              
+              {/* Title Section */}
+              <div className="mb-5">
+                <h1
+                  className="font-bold text-gray-900 leading-tight"
+                  style={{
+                    fontFamily: 'var(--font-playfair)',
+                    fontSize: '24px',
+                  }}
+                >
+                  Profile Details
                 </h1>
-                <p className="text-gray-500 mb-7" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px' }}>
-                  Tell us where you are and how you wish to be seen by our artisans.
+                {/* Gold Accent Line */}
+                <div
+                  style={{
+                    width: '32px',
+                    height: '2px',
+                    backgroundColor: '#B78A3C',
+                    marginTop: '6px',
+                    marginBottom: '8px',
+                  }}
+                />
+                <p
+                  className="text-gray-400 font-light leading-relaxed"
+                  style={{
+                    fontFamily: 'var(--font-montserrat)',
+                    fontSize: '11px',
+                  }}
+                >
+                  Upload your avatar portrait and set your regional location.
                 </p>
+              </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+              {/* Form fields */}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                
+                {/* Portrait Upload Section */}
+                <div className="flex flex-row gap-4 items-center justify-between p-3 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-2xl">
+                  <div className="flex flex-col gap-0.5">
+                    <span
+                      className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      Profile Avatar
+                    </span>
+                    <p
+                      className="text-[10px] text-gray-400 font-light max-w-[200px]"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      Square format, clear background.
+                    </p>
+                  </div>
 
-                  {/* Section 1 — Profile Image */}
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#5F3041', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>1</div>
-                      <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Profile Image</h2>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                      <div
-                        onClick={!preview ? () => fileInputRef.current?.click() : undefined}
-                        style={{
-                          width: '140px',
-                          height: '140px',
-                          borderRadius: '50%',
-                          border: '1.5px dashed #D1C4C4',
-                          backgroundColor: '#FAF8F8',
-                          position: 'relative',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: !preview ? 'pointer' : 'default',
-                        }}
-                      >
-                        {preview ? (
-                          <Image src={preview} alt="Preview" fill className="object-cover" />
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', textAlign: 'center', padding: '10px' }}>
-                            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#5F3041" strokeWidth="1.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                            </svg>
-                            <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: '#5F3041', textTransform: 'uppercase' }}>Upload</p>
-                          </div>
-                        )}
-                      </div>
-                      {!preview && (
-                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '11px', color: '#9CA3AF', marginTop: '8px', textAlign: 'center' }}>
-                          Recommended: square portrait, clean background.
-                        </p>
+                  <div className="flex flex-col items-center">
+                    <div
+                      onClick={!preview ? () => fileInputRef.current?.click() : undefined}
+                      className="w-14 h-14 rounded-full border border-dashed border-[#B78A3C]/40 bg-[#FDFBF7] relative overflow-hidden flex items-center justify-center transition-all duration-300 hover:border-[#B78A3C]"
+                      style={{ cursor: !preview ? 'pointer' : 'default' }}
+                    >
+                      {preview ? (
+                        <Image src={preview} alt="Portrait Preview" fill className="object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-0.5 text-center">
+                          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#B78A3C" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                          </svg>
+                          <span
+                            className="text-[6px] font-bold tracking-widest text-[#B78A3C] uppercase"
+                            style={{ fontFamily: 'var(--font-montserrat)' }}
+                          >
+                            Upload
+                          </span>
+                        </div>
                       )}
                     </div>
+
                     {preview && (
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+                      <div className="flex gap-1.5 mt-2">
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '11px',
-                            fontFamily: 'var(--font-montserrat)',
-                            fontWeight: 600,
-                            backgroundColor: '#FAF8F5',
-                            border: '1px solid #D1C4C4',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            color: '#374151'
-                          }}
+                          className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-white border border-[#4B1325]/10 rounded text-gray-700 hover:bg-gray-50"
+                          style={{ fontFamily: 'var(--font-montserrat)' }}
                         >
-                          Change Image
+                          Change
                         </button>
                         <button
                           type="button"
                           onClick={() => {
                             setFile(null)
                             setPreview(null)
-                            if (fileInputRef.current) {
-                              fileInputRef.current.value = ''
-                            }
+                            if (fileInputRef.current) fileInputRef.current.value = ''
                           }}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '11px',
-                            fontFamily: 'var(--font-montserrat)',
-                            fontWeight: 600,
-                            backgroundColor: '#FEE2E2',
-                            border: '1px solid #FCA5A5',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            color: '#991B1B'
-                          }}
+                          className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-rose-50 border border-rose-200 rounded text-rose-700 hover:bg-rose-100"
+                          style={{ fontFamily: 'var(--font-montserrat)' }}
                         >
-                          Remove Image
+                          Remove
                         </button>
                       </div>
                     )}
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                   </div>
 
-                  {/* Section 2 — Location */}
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#5F3041', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-montserrat)', flexShrink: 0 }}>2</div>
-                      <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '17px', fontWeight: 600, color: '#111827' }}>Location <span style={{ color: '#EF4444', fontSize: '13px' }}>*</span></h2>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
+
+                {/* District Select */}
+                <div className="flex flex-col gap-0.5">
+                  <label
+                    className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                  >
+                    District
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={district}
+                      onChange={(e) => {
+                        setDistrict(e.target.value)
+                        setLocality('')
+                      }}
+                      required
+                      className="w-full h-[42px] px-3.5 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20 appearance-none cursor-pointer"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      <option value="">Select district</option>
+                      {districts.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg width="10" height="10" fill="none" stroke="#4B1325" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
                     </div>
+                  </div>
+                </div>
 
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <label style={labelStyle}>District *</label>
-                        <div className="relative">
-                          <select value={district} onChange={(e) => { setDistrict(e.target.value); setLocality('') }} required style={selectStyle}>
-                            <option value="">Select district</option>
-                            {districts.map(d => <option key={d} value={d}>{d}</option>)}
-                          </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <svg width="13" height="13" fill="none" stroke="#6B7280" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label style={labelStyle}>Area / Locality *</label>
-                        <div className="relative">
-                          <select value={locality} onChange={(e) => setLocality(e.target.value)} required disabled={!district} style={{ ...selectStyle, opacity: district ? 1 : 0.5 }}>
-                            <option value="">{district ? 'Select locality' : 'Select district first'}</option>
-                            {localities.map(l => <option key={l} value={l}>{l}</option>)}
-                          </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <svg width="13" height="13" fill="none" stroke="#6B7280" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </div>
-                        </div>
-                      </div>
-
-                      {district && locality && (
-                        <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#5F3041' }}>
-                          📍 {locality}, {district}, Nepal
-                        </p>
-                      )}
+                {/* Locality Select */}
+                <div className="flex flex-col gap-0.5">
+                  <label
+                    className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                  >
+                    Area / Locality
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={locality}
+                      onChange={(e) => setLocality(e.target.value)}
+                      required
+                      disabled={!district}
+                      className="w-full h-[42px] px-4 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20 appearance-none cursor-pointer disabled:opacity-50"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    >
+                      <option value="">
+                        {district ? 'Select locality' : 'Select district first'}
+                      </option>
+                      {localities.map((l) => (
+                        <option key={l} value={l}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg width="10" height="10" fill="none" stroke="#4B1325" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
                     </div>
                   </div>
+                </div>
 
-                  {error && <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#EF4444' }}>{error}</p>}
+                {district && locality && (
+                  <p
+                    className="text-[10px] font-bold text-[#4B1325] tracking-wide"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    📍 {locality}, {district}, Nepal
+                  </p>
+                )}
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button type="button" onClick={handleBack} style={{ padding: '12px 28px', borderRadius: '4px', border: '2px solid #5F3041', color: '#5F3041', backgroundColor: 'transparent', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer' }}>
-                      Go Back
-                    </button>
-                    <button type="submit" disabled={loading} style={{ padding: '12px 32px', borderRadius: '4px', backgroundColor: '#5F3041', color: 'white', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, border: 'none' }}>
-                      {loading ? 'Creating account...' : 'Get Started'}
-                    </button>
-                  </div>
+                {/* Error Banner */}
+                {error && (
+                  <p
+                    className="text-rose-600 text-[10px] font-semibold uppercase tracking-wide mt-0.5"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {error}
+                  </p>
+                )}
 
-                </form>
-              </div>
+                {/* Actions row */}
+                <div className="flex gap-4 mt-2">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="flex-1 h-[42px] text-xs font-bold uppercase tracking-widest rounded-xl border-2 border-[#4B1325] text-[#4B1325] bg-transparent hover:bg-[#4B1325]/5 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 h-[42px] text-xs font-bold uppercase tracking-widest rounded-xl text-[#E9D7C3] hover:text-[#FFFFFF] bg-gradient-to-r from-[#4B1325] to-[#7A2A46] hover:shadow-lg hover:shadow-[#4B1325]/10 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {loading ? 'Submitting...' : 'Get Started'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

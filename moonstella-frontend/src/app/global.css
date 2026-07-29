@@ -64,3 +64,98 @@ body {
 .animate-slide-in-right {
   animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Feed theme tokens */
+:root {
+  --ms-ground: #FBF8F7;
+  --ms-surface: #FFFFFF;
+  --ms-surface-alt: #F5F2EF;
+  --ms-line: #ECE7E3;
+  --ms-ink: #1A1614;
+  --ms-ink-soft: #8B8580;
+  --ms-plum: #4A0F2C;
+  --ms-plum-hover: #380A20;
+  --ms-plum-tint: #F7EFF3;
+  --ms-quiet: #EFECF1;
+}
+
+.surface {
+  background-color: var(--ms-surface);
+  border: 1px solid var(--ms-line);
+  box-shadow:
+    0 1px 2px rgba(26, 22, 20, 0.03),
+    0 8px 24px -16px rgba(26, 22, 20, 0.1);
+}
+
+.surface-alt {
+  background-color: var(--ms-surface-alt);
+  border: 1px solid rgba(26, 22, 20, 0.04);
+}
+
+.surface-raise {
+  transition: box-shadow 0.45s ease, transform 0.45s ease;
+}
+
+.surface-raise:hover {
+  box-shadow:
+    0 2px 6px rgba(26, 22, 20, 0.04),
+    0 18px 38px -20px rgba(26, 22, 20, 0.16);
+}
+
+/* Loading placeholder sweep */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #EFE8E3;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-scale-up,
+  .animate-slide-in-right,
+  .skeleton::after {
+    animation: none;
+  }
+
+  /* Drop the movement, keep the colour and shadow changes */
+  .group:hover,
+  button:hover {
+    transform: none !important;
+  }
+}

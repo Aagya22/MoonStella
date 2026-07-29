@@ -21,6 +21,7 @@ export interface IUser extends Document{
     interests: string[]
     isApproved: boolean
     isSuspended: boolean
+    passwordChangedAt?: Date | null
     createdAt: Date
     updatedAt: Date
     comparePassword(password: string): Promise<boolean>
@@ -96,6 +97,11 @@ const UserSchema = new Schema<IUser>(
         isSuspended: {
             type: Boolean,
             default: false,
+        },
+        // Tokens issued before this are rejected
+        passwordChangedAt: {
+            type: Date,
+            default: null,
         },
         following:[
             {

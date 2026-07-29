@@ -5,8 +5,37 @@ import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { Review } from '../models/review.model'
-import { createNotification } from '../services/notification.service'
+import { emitToRoom } from '../socket'
+import { createNotification, notifyAdmins } from '../services/notification.service'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
+
+const emitThreadMessage = async (threadId: any, messageId: any): Promise<void> => {
+  const populated = await Message.findById(messageId)
+    .populate('senderId', 'firstName lastName email avatar role')
+    .populate({
+      path: 'postId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName email avatar role bio'
+      }
+    })
+
+  emitToRoom(`thread:${String(threadId)}`, 'new_message', populated)
+}
+
+// Tag each order with whether it already has a review
+const withReviewFlags = async (orders: any[]): Promise<any[]> => {
+  if (!orders.length) return []
+
+  const reviews = await Review.find({ orderId: { $in: orders.map((o) => o._id) } }).select('orderId')
+  const reviewed = new Set(reviews.map((r: any) => String(r.orderId)))
+
+  return orders.map((o) => {
+    const obj = typeof o.toObject === 'function' ? o.toObject() : o
+    obj.hasReview = reviewed.has(String(obj._id))
+    return obj
+  })
+}
 
 // Create Order (Buyer initiates bespoke brief order)
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
@@ -82,15 +111,7 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
     await thread.save()
 
     // Socket.io live notification
-    const socketIo = (global as any).io
-    if (socketIo) {
-      socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      socketIo.to(String(thread._id)).emit('threadUpdated', {
-        threadId: thread._id,
-        lastMessageText: thread.lastMessageText,
-        lastMessageAt: thread.lastMessageAt,
-      })
-    }
+    await emitThreadMessage(thread._id, systemMsg._id)
 
     await createNotification({
       userId: sellerId,
@@ -115,12 +136,39 @@ export const getBuyerOrders = async (req: Request, res: Response): Promise<void>
       return
     }
 
-    const orders = await Order.find({ buyerId })
+    const pageVal = req.query.page
+    const filter = { buyerId }
+
+    if (!pageVal) {
+      const orders = await Order.find(filter)
+        .populate('sellerId', 'firstName lastName email avatar role location bio averageResponseTime')
+        .populate('postId', 'images description category budget')
+        .sort({ createdAt: -1 })
+      ok(res, await withReviewFlags(orders))
+      return
+    }
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const totalDocs = await Order.countDocuments(filter)
+    const orders = await Order.find(filter)
       .populate('sellerId', 'firstName lastName email avatar role location bio averageResponseTime')
       .populate('postId', 'images description category budget')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    ok(res, orders)
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: await withReviewFlags(orders),
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     serverError(res, err)
   }
@@ -135,12 +183,39 @@ export const getSellerOrders = async (req: Request, res: Response): Promise<void
       return
     }
 
-    const orders = await Order.find({ sellerId })
+    const pageVal = req.query.page
+    const filter = { sellerId }
+
+    if (!pageVal) {
+      const orders = await Order.find(filter)
+        .populate('buyerId', 'firstName lastName email avatar role location bio')
+        .populate('postId', 'images description category budget')
+        .sort({ createdAt: -1 })
+      ok(res, orders)
+      return
+    }
+
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const skip = (page - 1) * limit
+
+    const totalDocs = await Order.countDocuments(filter)
+    const orders = await Order.find(filter)
       .populate('buyerId', 'firstName lastName email avatar role location bio')
       .populate('postId', 'images description category budget')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    ok(res, orders)
+    const totalPages = Math.ceil(totalDocs / limit)
+
+    ok(res, {
+      docs: orders,
+      page,
+      limit,
+      totalPages,
+      totalDocs
+    })
   } catch (err) {
     serverError(res, err)
   }
@@ -205,10 +280,7 @@ export const acceptOrder = async (req: Request, res: Response): Promise<void> =>
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -288,81 +360,7 @@ export const updateOrderProgress = async (req: Request, res: Response): Promise<
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
-    }
-
-    ok(res, order)
-  } catch (err) {
-    serverError(res, err)
-  }
-}
-
-// Complete Order (Only allowed by buyer confirming they got the product)
-export const completeOrder = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params
-    const buyerId = req.user?._id
-
-    if (!buyerId) {
-      badRequest(res, 'Unauthorized')
-      return
-    }
-
-    const order = await Order.findById(id)
-    if (!order) {
-      notFound(res, 'Not found')
-      return
-    }
-
-    if (String(order.buyerId) !== String(buyerId)) {
-      badRequest(res, 'Only the buyer can mark the order as complete after confirming receipt of the product.')
-      return
-    }
-
-    order.status = 'completed'
-    order.currentStage = 'Delivered'
-    order.timeline.push({
-      stage: 'Delivered',
-      note: 'Buyer confirmed receipt of the bespoke jewelry product.',
-      image: null,
-      createdAt: new Date(),
-    })
-
-    await order.save()
-
-    await createNotification({
-      userId: order.sellerId,
-      actorId: buyerId,
-      type: 'order',
-      text: `Order "${order.title}" was marked as delivered`,
-      link: 'orders',
-    })
-
-    // Send chat system message notification
-    let thread = await Thread.findOne({
-      participants: { $all: [order.buyerId, order.sellerId], $size: 2 },
-    })
-    if (thread) {
-      const systemMsg = new Message({
-        threadId: thread._id,
-        senderId: buyerId,
-        text: `DELIVERY CONFIRMED:\nThe buyer has confirmed that they received their bespoke product for "${order.title}".`,
-        postId: order.postId || null,
-        createdAt: new Date(),
-      })
-      await systemMsg.save()
-
-      thread.lastMessageText = `Delivery Confirmed: "${order.title}"`
-      thread.lastMessageAt = new Date()
-      await thread.save()
-
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -431,10 +429,7 @@ export const cancelOrder = async (req: Request, res: Response): Promise<void> =>
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)
@@ -497,6 +492,15 @@ export const confirmReceipt = async (req: Request, res: Response): Promise<void>
       link: 'orders',
     })
 
+    if (!received) {
+      await notifyAdmins({
+        actorId: buyerId,
+        type: 'system',
+        text: `New delivery dispute reported for order "${order.title}"`,
+        link: '/admin/disputes'
+      })
+    }
+
     // Send chat notification
     let thread = await Thread.findOne({
       participants: { $all: [order.buyerId, order.sellerId], $size: 2 },
@@ -521,10 +525,7 @@ export const confirmReceipt = async (req: Request, res: Response): Promise<void>
       thread.lastMessageAt = new Date()
       await thread.save()
 
-      const socketIo = (global as any).io
-      if (socketIo) {
-        socketIo.to(String(thread._id)).emit('newMessage', systemMsg)
-      }
+      await emitThreadMessage(thread._id, systemMsg._id)
     }
 
     ok(res, order)

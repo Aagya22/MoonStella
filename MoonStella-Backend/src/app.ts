@@ -9,6 +9,7 @@ import chatRoutes from './routes/chat.routes'
 import orderRoutes from './routes/order.routes'
 import notificationRoutes from './routes/notification.routes'
 import adminRoutes from './routes/admin.routes'
+import reportRoutes from './routes/report.routes'
 
 const app = express()
 
@@ -35,6 +36,7 @@ app.use('/api/chat', chatRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/reports', reportRoutes)
 
 app.use(errorHandler)
 

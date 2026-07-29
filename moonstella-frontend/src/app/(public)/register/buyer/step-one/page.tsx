@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/app/components/shared/navbar'
-import StepProgressBar from '@/app/components/shared/stepprogressbar'
 import { checkUniqueApi } from '@/lib/api/auth'
 
 export default function BuyerRegisterStepOne() {
@@ -71,11 +70,7 @@ export default function BuyerRegisterStepOne() {
         phoneNumber: form.phoneNumber,
       })
 
-      sessionStorage.setItem('buyer_step_one', JSON.stringify({
-        ...form,
-        role: 'buyer',
-      }))
-
+      sessionStorage.setItem('buyer_step_one', JSON.stringify({ ...form, role: 'buyer' }))
       router.push('/register/buyer/step-two')
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Email or phone number is already registered')
@@ -84,56 +79,44 @@ export default function BuyerRegisterStepOne() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-montserrat)',
-    backgroundColor: '#F5F2F2',
-    border: 'none',
-    fontSize: '13px',
-    color: '#1a1a1a',
-    width: '100%',
-    padding: '12px 16px',
-    borderRadius: '4px',
-    outline: 'none',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-montserrat)',
-    fontSize: '11px',
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    color: '#374151',
-    marginBottom: '6px',
-    display: 'block',
-  }
-
   const eyeIcon = (show: boolean) => (
-    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-      {show
-        ? <><path d="M3 12s3.6-7 9-7 9 7 9 7-3.6 7-9 7-9-7-9-7" /><circle cx="12" cy="12" r="3" /></>
-        : <><path d="M17.94 17.94A10.1 10.1 0 0112 20c-5.4 0-9-7-9-7a17.6 17.6 0 014.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c5.4 0 9 7 9 7a17.6 17.6 0 01-2.06 3.06M3 3l18 18" /></>
-      }
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      {show ? (
+        <>
+          <path d="M3 12s3.6-7 9-7 9 7 9 7-3.6 7-9 7-9-7-9-7" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      ) : (
+        <>
+          <path d="M17.94 17.94A10.1 10.1 0 0112 20c-5.4 0-9-7-9-7a17.6 17.6 0 014.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c5.4 0 9 7 9 7a17.6 17.6 0 01-2.06 3.06M3 3l18 18" />
+        </>
+      )}
     </svg>
   )
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF8F5' }}>
+    <div
+      className="min-h-screen flex flex-col justify-between"
+      style={{ backgroundColor: '#FAF8F5' }}
+    >
       <Navbar />
 
-      {/* Centered card container container */}
-      <div className="flex-1 flex items-start justify-center px-4 pb-8 pt-0 md:px-10 md:pb-12 md:pt-0">
-
-        {/* Card container */}
+      {/* Floating Premium Card Wrapper */}
+      <div className="flex-1 flex items-center justify-center px-4 py-3 md:px-8 md:py-4">
         <div
-          className="w-full flex overflow-hidden bg-white"
+          className="w-full flex flex-col md:flex-row bg-[#FDFBF7] overflow-hidden"
           style={{
-            maxWidth: '1200px',
-            minHeight: '700px',
-            borderRadius: '4px',
-            boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
+            maxWidth: '980px',
+            borderRadius: '2rem',
+            boxShadow: '0 24px 60px rgba(75, 19, 37, 0.04)',
+            border: '1px solid rgba(75, 19, 37, 0.05)',
           }}
         >
-          {/* Left image */}
-          <div className="hidden md:block relative" style={{ width: '42%', flexShrink: 0 }}>
+          {/* Left panel - 40% Width Image with subtle divider */}
+          <div
+            className="hidden md:block relative border-r border-[#E6DFD5]/40"
+            style={{ width: '40%', flexShrink: 0 }}
+          >
             <Image
               src="/buyersignup.png"
               alt="The Buyer's Journey"
@@ -141,90 +124,259 @@ export default function BuyerRegisterStepOne() {
               className="object-cover object-center"
               priority
             />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%)' }} />
-            <div className="absolute bottom-0 left-0 p-10 z-10">
-              <h2 className="font-bold text-white leading-tight mb-4" style={{ fontFamily: 'var(--font-playfair)', fontSize: '36px' }}>
-                The Buyer's<br />Journey
+            {/* Dark Gradient Overlay */}
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                background: 'linear-gradient(to top, rgba(15, 5, 8, 0.85) 0%, rgba(15, 5, 8, 0.15) 100%)',
+              }}
+            />
+            {/* Elegant bottom typography */}
+            <div className="absolute bottom-0 left-0 p-8 z-20">
+              <h2
+                className="font-bold text-[#FDFBF7] leading-tight mb-2.5"
+                style={{
+                  fontFamily: 'var(--font-playfair)',
+                  fontSize: '28px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                The Buyer&apos;s
+                <br />
+                Journey
               </h2>
-              <p className="text-white/75 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px', maxWidth: '260px' }}>
+              <div
+                style={{
+                  width: '32px',
+                  height: '2px',
+                  backgroundColor: '#B78A3C',
+                  marginBottom: '10px',
+                }}
+              />
+              <p
+                className="text-[#FAF8F5]/80 leading-relaxed font-light"
+                style={{
+                  fontFamily: 'var(--font-montserrat)',
+                  fontSize: '11px',
+                  maxWidth: '240px',
+                  letterSpacing: '0.01em',
+                }}
+              >
                 Every masterpiece deserves a guardian. Your profile is the first
                 step into a world of curated brilliance and bespoke heritage.
               </p>
             </div>
           </div>
 
-          {/* Right — form column */}
-          <div className="flex-1 bg-white flex flex-col items-center justify-center p-6 md:p-12">
-            <div className="w-full flex flex-col gap-6" style={{ maxWidth: '480px' }}>
-
-              {/* Progress bar inside aligned column */}
-              <StepProgressBar currentStep={1} />
-
-              <div>
-                <h1 className="font-bold text-gray-900 mb-2" style={{ fontFamily: 'var(--font-playfair)', fontSize: '26px' }}>
-                  Create Your Buyer Profile
+          {/* Right panel - 60% Width Form vertically centered */}
+          <div className="flex-1 flex flex-col justify-center px-6 py-6 md:px-14 md:py-8 bg-[#FDFBF7]">
+            <div className="w-full mx-auto" style={{ maxWidth: '420px' }}>
+              
+              {/* Title Section */}
+              <div className="mb-5">
+                <h1
+                  className="font-bold text-gray-900 leading-tight"
+                  style={{
+                    fontFamily: 'var(--font-playfair)',
+                    fontSize: '24px',
+                  }}
+                >
+                  Create Your Profile
                 </h1>
-                <p className="text-gray-500 mb-6 leading-relaxed" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '13px' }}>
-                  Please provide your foundational information to begin your journey with MoonStella.
+                {/* Gold Accent Line */}
+                <div
+                  style={{
+                    width: '32px',
+                    height: '2px',
+                    backgroundColor: '#B78A3C',
+                    marginTop: '6px',
+                    marginBottom: '8px',
+                  }}
+                />
+                <p
+                  className="text-gray-400 font-light leading-relaxed"
+                  style={{
+                    fontFamily: 'var(--font-montserrat)',
+                    fontSize: '11px',
+                  }}
+                >
+                  Provide your foundational details to begin your onboarding journey.
                 </p>
-
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={labelStyle}>First Name</label>
-                      <input name="firstName" placeholder="E.g. Asmi" value={form.firstName} onChange={handleChange} required style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Last Name</label>
-                      <input name="lastName" placeholder="E.g. K.C" value={form.lastName} onChange={handleChange} required style={inputStyle} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Email</label>
-                    <input name="email" type="email" placeholder="E.g. asmi123@gmail.com" value={form.email} onChange={handleChange} required style={inputStyle} />
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Phone Number</label>
-                    <input name="phoneNumber" type="tel" placeholder="E.g. 9800000000" value={form.phoneNumber} onChange={handleChange} required style={inputStyle} />
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Password</label>
-                    <div className="relative">
-                      <input name="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={handleChange} required style={{ ...inputStyle, paddingRight: '44px' }} />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{eyeIcon(showPassword)}</button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Confirm Password</label>
-                    <div className="relative">
-                      <input name="confirmPassword" type={showConfirm ? 'text' : 'password'} placeholder="••••••••" value={form.confirmPassword} onChange={handleChange} required style={{ ...inputStyle, paddingRight: '44px' }} />
-                      <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{eyeIcon(showConfirm)}</button>
-                    </div>
-                  </div>
-
-                  {error && <p style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#EF4444' }}>{error}</p>}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3.5 text-white rounded uppercase transition-opacity hover:opacity-90 mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: '#5F3041', fontFamily: 'var(--font-montserrat)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em' }}
-                  >
-                    {loading ? 'Checking...' : 'Continue'}
-                  </button>
-
-                  <p className="text-center" style={{ fontFamily: 'var(--font-montserrat)', fontSize: '12px', color: '#6B7280' }}>
-                    Already have an account?{' '}
-                    <Link href="/login" style={{ color: '#5F3041', fontWeight: 600 }}>Sign in</Link>
-                  </p>
-
-                </form>
               </div>
+
+              {/* Form fields */}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                
+                {/* First & Last Name row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <label
+                      className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                      style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                    >
+                      First Name
+                    </label>
+                    <input
+                      name="firstName"
+                      placeholder="E.g. Asmi"
+                      value={form.firstName}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-[42px] px-3.5 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <label
+                      className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                      style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      name="lastName"
+                      placeholder="E.g. K.C"
+                      value={form.lastName}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-[42px] px-3.5 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Email field */}
+                <div className="flex flex-col gap-0.5">
+                  <label
+                    className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="E.g. asmi123@gmail.com"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full h-[42px] px-3.5 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  />
+                </div>
+
+                {/* Phone Number field */}
+                <div className="flex flex-col gap-0.5">
+                  <label
+                    className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    name="phoneNumber"
+                    type="tel"
+                    placeholder="E.g. 9800000000"
+                    value={form.phoneNumber}
+                    onChange={handleChange}
+                    required
+                    className="w-full h-[42px] px-3.5 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  />
+                </div>
+
+                {/* Password field */}
+                <div className="flex flex-col gap-0.5">
+                  <label
+                    className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={form.password}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-[42px] px-3.5 pr-10 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100/50 hover:text-[#4B1325] transition-all duration-300 focus:outline-none"
+                    >
+                      {eyeIcon(showPassword)}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password field */}
+                <div className="flex flex-col gap-0.5">
+                  <label
+                    className="text-[8px] font-bold text-gray-400 uppercase tracking-widest"
+                    style={{ fontFamily: 'var(--font-montserrat)', marginBottom: '2px' }}
+                  >
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      name="confirmPassword"
+                      type={showConfirm ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-[42px] px-3.5 pr-10 bg-[#FAF8F5] border border-[#4B1325]/10 rounded-xl text-xs text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4B1325] focus:border-transparent transition-all duration-300 hover:border-[#4B1325]/20"
+                      style={{ fontFamily: 'var(--font-montserrat)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100/50 hover:text-[#4B1325] transition-all duration-300 focus:outline-none"
+                    >
+                      {eyeIcon(showConfirm)}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {error && (
+                  <p
+                    className="text-rose-600 text-[9px] font-semibold uppercase tracking-wide mt-0.5"
+                    style={{ fontFamily: 'var(--font-montserrat)' }}
+                  >
+                    {error}
+                  </p>
+                )}
+
+                {/* Continue button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-[42px] mt-1.5 text-xs font-bold uppercase tracking-widest rounded-xl text-[#E9D7C3] hover:text-[#FFFFFF] bg-gradient-to-r from-[#4B1325] to-[#7A2A46] hover:shadow-lg hover:shadow-[#4B1325]/10 focus:outline-none transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  {loading ? 'Validating...' : 'Continue'}
+                </button>
+
+                {/* Sign In Link */}
+                <p
+                  className="text-center text-xs text-gray-400 font-light mt-1.5"
+                  style={{ fontFamily: 'var(--font-montserrat)' }}
+                >
+                  Already have an account?{' '}
+                  <Link
+                    href="/login"
+                    className="text-[#4B1325] font-bold hover:underline ml-1"
+                  >
+                    Sign in
+                  </Link>
+                </p>
+              </form>
             </div>
           </div>
         </div>

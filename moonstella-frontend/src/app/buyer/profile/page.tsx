@@ -8,6 +8,7 @@ import api from '@/lib/api/axios'
 import { useSnackbar } from '@/context/SnackbarContext'
 import { updateProfileApi } from '@/lib/api/auth'
 import FollowModal from '@/app/components/profile/FollowModal'
+import ReportModal from '@/app/components/ReportModal'
 
 export default function BuyerProfilePage() {
   return (
@@ -33,6 +34,8 @@ function BuyerProfileContent() {
   const [isEditing, setIsEditing] = useState(false)
   const [editDesc, setEditDesc] = useState('')
   const [editBudget, setEditBudget] = useState('')
+  const [showReportUserModal, setShowReportUserModal] = useState(false)
+  const [optionsMenuOpen, setOptionsMenuOpen] = useState(false)
 
   const [avatarModalOpen, setAvatarModalOpen] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -222,11 +225,13 @@ function BuyerProfileContent() {
   useEffect(() => {
     const fetchProfilePosts = async () => {
       try {
-        const response = await api.get('/api/posts')
         const targetUserId = profileUser?.id || profileUser?._id
+        const response = await api.get('/api/posts', {
+          params: { authorId: String(targetUserId || ''), limit: '100', sort: 'latest' },
+        })
         const targetUserName = profileUser ? `${profileUser.firstName} ${profileUser.lastName}` : ''
 
-        const formatted = response.data
+        const formatted = (response.data?.data?.docs || [])
           .filter((p: any) => {
             const authorId = p.userId?._id || p.userId
             return String(authorId) === String(targetUserId)
@@ -272,6 +277,43 @@ function BuyerProfileContent() {
 
       {/* Unified Premium Profile Details Header — Glassmorphism */}
       <div className="relative flex flex-col w-full bg-gradient-to-br from-[#5F3041]/90 via-[#2E0715]/85 to-[#5F3041]/90 backdrop-blur-xl text-[#FAF8F5] rounded-3xl p-8 shadow-[0_15px_45px_rgba(61,12,31,0.15)] transition-all hover:shadow-[0_20px_60px_rgba(61,12,31,0.22)] duration-500 animate-fade-in border border-white/[0.06] overflow-hidden">
+        
+        {/* Profile Options 3-dot dropdown (Report User Profile) */}
+        {!isOwnProfile && (
+          <div className="absolute top-6 right-6 z-25">
+            <button
+              onClick={() => setOptionsMenuOpen(!optionsMenuOpen)}
+              className="text-white/50 hover:text-white cursor-pointer p-2 rounded-full hover:bg-white/10 border-none bg-transparent flex items-center justify-center transition-all duration-200"
+              title="Profile Options"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+                <circle cx="5" cy="12" r="1.5" />
+              </svg>
+            </button>
+
+            {optionsMenuOpen && (
+              <div className="absolute right-0 mt-1.5 bg-white border border-gray-150 rounded-xl shadow-lg py-1.5 w-36 z-35 flex flex-col text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOptionsMenuOpen(false)
+                    setShowReportUserModal(true)
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-[#FAF0F3]/30 hover:text-rose-700 border-none bg-transparent cursor-pointer transition-colors flex items-center gap-1.5 font-sans"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                    <line x1="4" y1="22" x2="4" y2="15" />
+                  </svg>
+                  Report Profile
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Glass light effects */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <div className="absolute -top-20 -left-20 w-60 h-60 bg-[#E9D7C3]/[0.04] rounded-full blur-3xl" />
@@ -915,6 +957,17 @@ function BuyerProfileContent() {
         onClose={() => setLikesModalOpen(false)}
         roleContext="buyer"
       />
+
+      {/* Report User Modal Overlay */}
+      {profileUser && (
+        <ReportModal
+          isOpen={showReportUserModal}
+          onClose={() => setShowReportUserModal(false)}
+          type="user"
+          reportedId={profileUser.id || profileUser._id}
+          title="Report User Profile"
+        />
+      )}
 
     </div>
   )

@@ -32,7 +32,7 @@ export default function Header({
   if (!user) return null
 
   return (
-    <header className="w-full bg-[#FAF0F3]/90 backdrop-blur-md border-b border-[#5F3041]/10 shadow-[0_2px_15px_rgba(61,12,31,0.025)] px-6 flex items-center justify-between sticky top-0 z-40 h-14 transition-all duration-300">
+    <header className="w-full bg-[#FCF7F8]/90 backdrop-blur-md border-b border-[#5F3041]/10 shadow-[0_2px_15px_rgba(61,12,31,0.025)] px-6 flex items-center justify-between sticky top-0 z-40 h-14 transition-all duration-300">
       <div className="flex items-center gap-4">
         
         <button

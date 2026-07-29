@@ -253,25 +253,35 @@ export default function SellerSavedPage() {
     <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 md:px-12 md:py-8 flex flex-col gap-8 animate-fade-in">
       
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 border-b border-[#5F3041]/10 pb-6">
         <div>
-          <h1 
-            className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-2 font-playfair"
+          <p
+            className="text-[10px] font-bold tracking-[0.24em] text-[#8A6538] uppercase mb-3"
+            style={{ fontFamily: 'var(--font-montserrat)' }}
+          >
+            The Studio Reference
+          </p>
+          <h1
+            className="text-3xl md:text-[2.6rem] font-bold text-gray-900 leading-[1.05]"
             style={{ fontFamily: 'var(--font-playfair)' }}
           >
             Saved Posts
           </h1>
-          <p 
-            className="text-xs text-gray-500 font-medium tracking-wide flex items-center gap-2"
+          <div aria-hidden className="h-px w-14 mt-4 mb-3" style={{ backgroundColor: '#B78A3C' }} />
+          <p
+            className="text-xs text-gray-500 font-medium tracking-wide"
             style={{ fontFamily: 'var(--font-montserrat)' }}
           >
-            <span className="w-2 h-2 rounded-full bg-[#5F3041] animate-pulse" />
             Curated and saved client briefs and designs.
           </p>
         </div>
-        <div className="bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center select-none">
-          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider" style={{ fontFamily: 'var(--font-montserrat)' }}>Saved items</span>
-          <span className="text-sm font-extrabold text-[#5F3041]" style={{ fontFamily: 'var(--font-playfair)' }}>{posts.length} Saved</span>
+        <div className="flex items-baseline gap-2.5 bg-white px-6 py-4 rounded-2xl border border-[#5F3041]/10 shadow-[0_8px_24px_-16px_rgba(61,12,31,0.35)] select-none self-start md:self-auto">
+          <span className="text-[2rem] leading-none font-bold text-[#5F3041]" style={{ fontFamily: 'var(--font-playfair)' }}>
+            {posts.length}
+          </span>
+          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-montserrat)' }}>
+            Posts<br />Saved
+          </span>
         </div>
       </div>
 
@@ -281,7 +291,8 @@ export default function SellerSavedPage() {
           Loading saved posts...
         </div>
       ) : posts.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-20 bg-white border border-dashed border-gray-100 rounded-3xl gap-4 max-w-4xl mx-auto w-full select-none animate-fade-in">
+        <div className="flex-1 flex justify-center">
+        <div className="flex flex-col items-center justify-center py-20 px-8 bg-white border border-dashed border-gray-100 rounded-3xl gap-4 max-w-lg w-full select-none animate-fade-in">
           <div className="w-16 h-16 rounded-full bg-[#FAF8F5] flex items-center justify-center text-gray-300 border border-gray-50 shadow-inner">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
               <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -300,6 +311,7 @@ export default function SellerSavedPage() {
           >
             Explore Feed
           </button>
+        </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl w-full mx-auto">
@@ -366,21 +378,9 @@ export default function SellerSavedPage() {
                 {/* Category pill */}
                 <div className="flex items-center">
                   {(() => {
-                    const normCat = (post.category || '').toLowerCase()
-                    let pillStyles = 'bg-amber-50 text-amber-700 border-amber-200/60'
-                    if (normCat.includes('earring')) {
-                      pillStyles = 'bg-rose-50 text-rose-700 border-rose-200/60'
-                    } else if (normCat.includes('ring')) {
-                      pillStyles = 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                    } else if (normCat.includes('pendant') || normCat.includes('necklace')) {
-                      pillStyles = 'bg-indigo-50 text-indigo-700 border-indigo-200/60'
-                    } else if (normCat.includes('bracelet') || normCat.includes('bangle')) {
-                      pillStyles = 'bg-purple-50 text-purple-700 border-purple-200/60'
-                    }
-
                     return (
                       <span
-                        className={`text-[8.5px] font-extrabold tracking-widest uppercase border px-3 py-1 rounded-full ${pillStyles}`}
+                        className="text-[8.5px] font-extrabold tracking-widest uppercase text-[#5F3041] bg-[#FAF0F3] border border-[#5F3041]/10 px-3 py-1 rounded-full"
                         style={{ fontFamily: 'var(--font-montserrat)' }}
                       >
                         {post.category || 'Bespoke Request'}

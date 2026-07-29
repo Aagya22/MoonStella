@@ -4,7 +4,7 @@ import { Thread } from '../models/thread.model'
 import { Message } from '../models/message.model'
 import { User } from '../models/user.model'
 import { ok, created, badRequest, serverError, notFound } from '../utils/response'
-import { io } from '../server'
+import { emitToRoom } from '../socket'
 import { createNotification } from '../services/notification.service'
 
 export const createOrGetThread = async (req: Request, res: Response): Promise<void> => {
@@ -254,7 +254,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
         }
       })
 
-    io.to(`thread:${threadId}`).emit('new_message', populatedMessage)
+    emitToRoom(`thread:${threadId}`, 'new_message', populatedMessage)
 
     const recipientId = thread.participants.find((id: any) => String(id) !== String(currentUserId))
     if (recipientId) {

@@ -2,9 +2,11 @@ import app from './app'
 import {Server} from 'socket.io'
 import { connectDB } from './config/db'
 import {env} from './config/env'
+import { setIo } from './socket'
 import http from 'http'
 import jwt from 'jsonwebtoken'
 import { Thread } from './models/thread.model'
+import { User } from './models/user.model'
 
 const server = http.createServer(app)
 
@@ -15,13 +17,27 @@ export const io=new Server(server,{
   },
 })
 
-io.use((socket, next) => {
+// Publish the instance so controllers can emit through ./socket
+setIo(io)
+
+io.use(async (socket, next) => {
   const token = socket.handshake.auth.token
   if (!token) {
     return next(new Error('Authentication error: No token provided'))
   }
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string }
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string; iat: number; type?: string }
+    if (decoded.type === 'reset') {
+      return next(new Error('Authentication error: Invalid token'))
+    }
+    // Same checks as the protect middleware
+    const user = await User.findById(decoded.id).select('isSuspended passwordChangedAt')
+    if (!user || user.isSuspended) {
+      return next(new Error('Authentication error: Invalid token'))
+    }
+    if (user.passwordChangedAt && decoded.iat * 1000 < new Date(user.passwordChangedAt).getTime()) {
+      return next(new Error('Authentication error: Invalid token'))
+    }
     socket.data.userId = decoded.id
     next()
   } catch (err) {

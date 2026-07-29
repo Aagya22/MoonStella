@@ -16,10 +16,25 @@ export const protect =async(
         return
     }
     const token=authHeader.split(' ')[1]
-    const decoded=jwt.verify(token,env.JWT_SECRET)as {id:string}
+    const decoded=jwt.verify(token,env.JWT_SECRET)as {id:string;iat:number;type?:string}
+    // Password reset tokens must never authenticate a request
+    if(decoded.type==='reset'){
+        unauthorized(res)
+        return
+    }
     const user=await User.findById(decoded.id).select('-passwordHash')
     if(!user){
         unauthorized(res)
+        return
+    }
+    // Checked here as well as at login, since tokens last 30 days
+    if(user.isSuspended){
+        unauthorized(res,'Your account has been suspended by the administrator. Please contact support.')
+        return
+    }
+    // Reject tokens issued before the last password change
+    if(user.passwordChangedAt&&decoded.iat*1000<new Date(user.passwordChangedAt).getTime()){
+        unauthorized(res,'Your password was changed. Please log in again.')
         return
     }
     req.user=user as any
